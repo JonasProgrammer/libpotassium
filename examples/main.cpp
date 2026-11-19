@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 libpotassium team
+// SPDX-License-Identifier: BSL-1.0
+
 import libpotassium;
 import std;
 

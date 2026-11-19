@@ -11,6 +11,17 @@
 - Write Markdown with one sentence per line to keep diffs focused.
 - Follow the [AI usage and attribution policy](README.md#ai-usage).
 
+## Source file notices
+
+Start each project source file, including examples, build scripts, and source templates, with the following notices in the file's comment syntax.
+Place the notices immediately after the shebang in executable scripts.
+Use the year the file was first published for new files and preserve existing copyright notices.
+
+```cpp
+// SPDX-FileCopyrightText: 2026 libpotassium team
+// SPDX-License-Identifier: BSL-1.0
+```
+
 ## Commit messages
 
 Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).

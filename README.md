@@ -29,3 +29,7 @@ Each AI-assisted commit must attribute the assistance with a Git trailer in the 
 ```text
 Assisted-By: Agent (Provider; underlying model)
 ```
+
+## License
+
+libpotassium is licensed under the [Boost Software License 1.0](LICENSE).

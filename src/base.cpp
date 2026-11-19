@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 libpotassium team
+// SPDX-License-Identifier: BSL-1.0
+
 module;
 #include <sodium.h>
 #include "libpotassium/version.hpp"

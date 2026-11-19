@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 libpotassium team
+# SPDX-License-Identifier: BSL-1.0
+
 # Source this file from CLion's toolchain environment settings.
 # Must run in Bash: `nix print-dev-env` generates Bash source code (including
 # shell functions and Bash-specific variables), not a POSIX sh environment.

@@ -8,12 +8,26 @@ Use CMake 4.5 or newer, Ninja 1.11 or newer, libsodium development files, and a 
 See [HACKING.md](HACKING.md) for the pinned Nix development shell, toolchain details, and CLion setup.
 
 ```sh
-cmake -S . -B build -G Ninja
-cmake --build build
-ctest --test-dir build --output-on-failure
+cmake --preset debug
+cmake --build --preset debug
+ctest --preset debug
 ```
 
-Run the example directly with `./build/libpotassium_example`.
+Run the example directly with `./build/debug/libpotassium_example`.
+Use `release` in the same commands for an optimized build in `build/release`.
+
+## API documentation
+
+With Doxygen installed, enable and build the HTML documentation with the following commands.
+
+```sh
+cmake --preset docs
+cmake --build --preset docs
+```
+
+Open `build/docs/docs/html/index.html` to browse the documentation.
+The documentation option defaults to `OFF`.
+If enabled while Doxygen is missing, CMake warns and skips the documentation target.
 
 ## Contributing
 

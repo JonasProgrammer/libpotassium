@@ -56,6 +56,23 @@ The script uses `nix print-dev-env` to load the flake environment into CLion's t
 After updating `flake.lock`, refresh any stored Nix tool paths and reset the CMake cache if CLion still uses the old environment.
 See [CLion toolchain setup](https://www.jetbrains.com/help/clion/how-to-create-toolchain-in-clion.html#toolchain-environment).
 
+### Example presets for a custom CLion toolchain
+
+The [CMakeUserPresets.example.json](CMakeUserPresets.example.json) example extends the shared `debug`, `release`, and `docs` presets with profiles that select a CLion toolchain named `libpotassium`.
+Name the toolchain you configured above `libpotassium`, or change each `toolchain` value in your local copy to match your toolchain's name in CLion.
+The toolchain must make Doxygen available to build the `clion-docs` preset.
+
+If you do not have a `CMakeUserPresets.json` in the project root, copy the example to that filename.
+
+```sh
+cp CMakeUserPresets.example.json CMakeUserPresets.json
+```
+
+If you already have a `CMakeUserPresets.json`, merge the example's configure and build presets into it and use schema version 10.
+Git ignores `CMakeUserPresets.json` so you can keep your toolchain settings local.
+Reload the CMake project in CLion and enable the desired `clion-*` profile under **Settings > Build, Execution, Deployment > CMake**.
+See [CLion's CMake presets documentation](https://www.jetbrains.com/help/clion/cmake-presets.html).
+
 ## Updating the development shell
 
 ```sh

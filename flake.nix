@@ -21,12 +21,11 @@
 
       cmake45 = pkgs.callPackage "${nixpkgs-staging}/pkgs/by-name/cm/cmake/package.nix" { };
 
-      gccShell = pkgs.mkShell.override {
+      mkDevShell = pkgs.mkShell.override {
         stdenv = selectedStdenv;
       };
-    in
-    {
-      devShells.${system}.default = gccShell {
+
+      baseShell = mkDevShell {
         packages = [
           cmake45
           pkgs.ninja
@@ -37,6 +36,24 @@
         # Select nixpkgs' wrapped compilers.
         CC = "${selectedStdenv.cc}/bin/gcc";
         CXX = "${selectedStdenv.cc}/bin/g++";
+      };
+
+      fullShell = mkDevShell {
+        inputsFrom = [ baseShell ];
+
+        packages = [
+          pkgs.doxygen
+        ];
+
+        buildInputs = [
+          pkgs.catch2_3
+        ];
+      };
+    in
+    {
+      devShells.${system} = {
+        default = baseShell;
+        full = fullShell;
       };
     };
 }

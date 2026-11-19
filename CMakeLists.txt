@@ -32,6 +32,18 @@ target_link_libraries(libpotassium PRIVATE "${SODIUM_LIBRARY}")
 if (PROJECT_IS_TOP_LEVEL)
     include(CTest)
 
+    option(LIBPOTASSIUM_BUILD_DOCS "Enable the Doxygen documentation target" OFF)
+    if (LIBPOTASSIUM_BUILD_DOCS)
+        find_package(Doxygen QUIET)
+        if (Doxygen_FOUND)
+            set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs")
+            set(DOXYGEN_GENERATE_LATEX NO)
+            doxygen_add_docs(libpotassium_docs src)
+        else ()
+            message(WARNING "Doxygen was not found. The libpotassium_docs target is unavailable.")
+        endif ()
+    endif ()
+
     add_executable(libpotassium_example examples/main.cpp)
     target_link_libraries(libpotassium_example PRIVATE libpotassium)
 

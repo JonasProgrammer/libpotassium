@@ -11,5 +11,6 @@ import std;
 
 export namespace potassium
 {
+/// The libpotassium version followed by the libsodium version, separated by a hyphen.
 constexpr std::string_view version_string{LIBPOTASSIUM_VERSION "-" SODIUM_VERSION_STRING};
-}
+}  // namespace potassium

@@ -28,7 +28,7 @@ fi
 # Check command status separately: `eval "$(...)"` masks failures of nix.
 _devenv_code=$(
   nix --extra-experimental-features 'nix-command flakes' \
-    print-dev-env "$_devenv_root"
+    print-dev-env "$_devenv_root#full"
 ) || {
   printf '%s\n' 'CLion Nix environment: nix print-dev-env failed.' >&2
   unset _devenv_root _devenv_code

@@ -119,6 +119,20 @@ TEST_CASE("Guarded allocator rejects overflowing sizes and accepts zero counts",
     ordinary.deallocate(ordinary.allocate(0), 0);
 }
 
+TEST_CASE("Raw allocator provides nothrow allocation", "[memory]")
+{
+    using potassium::raw_allocator;
+    static_assert(noexcept(raw_allocator::allocate_raw(16, std::nothrow)));
+    static_assert(noexcept(raw_allocator::allocate_raw(2, 16, std::nothrow)));
+    auto* single = raw_allocator::allocate_raw(16, std::nothrow);
+    REQUIRE(single != nullptr);
+    raw_allocator::deallocate(single, 16);
+    auto* array = raw_allocator::allocate_raw(2, 16, std::nothrow);
+    REQUIRE(array != nullptr);
+    raw_allocator::deallocate(array, 2);
+    CHECK(raw_allocator::allocate_raw(std::numeric_limits<std::size_t>::max(), 2, std::nothrow) == nullptr);
+}
+
 TEST_CASE("Moving a memory lock guard keeps the buffer intact until release", "[memory]")
 {
     constexpr std::array contents{std::byte{1}, std::byte{2}};

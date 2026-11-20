@@ -14,16 +14,26 @@ namespace potassium
 
 void* raw_allocator::allocate_raw(size_type bytes)
 {
-    auto const ret = sodium_malloc(bytes);
+    auto const ret = allocate_raw(bytes, std::nothrow);
     if (!ret) throw std::bad_alloc{};
     return ret;
 }
 
 void* raw_allocator::allocate_raw(size_type count, size_type element_size)
 {
-    auto const ret = sodium_allocarray(count, element_size);
+    auto const ret = allocate_raw(count, element_size, std::nothrow);
     if (!ret) throw std::bad_alloc{};
     return ret;
+}
+
+void* raw_allocator::allocate_raw(size_type bytes, std::nothrow_t const&) noexcept
+{
+    return sodium_malloc(bytes);
+}
+
+void* raw_allocator::allocate_raw(size_type count, size_type element_size, std::nothrow_t const&) noexcept
+{
+    return sodium_allocarray(count, element_size);
 }
 
 void raw_allocator::deallocate(void* ptr, size_type) noexcept

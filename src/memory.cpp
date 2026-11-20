@@ -21,13 +21,29 @@ export struct raw_allocator
     /// @brief Allocates raw storage.
     /// @pre @p bytes is a multiple of the required fundamental alignment.
     /// @throws std::bad_alloc If allocation fails.
+    /// @see allocate_raw(size_type, std::nothrow_t const&)
+    /// @see deallocate_raw(void*)
     [[nodiscard]] static void* allocate_raw(size_type bytes);
+
+    /// @brief Allocates raw storage, returning nullptr on failure.
+    /// @pre @p bytes is a multiple of the required fundamental alignment.
+    /// @see allocate_raw(size_type)
+    /// @see deallocate_raw(void*)
+    [[nodiscard]] static void* allocate_raw(size_type bytes, std::nothrow_t const&) noexcept;
 
     /// @brief Allocates raw storage for an array.
     /// @param element_size Number of bytes per element.
     /// @pre The total byte count is a multiple of the required fundamental alignment.
     /// @throws std::bad_alloc If the total byte count overflows or allocation fails.
+    /// @see allocate_raw(size_type, size_type, std::nothrow_t const&)
+    /// @see deallocate_raw(void*)
     [[nodiscard]] static void* allocate_raw(size_type count, size_type element_size);
+
+    /// @brief Allocates array storage, returning nullptr on overflow or failure.
+    /// @pre The total byte count is a multiple of the required fundamental alignment.
+    /// @see allocate_raw(size_type, size_type)
+    /// @see deallocate_raw(void*)
+    [[nodiscard]] static void* allocate_raw(size_type count, size_type element_size, std::nothrow_t const&) noexcept;
 
     /// @brief Wipes and releases storage.
     /// @param ptr Pointer to release, or null.

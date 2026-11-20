@@ -15,10 +15,17 @@ export namespace potassium
 constexpr std::string_view version_string{LIBPOTASSIUM_VERSION "-" SODIUM_VERSION_STRING};
 
 /// @brief Initializes libpotassium and libsodium.
+/// @return @c true on success, @c false on failure.
+bool init(std::nothrow_t const&) noexcept
+{
+    return sodium_init() == 0;
+}
+
+/// @brief Initializes libpotassium and libsodium.
 /// @throws std::runtime_error If libsodium initialization fails.
 void init()
 {
-    if (sodium_init() < 0) throw std::runtime_error{"Failed to initialize sodium"};
+    if (!init(std::nothrow)) throw std::runtime_error{"Failed to initialize sodium"};
 }
 
 }  // namespace potassium

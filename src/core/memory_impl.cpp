@@ -5,7 +5,7 @@ module;
 #include <cassert>
 #include <sodium.h>
 
-module libpotassium;
+module potassium.core;
 import std;
 
 static_assert(std::is_trivial_v<potassium::raw_allocator>);

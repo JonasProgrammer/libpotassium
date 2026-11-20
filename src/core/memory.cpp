@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 libpotassium team
 // SPDX-License-Identifier: BSL-1.0
 
-export module libpotassium:memory;
+export module potassium.core:memory;
 
 import std;
 

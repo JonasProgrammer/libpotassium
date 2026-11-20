@@ -24,10 +24,11 @@ target_sources(libpotassium PUBLIC
         src/libpotassium.cpp
         # partitions
         src/base.cpp
-        src/memory.cpp
+        src/core/core_iface.cpp
+        src/core/memory.cpp
         PRIVATE
         # implementations
-        src/memory_impl.cpp
+        src/core/memory_impl.cpp
 )
 target_include_directories(libpotassium PRIVATE
         "${SODIUM_INCLUDE_DIR}"

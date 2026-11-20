@@ -133,6 +133,29 @@ TEST_CASE("Raw allocator provides nothrow allocation", "[memory]")
     CHECK(raw_allocator::allocate_raw(std::numeric_limits<std::size_t>::max(), 2, std::nothrow) == nullptr);
 }
 
+TEST_CASE("Guarded memory resources compare equal only to each other", "[memory]")
+{
+    potassium::memory_resource first;
+    potassium::memory_resource second;
+    std::pmr::memory_resource& resource = first;
+    CHECK(resource.is_equal(first));
+    REQUIRE(resource.is_equal(second));
+    CHECK_FALSE(resource.is_equal(*std::pmr::new_delete_resource()));
+
+    constexpr std::size_t bytes = 1;
+    constexpr auto alignment = alignof(std::max_align_t);
+    auto* ptr = resource.allocate(bytes, alignment);
+    CHECK(reinterpret_cast<std::uintptr_t>(ptr) % alignment == 0);
+    second.deallocate(ptr, bytes, alignment);
+}
+
+TEST_CASE("Guarded memory resource rejects unsupported or overflowing requests", "[memory]")
+{
+    potassium::memory_resource resource;
+    CHECK_THROWS_AS(static_cast<void>(resource.allocate(1, alignof(OveralignedPayload))), std::bad_alloc);
+    CHECK_THROWS_AS(static_cast<void>(resource.allocate(std::numeric_limits<std::size_t>::max(), alignof(std::max_align_t))), std::bad_alloc);
+}
+
 TEST_CASE("Moving a memory lock guard keeps the buffer intact until release", "[memory]")
 {
     constexpr std::array contents{std::byte{1}, std::byte{2}};

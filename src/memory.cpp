@@ -152,4 +152,13 @@ public:
     [[nodiscard]] void* address() const noexcept { return addr_; }
 };
 
+/// @brief Guarded heap resource for PMR containers and other byte allocations.
+/// Supports fundamental alignment. Each allocation has page-level overhead.
+export class memory_resource final : public std::pmr::memory_resource
+{
+    [[nodiscard]] void* do_allocate(std::size_t bytes, std::size_t alignment) override;
+    void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
+    [[nodiscard]] bool do_is_equal(std::pmr::memory_resource const& other) const noexcept override;
+};
+
 }  // namespace potassium

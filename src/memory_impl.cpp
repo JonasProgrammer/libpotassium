@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSL-1.0
 
 module;
+#include <cassert>
 #include <sodium.h>
 
 module libpotassium;
@@ -45,12 +46,37 @@ mlock_guard::mlock_guard(void* address, std::size_t len)
     : addr_(address)
     , len_(len)
 {
+    assert(address && len);
     if (sodium_mlock(address, len) == -1) throw std::runtime_error{"cannot mlock"};
 }
 
 mlock_guard::~mlock_guard()
 {
     if (addr_) sodium_munlock(addr_, len_);
+}
+
+void* memory_resource::do_allocate(std::size_t bytes, std::size_t alignment)
+{
+    assert(std::has_single_bit(alignment));
+    if (alignment > alignof(std::max_align_t)) throw std::bad_alloc{};
+
+    auto const remainder = bytes % alignment;
+    auto const padding = remainder == 0 ? 0 : alignment - remainder;
+    if (bytes > std::numeric_limits<std::size_t>::max() - padding) throw std::bad_alloc{};
+
+    auto const ret = raw_allocator::allocate_raw(bytes + padding);
+    assert(reinterpret_cast<std::uintptr_t>(ret) % alignment == 0);
+    return ret;
+}
+
+void memory_resource::do_deallocate(void* ptr, std::size_t bytes, std::size_t)
+{
+    raw_allocator::deallocate(ptr, bytes);
+}
+
+bool memory_resource::do_is_equal(std::pmr::memory_resource const& other) const noexcept
+{
+    return dynamic_cast<memory_resource const*>(&other) != nullptr;
 }
 
 }  // namespace potassium

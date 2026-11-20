@@ -20,8 +20,14 @@ target_compile_features(libpotassium PUBLIC cxx_std_23)
 target_sources(libpotassium PUBLIC
         FILE_SET CXX_MODULES
         FILES
+        # entry
         src/libpotassium.cpp
+        # partitions
         src/base.cpp
+        src/memory.cpp
+        PRIVATE
+        # implementations
+        src/memory_impl.cpp
 )
 target_include_directories(libpotassium PRIVATE
         "${SODIUM_INCLUDE_DIR}"
@@ -49,5 +55,17 @@ if (PROJECT_IS_TOP_LEVEL)
 
     if (BUILD_TESTING)
         add_test(NAME libpotassium.example COMMAND libpotassium_example)
+
+        find_package(Catch2 3 REQUIRED)
+        add_executable(libpotassium_tests
+                # entrypoint
+                tests/main.cpp
+                # case files
+                tests/memory.cpp
+        )
+        target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2)
+
+        include(Catch)
+        catch_discover_tests(libpotassium_tests TEST_PREFIX "libpotassium.")
     endif ()
 endif ()

@@ -13,10 +13,11 @@ See the [CMake 4.5 release notes](https://cmake.org/cmake/help/v4.5/release/4.5.
 
 The repository flake provides GCC 16 with libstdc++, CMake 4.5, Ninja, and libsodium for x86_64 Linux.
 The flake takes CMake from the pinned nixpkgs staging input.
+The full shell also provides Catch2 v3 for the test suite and Doxygen for the documentation.
 Use the checked-in `flake.lock` to reproduce the development environment.
 
 ```sh
-nix --extra-experimental-features 'nix-command flakes' develop .
+nix --extra-experimental-features 'nix-command flakes' develop .#full
 ```
 
 In a Git checkout, Nix only sees tracked files when it evaluates the Git-backed flake.

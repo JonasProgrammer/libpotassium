@@ -5,6 +5,8 @@ libpotassium is an opinionated C++ wrapper for libsodium.
 ## Build and test
 
 Use CMake 4.5 or newer, Ninja 1.11 or newer, libsodium development files, and a C++23 toolchain whose standard library provides the `std` module.
+The test suite requires Catch2 v3, which is available in the full Nix development shell.
+To configure without the test suite, pass `-DBUILD_TESTING=OFF`.
 See [HACKING.md](HACKING.md) for the pinned Nix development shell, toolchain details, and CLion setup.
 
 ```sh

@@ -9,6 +9,7 @@ export module libpotassium:base;
 
 import std;
 
+/// Parent namespace for all libpotassium's contents.
 export namespace potassium
 {
 /// The libpotassium version followed by the libsodium version, separated by a hyphen.

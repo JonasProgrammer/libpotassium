@@ -19,17 +19,13 @@ export struct raw_allocator
     using size_type = std::size_t;
 
     /// @brief Allocates raw storage.
-    /// @param bytes Number of bytes to allocate.
     /// @pre @p bytes is a multiple of the required fundamental alignment.
-    /// @return Pointer to the allocated storage.
     /// @throws std::bad_alloc If allocation fails.
     [[nodiscard]] static void* allocate_raw(size_type bytes);
 
     /// @brief Allocates raw storage for an array.
-    /// @param count Number of elements.
     /// @param element_size Number of bytes per element.
     /// @pre The total byte count is a multiple of the required fundamental alignment.
-    /// @return Pointer to the allocated storage.
     /// @throws std::bad_alloc If the total byte count overflows or allocation fails.
     [[nodiscard]] static void* allocate_raw(size_type count, size_type element_size);
 
@@ -58,8 +54,6 @@ struct allocator : raw_allocator
     }
 
     /// @brief Allocates storage for elements without constructing them.
-    /// @param count Number of elements.
-    /// @return Pointer to the allocated storage.
     /// @throws std::bad_alloc If the total byte count overflows or allocation fails.
     [[nodiscard]] static T* allocate(size_type count)
     {
@@ -86,9 +80,7 @@ struct allocator : raw_allocator
 };
 
 /// @brief Move-only guard for a lock on caller-owned memory.
-/// Keep the region alive, writable, and at the same address until the guard releases it.
-/// Locks operate on whole pages, so independently managed locks must cover separate pages,
-/// even if their byte ranges are disjoint.
+/// Disjoint byte ranges can share a page and its lock.
 ///
 /// @code{.cpp}
 /// import libpotassium;
@@ -110,10 +102,9 @@ export class mlock_guard final
 
 public:
     /// @brief Locks a region of writable memory.
-    /// @param address Start of the region.
-    /// @param len Number of bytes in the region.
     /// @pre @p address is non-null and points to a writable region of at least @p len bytes.
     /// @pre @p len is greater than zero.
+    /// @pre The region remains alive, writable, and at the same address until the lock is released.
     /// @pre The guard has exclusive control of locking on every page touched by the region.
     /// @throws std::runtime_error If libsodium reports that the lock failed.
     mlock_guard(void* address, std::size_t len);

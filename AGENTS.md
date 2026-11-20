@@ -11,6 +11,15 @@
 - Write Markdown with one sentence per line to keep diffs focused.
 - Follow the [AI usage and attribution policy](README.md#ai-usage).
 
+## In-code documentation
+
+- Use Doxygen for in-code documentation.
+- Both `///` and `/** ... */` comment forms are allowed.
+- Prefix Doxygen commands with `@`, as in `@pre` and `@ref`.
+- Keep documentation terse and useful.
+- Document preconditions with `@pre` instead of using exceptions.
+- The global precondition that `init` must have been called does not need to be repeated for every function.
+
 ## Source file notices
 
 Start each project source file, including examples, build scripts, and source templates, with the following notices in the file's comment syntax.

@@ -61,6 +61,7 @@ if (PROJECT_IS_TOP_LEVEL)
                 # entrypoint
                 tests/main.cpp
                 # case files
+                tests/base.cpp
                 tests/memory.cpp
         )
         target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2)

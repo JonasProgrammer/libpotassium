@@ -19,7 +19,8 @@ constexpr std::string_view version_string{LIBPOTASSIUM_VERSION "-" SODIUM_VERSIO
 /// @return @c true on success, @c false on failure.
 bool init(std::nothrow_t const&) noexcept
 {
-    return sodium_init() == 0;
+    // will return -1 on error, 0 on first init and 1 for subsequent inits
+    return sodium_init() != -1;
 }
 
 /// @brief Initializes libpotassium and libsodium.

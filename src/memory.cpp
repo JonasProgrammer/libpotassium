@@ -85,4 +85,64 @@ struct allocator : raw_allocator
     }
 };
 
+/// @brief Move-only guard for a lock on caller-owned memory.
+/// Keep the region alive, writable, and at the same address until the guard releases it.
+/// Locks operate on whole pages, so independently managed locks must cover separate pages,
+/// even if their byte ranges are disjoint.
+///
+/// @code{.cpp}
+/// import libpotassium;
+/// import std;
+///
+/// int main()
+/// {
+///     potassium::init();
+///     constexpr std::size_t size = 32;
+///     auto buffer = std::make_unique<std::byte[]>(size);
+///     potassium::mlock_guard guard{buffer.get(), size};
+///     // Read sensitive data directly into buffer and use it here.
+/// }
+/// @endcode
+export class mlock_guard final
+{
+    void* addr_;
+    std::size_t len_;
+
+public:
+    /// @brief Locks a region of writable memory.
+    /// @param address Start of the region.
+    /// @param len Number of bytes in the region.
+    /// @pre @p address is non-null and points to a writable region of at least @p len bytes.
+    /// @pre @p len is greater than zero.
+    /// @pre The guard has exclusive control of locking on every page touched by the region.
+    /// @throws std::runtime_error If libsodium reports that the lock failed.
+    mlock_guard(void* address, std::size_t len);
+
+    /// Transfers the lock and leaves @p other empty.
+    mlock_guard(mlock_guard&& other) noexcept
+        : addr_(std::exchange(other.addr_, nullptr))
+        , len_(std::exchange(other.len_, 0))
+    {
+    }
+
+    /// Wipes the guarded bytes and attempts to unlock their pages, if the guard owns a lock.
+    /// Unlock errors are ignored.
+    ~mlock_guard();
+
+    /// Exchanges locks with @p other, including empty states.
+    /// Self-move assignment leaves the guard unchanged.
+    mlock_guard& operator=(mlock_guard&& other) noexcept
+    {
+        std::swap(addr_, other.addr_);
+        std::swap(len_, other.len_);
+        return *this;
+    }
+
+    /// @return Whether the guard owns a lock.
+    [[nodiscard]] explicit operator bool() const noexcept { return addr_ != nullptr; }
+
+    /// @return The start of the guarded region, or null if empty.
+    [[nodiscard]] void* address() const noexcept { return addr_; }
+};
+
 }  // namespace potassium

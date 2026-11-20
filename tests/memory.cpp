@@ -42,6 +42,11 @@ concept SupportsGuardedAllocator = requires { typename potassium::allocator<T>; 
 
 static_assert(SupportsGuardedAllocator<std::max_align_t>);
 static_assert(!SupportsGuardedAllocator<OveralignedPayload>);
+
+static_assert(!std::is_copy_constructible_v<potassium::mlock_guard>);
+static_assert(!std::is_copy_assignable_v<potassium::mlock_guard>);
+static_assert(std::is_nothrow_move_constructible_v<potassium::mlock_guard>);
+static_assert(std::is_nothrow_move_assignable_v<potassium::mlock_guard>);
 }  // namespace
 
 TEMPLATE_TEST_CASE("Allocators satisfy the same object alignment", "[memory]", char, int, double, std::max_align_t, ThreeBytes, PaddedFields, AlignedPayload, PageCrossingPayload)
@@ -112,4 +117,40 @@ TEST_CASE("Guarded allocator rejects overflowing sizes and accepts zero counts",
     potassium::allocator<int> ordinary;
     CHECK_THROWS_AS(static_cast<void>(ordinary.allocate(oversized_count)), std::bad_alloc);
     ordinary.deallocate(ordinary.allocate(0), 0);
+}
+
+TEST_CASE("Moving a memory lock guard keeps the buffer intact until release", "[memory]")
+{
+    constexpr std::array contents{std::byte{1}, std::byte{2}};
+    auto buffer = contents;
+    std::optional<potassium::mlock_guard> original;
+    try
+    {
+        original.emplace(buffer.data(), buffer.size());
+    }
+    catch (std::runtime_error const& error)
+    {
+        SKIP(error.what());
+    }
+
+    {
+        potassium::mlock_guard owner{std::move(*original)};
+        CHECK_FALSE(static_cast<bool>(*original));
+        CHECK(original->address() == nullptr);
+
+        potassium::mlock_guard empty{std::move(*original)};
+        CHECK_FALSE(static_cast<bool>(empty));
+        original.reset();
+
+        auto& alias = owner;
+        owner = std::move(alias);
+        CHECK(owner.address() == buffer.data());
+
+        owner = std::move(empty);
+        CHECK_FALSE(static_cast<bool>(owner));
+        CHECK(static_cast<bool>(empty));
+        CHECK(empty.address() == buffer.data());
+        CHECK(buffer == contents);
+    }
+    CHECK(std::ranges::all_of(buffer, [](std::byte value) { return value == std::byte{}; }));
 }

@@ -30,6 +30,19 @@ void raw_allocator::deallocate(void* ptr, size_type) noexcept
 {
     sodium_free(ptr);
 }
+
+mlock_guard::mlock_guard(void* address, std::size_t len)
+    : addr_(address)
+    , len_(len)
+{
+    if (sodium_mlock(address, len) == -1) throw std::runtime_error{"cannot mlock"};
+}
+
+mlock_guard::~mlock_guard()
+{
+    if (addr_) sodium_munlock(addr_, len_);
+}
+
 }  // namespace potassium
 
 namespace

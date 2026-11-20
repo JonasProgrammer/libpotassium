@@ -19,5 +19,6 @@ EnumTrailingComma: Insert
 IndentCaseLabels: false
 IndentWidth: 4
 InsertNewlineAtEOF: true
+PackConstructorInitializers: BinPack
 QualifierAlignment: Right
 Standard: Latest

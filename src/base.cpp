@@ -3,7 +3,7 @@
 
 module;
 #include <sodium.h>
-#include "libpotassium/version.hpp"
+#include "libpotassium/internal/version.hpp"
 
 export module potassium:base;
 

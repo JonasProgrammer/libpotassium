@@ -22,3 +22,4 @@ InsertNewlineAtEOF: true
 PackConstructorInitializers: BinPack
 QualifierAlignment: Right
 Standard: Latest
+SeparateDefinitionBlocks: Always

@@ -41,7 +41,7 @@ Include an `Assisted-By` trailer for AI-assisted commits as specified in the REA
 
 ## C++26 features
 
-None are currently enabled.
+Deleted-function reasons are enabled for rvalue key borrowing on compilers that accept them in C++23 mode.
 
 ## Forbidden features
 

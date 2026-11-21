@@ -5,3 +5,4 @@
 export module potassium.core;
 
 export import :memory;
+export import :crypto;

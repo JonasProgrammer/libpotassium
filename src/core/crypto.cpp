@@ -1,0 +1,220 @@
+// SPDX-FileCopyrightText: 2026 libpotassium team
+// SPDX-License-Identifier: BSL-1.0
+
+export module potassium.core:crypto;
+import :memory;
+import std;
+
+export namespace potassium
+{
+/// Operational failures returned by the nonthrowing API.
+enum class errc
+{
+    /// Encryption or authentication failed.
+    crypto_failed,
+    /// The requested output storage could not be allocated.
+    allocation_failed,
+};
+
+/// Exception raised when a cryptographic operation fails, including authentication failure.
+class crypto_error : public std::runtime_error
+{
+public:
+    /// Constructs an exception with a generic diagnostic.
+    crypto_error();
+};
+
+/// @param error Failure reported by a nonthrowing operation.
+/// @throws std::bad_alloc For errc::allocation_failed.
+/// @throws crypto_error For errc::crypto_failed.
+[[noreturn]] void throw_error(errc error);
+/// @param[out] bytes Destination to fill with cryptographically secure random bytes.
+void random_fill(std::span<std::byte> bytes) noexcept;
+/// @param[out] bytes Storage to securely overwrite with zeros.
+void wipe(std::span<std::byte> bytes) noexcept;
+/// Compile-time dimensions and limits of an algorithm.
+/// @tparam A Algorithm identity tag.
+template <class A>
+struct algorithm_traits;
+
+/// Specialize for each confidential key purpose with a static constexpr std::size_t size in bytes.
+/// @tparam KeyTag Tag identifying the purpose of the key.
+template <class KeyTag>
+struct key_traits;
+
+/// Read-only borrowed key. @pre The source storage outlives every use.
+template <class KeyTag>
+class key_ref
+{
+public:
+    /// Fixed-size read-only view of the underlying bytes.
+    using span_type = std::span<std::byte const, key_traits<KeyTag>::size>;
+
+    /// @param bytes Caller-owned key material.
+    /// @pre The key storage outlives every use of the view.
+    explicit constexpr key_ref(span_type bytes) noexcept
+        : bytes_(bytes)
+    {
+    }
+
+    /// @return The borrowed byte range.
+    constexpr span_type bytes() const noexcept { return bytes_; }
+
+private:
+    span_type bytes_;
+};
+
+/// Read-only borrowed nonce. @pre The source storage outlives every use.
+template <class A>
+class nonce_ref
+{
+public:
+    /// Fixed-size read-only view of the underlying bytes.
+    using span_type = std::span<std::byte const, algorithm_traits<A>::nonce_size>;
+
+    /// @param bytes Caller-owned nonce bytes.
+    /// @pre The nonce storage outlives every use of the view.
+    explicit constexpr nonce_ref(span_type bytes) noexcept
+        : bytes_(bytes)
+    {
+    }
+
+    /// @return The borrowed byte range.
+    constexpr span_type bytes() const noexcept { return bytes_; }
+
+private:
+    span_type bytes_;
+};
+
+/// Fixed-length guarded storage. The allocator wipes released bytes.
+class secure_buffer
+{
+    std::vector<std::byte, allocator<std::byte>> storage_;
+
+public:
+    /// @param size Number of zero-initialized bytes in the guarded allocation.
+    explicit secure_buffer(std::size_t size);
+    /// Transfers ownership of the guarded storage.
+    secure_buffer(secure_buffer&&) noexcept = default;
+    /// Releases the current storage and takes ownership of the source storage.
+    secure_buffer& operator=(secure_buffer&&) noexcept = default;
+
+    /// @return Writable bytes in the guarded allocation.
+    std::span<std::byte> bytes() & noexcept { return storage_; }
+
+    /// @return Read-only bytes in the guarded allocation.
+    std::span<std::byte const> bytes() const& noexcept { return storage_; }
+
+    std::span<std::byte const> bytes() const&& = delete;
+};
+
+/// Copyable public nonce. Default initialization yields zero bytes.
+template <class A>
+class nonce_buffer
+{
+public:
+    /// Nonce bytes in transmission order.
+    std::array<std::byte, algorithm_traits<A>::nonce_size> storage{};
+
+    /// @pre The owner remains alive while the view is in use.
+    nonce_ref<A> ref() const& noexcept { return nonce_ref<A>{storage}; }
+
+    nonce_ref<A> ref() && = delete;
+    nonce_ref<A> ref() const&& = delete;
+
+    /// @return A read-only view valid for the lifetime of this nonce.
+    operator nonce_ref<A>() const& noexcept { return ref(); }
+
+    operator nonce_ref<A>() && = delete;
+    operator nonce_ref<A>() const&& = delete;
+};
+
+// A reference obtained from a temporary owner could survive destruction of the key.
+#ifdef POTASSIUM_HAS_DELETE_REASON
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++26-extensions"
+#endif
+#define POTASSIUM_DELETE_KEY_BORROW(reason) = delete (reason)
+#else
+#define POTASSIUM_DELETE_KEY_BORROW(reason) = delete
+#endif
+
+/// Immobile stack key, generated on construction and wiped on destruction.
+template <class KeyTag>
+class key_buffer_storage
+{
+    std::array<std::byte, key_traits<KeyTag>::size> storage_{};
+
+public:
+    /// Generates a fresh key in the stack buffer.
+    key_buffer_storage() { random_fill(storage_); }
+
+    /// Wipes the key bytes before releasing the buffer.
+    ~key_buffer_storage() { wipe(storage_); }
+
+    key_buffer_storage(key_buffer_storage const&) = delete;
+    key_buffer_storage& operator=(key_buffer_storage const&) = delete;
+
+    /// @pre The owner remains alive while the view is in use.
+    key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{storage_}; }
+
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    key_ref<KeyTag> ref() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    key_ref<KeyTag> ref() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+
+    /// @return A borrowed view of this key.
+    /// @see ref()
+    operator key_ref<KeyTag>() const& noexcept { return ref(); }
+
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    operator key_ref<KeyTag>() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    operator key_ref<KeyTag>() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+};
+
+/// Move-only guarded key, generated directly in its allocation.
+template <class KeyTag>
+class secret_key
+{
+    secure_buffer storage_{key_traits<KeyTag>::size};
+
+public:
+    /// Generates a fresh key directly in guarded storage.
+    secret_key() { random_fill(storage_.bytes()); }
+
+    /// @pre The owner remains alive and owns its original allocation while the view is in use.
+    key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{storage_.bytes().template first<key_traits<KeyTag>::size>()}; }
+
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    key_ref<KeyTag> ref() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    key_ref<KeyTag> ref() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+
+    /// @return A borrowed view of this key.
+    /// @see ref()
+    operator key_ref<KeyTag>() const& noexcept { return ref(); }
+
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    operator key_ref<KeyTag>() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    /// Borrowing from a temporary owner would allow a dangling key view.
+    operator key_ref<KeyTag>() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+};
+
+#undef POTASSIUM_DELETE_KEY_BORROW
+#if defined(POTASSIUM_HAS_DELETE_REASON) && defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+/// @tparam A Algorithm whose nonce size determines the number of random bytes.
+/// @return A freshly generated nonce for A.
+template <class A>
+nonce_buffer<A> generate_nonce() noexcept
+{
+    nonce_buffer<A> nonce;
+    random_fill(nonce.storage);
+    return nonce;
+}
+
+}  // namespace potassium

@@ -12,9 +12,15 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 find_path(SODIUM_INCLUDE_DIR NAMES sodium.h REQUIRED)
 find_library(SODIUM_LIBRARY NAMES sodium REQUIRED)
 
-configure_file(src/version.hpp.in generated/libpotassium/version.hpp @ONLY)
+configure_file(src/internal/version.hpp.in generated/libpotassium/internal/version.hpp @ONLY)
+
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles([[void borrow() = delete("temporary owner"); int main() {}]] POTASSIUM_HAS_DELETE_REASON)
 
 add_library(libpotassium)
+if (POTASSIUM_HAS_DELETE_REASON)
+    target_compile_definitions(libpotassium PRIVATE POTASSIUM_HAS_DELETE_REASON)
+endif ()
 set_target_properties(libpotassium PROPERTIES OUTPUT_NAME potassium)
 target_compile_features(libpotassium PUBLIC cxx_std_23)
 target_sources(libpotassium PUBLIC
@@ -25,10 +31,14 @@ target_sources(libpotassium PUBLIC
         # partitions
         src/base.cpp
         src/core/core_iface.cpp
+        src/core/crypto.cpp
         src/core/memory.cpp
+        src/secretbox/secretbox.cpp
         PRIVATE
         # implementations
+        src/core/crypto_impl.cpp
         src/core/memory_impl.cpp
+        src/secretbox/secretbox_impl.cpp
 )
 target_include_directories(libpotassium PRIVATE
         "${SODIUM_INCLUDE_DIR}"
@@ -63,7 +73,9 @@ if (PROJECT_IS_TOP_LEVEL)
                 tests/main.cpp
                 # case files
                 tests/base.cpp
+                tests/key_traits.cpp
                 tests/memory.cpp
+                tests/secretbox.cpp
         )
         target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2)
 

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSL-1.0
 
 module;
-#include <cassert>
 #include <sodium.h>
+#include <cassert>
 
 module potassium.core;
 import std;

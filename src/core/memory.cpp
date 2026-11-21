@@ -32,6 +32,7 @@ export struct raw_allocator
     [[nodiscard]] static void* allocate_raw(size_type bytes, std::nothrow_t const&) noexcept;
 
     /// @brief Allocates raw storage for an array.
+    /// @param count Number of array elements.
     /// @param element_size Number of bytes per element.
     /// @pre The total byte count is a multiple of the required fundamental alignment.
     /// @throws std::bad_alloc If the total byte count overflows or allocation fails.

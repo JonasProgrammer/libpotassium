@@ -59,15 +59,17 @@ mlock_guard::~mlock_guard()
 void* memory_resource::do_allocate(std::size_t bytes, std::size_t alignment)
 {
     assert(std::has_single_bit(alignment));
-    if (alignment > alignof(std::max_align_t)) throw std::bad_alloc{};
+    if (alignment > detail::safe_alignment) [[unlikely]]
+        throw std::bad_alloc{};
 
+    // Libsodium places the end of the allocation at a page boundary.
     auto const remainder = bytes % alignment;
     auto const padding = remainder == 0 ? 0 : alignment - remainder;
     if (bytes > std::numeric_limits<std::size_t>::max() - padding) throw std::bad_alloc{};
 
-    auto const ret = raw_allocator::allocate_raw(bytes + padding);
-    assert(reinterpret_cast<std::uintptr_t>(ret) % alignment == 0);
-    return ret;
+    auto* ptr = raw_allocator::allocate_raw(bytes + padding);
+    assert(reinterpret_cast<std::uintptr_t>(ptr) % alignment == 0);
+    return ptr;
 }
 
 void memory_resource::do_deallocate(void* ptr, std::size_t bytes, std::size_t)

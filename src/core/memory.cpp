@@ -8,9 +8,16 @@ import std;
 namespace potassium
 {
 
+namespace detail
+{
+inline constexpr std::size_t safe_alignment = 1024;
+}
+
 /// @brief Guarded heap storage for sensitive data.
 /// Libsodium attempts to lock pages and wipes the storage on release.
 /// Each allocation has page-level overhead.
+/// For page-backed allocations, a byte count divisible by the required alignment
+/// gives an aligned address when the alignment also divides the page size.
 export struct raw_allocator
 {
     /// All instances can release each other's allocations.
@@ -19,14 +26,12 @@ export struct raw_allocator
     using size_type = std::size_t;
 
     /// @brief Allocates raw storage.
-    /// @pre @p bytes is a multiple of the required fundamental alignment.
     /// @throws std::bad_alloc If allocation fails.
     /// @see allocate_raw(size_type, std::nothrow_t const&)
     /// @see deallocate_raw(void*)
     [[nodiscard]] static void* allocate_raw(size_type bytes);
 
     /// @brief Allocates raw storage, returning nullptr on failure.
-    /// @pre @p bytes is a multiple of the required fundamental alignment.
     /// @see allocate_raw(size_type)
     /// @see deallocate_raw(void*)
     [[nodiscard]] static void* allocate_raw(size_type bytes, std::nothrow_t const&) noexcept;
@@ -34,14 +39,12 @@ export struct raw_allocator
     /// @brief Allocates raw storage for an array.
     /// @param count Number of array elements.
     /// @param element_size Number of bytes per element.
-    /// @pre The total byte count is a multiple of the required fundamental alignment.
     /// @throws std::bad_alloc If the total byte count overflows or allocation fails.
     /// @see allocate_raw(size_type, size_type, std::nothrow_t const&)
     /// @see deallocate_raw(void*)
     [[nodiscard]] static void* allocate_raw(size_type count, size_type element_size);
 
     /// @brief Allocates array storage, returning nullptr on overflow or failure.
-    /// @pre The total byte count is a multiple of the required fundamental alignment.
     /// @see allocate_raw(size_type, size_type)
     /// @see deallocate_raw(void*)
     [[nodiscard]] static void* allocate_raw(size_type count, size_type element_size, std::nothrow_t const&) noexcept;
@@ -54,9 +57,8 @@ export struct raw_allocator
 };
 
 /// @brief Stateless standard-container allocator for sensitive elements.
-/// Supports complete types with fundamental alignment.
+/// Page-backed allocations support alignments that divide the page size.
 export template <typename T>
-    requires(alignof(T) <= alignof(std::max_align_t))
 struct allocator : raw_allocator
 {
     /// Element type.
@@ -71,14 +73,25 @@ struct allocator : raw_allocator
     }
 
     /// @brief Allocates storage for elements without constructing them.
-    /// @throws std::bad_alloc If the total byte count overflows or allocation fails.
+    /// @throws std::bad_alloc If the total byte count overflows or aligned allocation fails.
     [[nodiscard]] static T* allocate(size_type count)
     {
+        constexpr auto object_size = std::max(sizeof(T), alignof(T));
         void* raw;
-        if constexpr (sizeof(T) == 1)
+        if constexpr (object_size == 1)
             raw = allocate_raw(count);
         else
-            raw = allocate_raw(count, sizeof(T));
+            raw = allocate_raw(count, object_size);
+
+        if constexpr (alignof(T) > detail::safe_alignment)
+        {
+            if (reinterpret_cast<std::uintptr_t>(raw) % alignof(T) != 0) [[unlikely]]
+            {
+                raw_allocator::deallocate(raw, count);
+                throw std::bad_alloc{};
+            }
+        }
+
         return std::start_lifetime_as_array<T>(raw, count);
     }
 
@@ -154,7 +167,10 @@ public:
 };
 
 /// @brief Guarded heap resource for PMR containers and other byte allocations.
-/// Supports fundamental alignment. Each allocation has page-level overhead.
+/// Allocation sizes are rounded up to the requested alignment.
+/// Supports alignments up to 1024 bytes.
+/// Throws std::bad_alloc if the requested alignment exceeds this limit.
+/// Each allocation has page-level overhead.
 export class memory_resource final : public std::pmr::memory_resource
 {
     [[nodiscard]] void* do_allocate(std::size_t bytes, std::size_t alignment) override;

@@ -32,16 +32,14 @@ struct PageCrossingPayload
     std::byte bytes[4097];
 };
 
-struct alignas(2 * alignof(std::max_align_t)) OveralignedPayload
+template <std::size_t Alignment>
+struct alignas(Alignment) AlignedValue
 {
     int value;
 };
 
-template <typename T>
-concept SupportsGuardedAllocator = requires { typename potassium::allocator<T>; };
-
-static_assert(SupportsGuardedAllocator<std::max_align_t>);
-static_assert(!SupportsGuardedAllocator<OveralignedPayload>);
+using OveralignedPayload = AlignedValue<2 * alignof(std::max_align_t)>;
+using Aligned1024Payload = AlignedValue<1024>;
 
 static_assert(!std::is_copy_constructible_v<potassium::mlock_guard>);
 static_assert(!std::is_copy_assignable_v<potassium::mlock_guard>);
@@ -119,6 +117,26 @@ TEST_CASE("Guarded allocator rejects overflowing sizes and accepts zero counts",
     ordinary.deallocate(ordinary.allocate(0), 0);
 }
 
+TEMPLATE_TEST_CASE("Guarded allocators support over-aligned container elements", "[memory]", OveralignedPayload, Aligned1024Payload)
+{
+    constexpr auto alignment = alignof(TestType);
+    potassium::memory_resource resource;
+    std::vector<TestType, potassium::allocator<TestType>> guarded(3);
+    std::pmr::vector<TestType> polymorphic(3, &resource);
+
+    REQUIRE(reinterpret_cast<std::uintptr_t>(guarded.data()) % alignment == 0);
+    REQUIRE(reinterpret_cast<std::uintptr_t>(polymorphic.data()) % alignment == 0);
+    guarded.back().value = 42;
+    polymorphic.back().value = 43;
+    CHECK(guarded.back().value == 42);
+    CHECK(polymorphic.back().value == 43);
+
+    potassium::allocator<TestType> allocator;
+    auto* empty = allocator.allocate(0);
+    CHECK(reinterpret_cast<std::uintptr_t>(empty) % alignment == 0);
+    allocator.deallocate(empty, 0);
+}
+
 TEST_CASE("Raw allocator provides nothrow allocation", "[memory]")
 {
     using potassium::raw_allocator;
@@ -149,11 +167,53 @@ TEST_CASE("Guarded memory resources compare equal only to each other", "[memory]
     second.deallocate(ptr, bytes, alignment);
 }
 
-TEST_CASE("Guarded memory resource rejects unsupported or overflowing requests", "[memory]")
+TEMPLATE_TEST_CASE_SIG("Guarded allocations honor large alignment requests", "[memory]", ((std::size_t Alignment), Alignment), 512, 1024, 2048, 4096, 8192, 32768, 65536, 131072)
+{
+    SECTION("Typed allocator")
+    {
+        using Allocator = potassium::allocator<AlignedValue<Alignment>>;
+        constexpr std::size_t count = 3;
+        AlignedValue<Alignment>* ptr;
+        try
+        {
+            ptr = Allocator::allocate(count);
+        }
+        catch (std::bad_alloc const&)
+        {
+            // Above this threshold, success depends on the address supplied by libsodium.
+            CHECK(Alignment > 1024);
+            std::println("[guarded-allocation-alignment] alignment failed: {}", Alignment);
+            return;
+        }
+
+        CHECK(reinterpret_cast<std::uintptr_t>(ptr) % Alignment == 0);
+        Allocator::deallocate(ptr, count);
+    }
+
+    SECTION("Memory resource")
+    {
+        potassium::memory_resource resource;
+        for (std::size_t const bytes : {std::size_t{0}, std::size_t{1}, Alignment + 1})
+        {
+            CAPTURE(bytes);
+            if constexpr (Alignment <= 1024)
+            {
+                auto* ptr = resource.allocate(bytes, Alignment);
+                CHECK(reinterpret_cast<std::uintptr_t>(ptr) % Alignment == 0);
+                resource.deallocate(ptr, bytes, Alignment);
+            }
+            else
+            {
+                CHECK_THROWS_AS(static_cast<void>(resource.allocate(bytes, Alignment)), std::bad_alloc);
+            }
+        }
+    }
+}
+
+TEST_CASE("Guarded memory resource rejects overflowing requests", "[memory]")
 {
     potassium::memory_resource resource;
-    CHECK_THROWS_AS(static_cast<void>(resource.allocate(1, alignof(OveralignedPayload))), std::bad_alloc);
-    CHECK_THROWS_AS(static_cast<void>(resource.allocate(std::numeric_limits<std::size_t>::max(), alignof(std::max_align_t))), std::bad_alloc);
+    CHECK_THROWS_AS(static_cast<void>(resource.allocate(std::numeric_limits<std::size_t>::max(), alignof(OveralignedPayload))), std::bad_alloc);
 }
 
 TEST_CASE("Moving a memory lock guard keeps the buffer intact until release", "[memory]")

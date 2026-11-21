@@ -51,7 +51,7 @@ Include an `Assisted-By` trailer for AI-assisted commits as specified in the REA
 ## C++26 features
 
 - `std::indirect` is enabled for fixed-size guarded key storage.
-- Deleted-function reasons are enabled for rvalue key borrowing when supported by the compiler.
+- Deleted-function reasons are enabled.
 
 ## Forbidden features
 

@@ -201,17 +201,6 @@ public:
     operator public_key_ref<A>() const&& = delete;
 };
 
-// A reference obtained from a temporary owner could survive destruction of the key.
-#ifdef POTASSIUM_HAS_DELETE_REASON
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++26-extensions"
-#endif
-#define POTASSIUM_DELETE_KEY_BORROW(reason) = delete (reason)
-#else
-#define POTASSIUM_DELETE_KEY_BORROW(reason) = delete
-#endif
-
 /// Immobile stack key, generated on construction and wiped on destruction.
 template <class KeyTag>
 class key_buffer_storage
@@ -235,18 +224,18 @@ public:
     key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{storage_}; }
 
     /// Borrowing from a temporary owner would allow a dangling key view.
-    key_ref<KeyTag> ref() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    key_ref<KeyTag> ref() && = delete ("A key view can dangle when borrowed from a temporary owner");
     /// Borrowing from a temporary owner would allow a dangling key view.
-    key_ref<KeyTag> ref() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    key_ref<KeyTag> ref() const&& = delete ("A key view can dangle when borrowed from a temporary owner");
 
     /// @return A borrowed view of this key.
     /// @see ref()
     operator key_ref<KeyTag>() const& noexcept { return ref(); }
 
     /// Borrowing from a temporary owner would allow a dangling key view.
-    operator key_ref<KeyTag>() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    operator key_ref<KeyTag>() && = delete ("A key view can dangle when borrowed from a temporary owner");
     /// Borrowing from a temporary owner would allow a dangling key view.
-    operator key_ref<KeyTag>() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    operator key_ref<KeyTag>() const&& = delete ("A key view can dangle when borrowed from a temporary owner");
 };
 
 /// Move-only guarded key, generated directly in its allocation.
@@ -276,9 +265,9 @@ public:
     key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{*storage_}; }
 
     /// Borrowing from a temporary owner would allow a dangling key view.
-    key_ref<KeyTag> ref() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    key_ref<KeyTag> ref() && = delete ("A key view can dangle when borrowed from a temporary owner");
     /// Borrowing from a temporary owner would allow a dangling key view.
-    key_ref<KeyTag> ref() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    key_ref<KeyTag> ref() const&& = delete ("A key view can dangle when borrowed from a temporary owner");
 
     /// @return A borrowed view of this key.
     /// @see ref()
@@ -286,15 +275,10 @@ public:
     operator key_ref<KeyTag>() const& noexcept { return ref(); }
 
     /// Borrowing from a temporary owner would allow a dangling key view.
-    operator key_ref<KeyTag>() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    operator key_ref<KeyTag>() && = delete ("A key view can dangle when borrowed from a temporary owner");
     /// Borrowing from a temporary owner would allow a dangling key view.
-    operator key_ref<KeyTag>() const&& POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
+    operator key_ref<KeyTag>() const&& = delete ("A key view can dangle when borrowed from a temporary owner");
 };
-
-#undef POTASSIUM_DELETE_KEY_BORROW
-#if defined(POTASSIUM_HAS_DELETE_REASON) && defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 /// @tparam A Algorithm whose nonce size determines the number of random bytes.
 /// @return A freshly generated nonce for A.

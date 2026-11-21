@@ -14,13 +14,7 @@ find_library(SODIUM_LIBRARY NAMES sodium REQUIRED)
 
 configure_file(src/internal/version.hpp.in generated/libpotassium/internal/version.hpp @ONLY)
 
-include(CheckCXXSourceCompiles)
-check_cxx_source_compiles([[void borrow() = delete("temporary owner"); int main() {}]] POTASSIUM_HAS_DELETE_REASON)
-
 add_library(libpotassium)
-if (POTASSIUM_HAS_DELETE_REASON)
-    target_compile_definitions(libpotassium PRIVATE POTASSIUM_HAS_DELETE_REASON)
-endif ()
 set_target_properties(libpotassium PROPERTIES OUTPUT_NAME potassium)
 target_compile_features(libpotassium PUBLIC cxx_std_26)
 target_sources(libpotassium PUBLIC

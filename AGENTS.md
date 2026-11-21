@@ -11,6 +11,15 @@
 - Write Markdown with one sentence per line to keep diffs focused.
 - Follow the [AI usage and attribution policy](README.md#ai-usage).
 
+## Error handling
+
+- For fallible cryptographic operations, provide a throwing overload and a `noexcept` overload with a final `std::nothrow_t` parameter that returns `std::expected<T, errc>`.
+- Use `std::expected<void, errc>` when success has no value.
+- Implement the operation in the nonthrowing overload and have the throwing overload delegate with `std::nothrow` and translate errors through `throw_error`.
+- Return `std::unexpected(errc::crypto_failed)` for cryptographic failures and `std::unexpected(errc::allocation_failed)` for allocation failures, catching only the exception types that the operation can translate to those errors.
+- Use a function try-block when exception handling applies to the entire function body.
+- Use a local try-block when the handler should cover only a specific operation.
+
 ## In-code documentation
 
 - Use Doxygen for in-code documentation.

@@ -129,6 +129,49 @@ public:
     operator nonce_ref<A>() const&& = delete;
 };
 
+/// Read-only borrowed public key. @pre The source storage outlives every use.
+template <class A>
+class public_key_ref
+{
+public:
+    /// Fixed-size read-only view of the underlying bytes.
+    using span_type = std::span<std::byte const, algorithm_traits<A>::public_key_size>;
+
+    /// @param bytes Caller-owned public key bytes.
+    /// @pre The public key storage outlives every use of the view.
+    explicit constexpr public_key_ref(span_type bytes) noexcept
+        : bytes_(bytes)
+    {
+    }
+
+    /// @return The borrowed byte range.
+    constexpr span_type bytes() const noexcept { return bytes_; }
+
+private:
+    span_type bytes_;
+};
+
+/// Copyable public key. Default initialization yields zero bytes.
+template <class A>
+class public_key
+{
+public:
+    /// Public key bytes in transmission order.
+    std::array<std::byte, algorithm_traits<A>::public_key_size> storage{};
+
+    /// @pre The owner remains alive while the view is in use.
+    public_key_ref<A> ref() const& noexcept { return public_key_ref<A>{storage}; }
+
+    public_key_ref<A> ref() && = delete;
+    public_key_ref<A> ref() const&& = delete;
+
+    /// @return A read-only view valid for the lifetime of this public key.
+    operator public_key_ref<A>() const& noexcept { return ref(); }
+
+    operator public_key_ref<A>() && = delete;
+    operator public_key_ref<A>() const&& = delete;
+};
+
 // A reference obtained from a temporary owner could survive destruction of the key.
 #ifdef POTASSIUM_HAS_DELETE_REASON
 #if defined(__GNUC__)
@@ -147,6 +190,9 @@ class key_buffer_storage
     std::array<std::byte, key_traits<KeyTag>::size> storage_{};
 
 public:
+    /// Writable destination for key generation or derivation.
+    std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return storage_; }
+
     /// Generates a fresh key in the stack buffer.
     key_buffer_storage() { random_fill(storage_); }
 
@@ -181,6 +227,9 @@ class secret_key
     secure_buffer storage_{key_traits<KeyTag>::size};
 
 public:
+    /// Writable destination for key generation or derivation.
+    std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return storage_.bytes().template first<key_traits<KeyTag>::size>(); }
+
     /// Generates a fresh key directly in guarded storage.
     secret_key() { random_fill(storage_.bytes()); }
 

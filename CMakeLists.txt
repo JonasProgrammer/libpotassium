@@ -30,12 +30,14 @@ target_sources(libpotassium PUBLIC
         src/libpotassium.cpp
         # partitions
         src/base.cpp
+        src/box/box.cpp
         src/core/core_iface.cpp
         src/core/crypto.cpp
         src/core/memory.cpp
         src/secretbox/secretbox.cpp
         PRIVATE
         # implementations
+        src/box/box_impl.cpp
         src/core/crypto_impl.cpp
         src/core/memory_impl.cpp
         src/secretbox/secretbox_impl.cpp
@@ -73,11 +75,13 @@ if (PROJECT_IS_TOP_LEVEL)
                 tests/main.cpp
                 # case files
                 tests/base.cpp
+                tests/box.cpp
                 tests/key_traits.cpp
                 tests/memory.cpp
                 tests/secretbox.cpp
         )
-        target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2)
+        target_include_directories(libpotassium_tests PRIVATE "${SODIUM_INCLUDE_DIR}")
+        target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2 "${SODIUM_LIBRARY}")
 
         include(Catch)
         catch_discover_tests(libpotassium_tests TEST_PREFIX "libpotassium.")

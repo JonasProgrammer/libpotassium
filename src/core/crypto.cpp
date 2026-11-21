@@ -5,6 +5,16 @@ export module potassium.core:crypto;
 import :memory;
 import std;
 
+namespace potassium::detail
+{
+template <class Traits>
+concept AuthenticatedEncryptionTraits = requires {
+    typename std::integral_constant<std::size_t, Traits::nonce_size>;
+    typename std::integral_constant<std::size_t, Traits::mac_size>;
+    typename std::integral_constant<std::size_t, Traits::messagebytes_max>;
+};
+}  // namespace potassium::detail
+
 export namespace potassium
 {
 /// Operational failures returned by the nonthrowing API.
@@ -37,6 +47,23 @@ void wipe(std::span<std::byte> bytes) noexcept;
 template <class A>
 struct algorithm_traits;
 
+/// Traits providing compile-time byte sizes and the message limit for secret-key authenticated encryption.
+template <class Traits>
+concept SecretKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits> && requires { typename std::integral_constant<std::size_t, Traits::key_size>; };
+
+/// Traits providing compile-time byte sizes and the message limit for public-key authenticated encryption.
+template <class Traits>
+concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits> && requires {
+    typename std::integral_constant<std::size_t, Traits::public_key_size>;
+    typename std::integral_constant<std::size_t, Traits::secret_key_size>;
+    typename std::integral_constant<std::size_t, Traits::seed_size>;
+    typename std::integral_constant<std::size_t, Traits::precomputed_key_size>;
+};
+
+/// Algorithm tag whose @ref algorithm_traits satisfy either authenticated-encryption trait contract.
+template <class A>
+concept Algorithm = SecretKeyAlgorithmTraits<algorithm_traits<A>> || PublicKeyAlgorithmTraits<algorithm_traits<A>>;
+
 /// Specialize for each confidential key purpose with a static constexpr std::size_t size in bytes.
 /// @tparam KeyTag Tag identifying the purpose of the key.
 template <class KeyTag>
@@ -65,7 +92,7 @@ private:
 };
 
 /// Read-only borrowed nonce. @pre The source storage outlives every use.
-template <class A>
+template <Algorithm A>
 class nonce_ref
 {
 public:
@@ -109,7 +136,7 @@ public:
 };
 
 /// Copyable public nonce. Default initialization yields zero bytes.
-template <class A>
+template <Algorithm A>
 class nonce_buffer
 {
 public:
@@ -131,6 +158,7 @@ public:
 
 /// Read-only borrowed public key. @pre The source storage outlives every use.
 template <class A>
+    requires PublicKeyAlgorithmTraits<algorithm_traits<A>>
 class public_key_ref
 {
 public:
@@ -153,6 +181,7 @@ private:
 
 /// Copyable public key. Default initialization yields zero bytes.
 template <class A>
+    requires PublicKeyAlgorithmTraits<algorithm_traits<A>>
 class public_key
 {
 public:
@@ -269,7 +298,7 @@ public:
 
 /// @tparam A Algorithm whose nonce size determines the number of random bytes.
 /// @return A freshly generated nonce for A.
-template <class A>
+template <Algorithm A>
 nonce_buffer<A> generate_nonce() noexcept
 {
     nonce_buffer<A> nonce;

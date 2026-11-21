@@ -3,14 +3,26 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+import potassium.box;
 import potassium.core;
+import potassium.secretbox;
 import std;
 
 namespace
 {
 struct PrivateKeyTag;
 struct SharedKeyTag;
+struct RuntimeNonceSize;
 }  // namespace
+
+template <>
+struct potassium::algorithm_traits<RuntimeNonceSize>
+{
+    static constexpr std::size_t key_size = 32;
+    static std::size_t nonce_size;
+    static constexpr std::size_t mac_size = 16;
+    static constexpr std::size_t messagebytes_max = 4096;
+};
 
 template <>
 struct potassium::key_traits<PrivateKeyTag>
@@ -30,6 +42,18 @@ template class potassium::key_buffer_storage<PrivateKeyTag>;
 
 namespace
 {
+using SecretBoxAlgorithm = potassium::secretbox::secretbox_default;
+using BoxAlgorithm = potassium::box::box_default;
+
+static_assert(potassium::SecretKeyAlgorithmTraits<potassium::algorithm_traits<SecretBoxAlgorithm>>);
+static_assert(!potassium::PublicKeyAlgorithmTraits<potassium::algorithm_traits<SecretBoxAlgorithm>>);
+static_assert(potassium::PublicKeyAlgorithmTraits<potassium::algorithm_traits<BoxAlgorithm>>);
+static_assert(!potassium::SecretKeyAlgorithmTraits<potassium::algorithm_traits<BoxAlgorithm>>);
+static_assert(potassium::Algorithm<SecretBoxAlgorithm>);
+static_assert(potassium::Algorithm<BoxAlgorithm>);
+static_assert(!potassium::Algorithm<PrivateKeyTag>);
+static_assert(!potassium::Algorithm<RuntimeNonceSize>);
+
 using RawKey = std::span<std::byte const, 48>;
 using PrivateRef = potassium::key_ref<PrivateKeyTag>;
 using SharedRef = potassium::key_ref<SharedKeyTag>;

@@ -8,5 +8,8 @@ export module potassium;
 export import :base;
 
 export import potassium.core;
-export import potassium.secretbox;
+
 export import potassium.box;
+export import potassium.secretbox;
+
+export import potassium.hash;

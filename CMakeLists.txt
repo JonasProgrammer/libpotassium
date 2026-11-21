@@ -28,12 +28,14 @@ target_sources(libpotassium PUBLIC
         src/core/core_iface.cpp
         src/core/crypto.cpp
         src/core/memory.cpp
+        src/hash/hash.cpp
         src/secretbox/secretbox.cpp
         PRIVATE
         # implementations
         src/box/box_impl.cpp
         src/core/crypto_impl.cpp
         src/core/memory_impl.cpp
+        src/hash/hash_impl.cpp
         src/secretbox/secretbox_impl.cpp
 )
 target_include_directories(libpotassium PRIVATE
@@ -70,12 +72,26 @@ if (PROJECT_IS_TOP_LEVEL)
                 # case files
                 tests/base.cpp
                 tests/box.cpp
+                tests/hash.cpp
+                tests/hash_interop.cpp
                 tests/key_traits.cpp
                 tests/memory.cpp
                 tests/secretbox.cpp
         )
         target_include_directories(libpotassium_tests PRIVATE "${SODIUM_INCLUDE_DIR}")
         target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2 "${SODIUM_LIBRARY}")
+
+        add_library(hash_finalize_lvalue OBJECT EXCLUDE_FROM_ALL tests/hash_finalize_lvalue.cpp)
+        target_link_libraries(hash_finalize_lvalue PRIVATE libpotassium)
+        add_test(NAME libpotassium.hash.finalize-diagnostic
+                COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_hash_diagnostic.cmake")
+
+        add_executable(hash_contract tests/hash_contract.cpp)
+        target_link_libraries(hash_contract PRIVATE libpotassium)
+        foreach(mode IN ITEMS finalized-update finalized-finalize moved-reset)
+            add_test(NAME libpotassium.hash.${mode} COMMAND hash_contract ${mode})
+            set_tests_properties(libpotassium.hash.${mode} PROPERTIES WILL_FAIL TRUE)
+        endforeach()
 
         include(Catch)
         catch_discover_tests(libpotassium_tests TEST_PREFIX "libpotassium.")

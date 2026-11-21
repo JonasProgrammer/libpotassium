@@ -42,22 +42,20 @@ T unwrap(std::expected<T, errc> result)
 
 template <class Buffer, class Operation>
 std::expected<Buffer, errc> allocate_and_transform(std::size_t size, Operation operation) noexcept
+try
 {
-    try
-    {
-        Buffer out(size);
-        auto result = operation(out);
-        if (!result) return std::unexpected(result.error());
-        return out;
-    }
-    catch (std::bad_alloc const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
-    catch (std::length_error const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
+    Buffer out(size);
+    auto result = operation(out);
+    if (!result) return std::unexpected(result.error());
+    return out;
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
+}
+catch (std::length_error const&)
+{
+    return std::unexpected(errc::allocation_failed);
 }
 
 template <class Function, class A, class... Keys>
@@ -86,18 +84,16 @@ void generate_keypair_into(public_key<curve25519xsalsa20poly1305>& pub, std::spa
 }
 
 std::expected<secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>>, errc> precompute(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::nothrow_t) noexcept
+try
 {
-    try
-    {
-        secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>> result;
-        if (crypto_box_beforenm(POTASSIUM_MUTABLE_BYTES(result.writable_bytes().data()), POTASSIUM_CONST_BYTES(peer.bytes().data()), POTASSIUM_CONST_BYTES(key.bytes().data())) != 0)
-            return std::unexpected(errc::crypto_failed);
-        return result;
-    }
-    catch (std::bad_alloc const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
+    secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>> result;
+    if (crypto_box_beforenm(POTASSIUM_MUTABLE_BYTES(result.writable_bytes().data()), POTASSIUM_CONST_BYTES(peer.bytes().data()), POTASSIUM_CONST_BYTES(key.bytes().data())) != 0)
+        return std::unexpected(errc::crypto_failed);
+    return result;
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
 }
 
 secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>> precompute(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer)
@@ -302,19 +298,17 @@ void generate_keypair_into(public_key<curve25519xchacha20poly1305>& pub, std::sp
 }
 
 std::expected<secret_key<precomputed_key_tag<curve25519xchacha20poly1305>>, errc> precompute(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::nothrow_t) noexcept
+try
 {
-    try
-    {
-        secret_key<precomputed_key_tag<curve25519xchacha20poly1305>> result;
-        if (crypto_box_curve25519xchacha20poly1305_beforenm(
-                    POTASSIUM_MUTABLE_BYTES(result.writable_bytes().data()), POTASSIUM_CONST_BYTES(peer.bytes().data()), POTASSIUM_CONST_BYTES(key.bytes().data())) != 0)
-            return std::unexpected(errc::crypto_failed);
-        return result;
-    }
-    catch (std::bad_alloc const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
+    secret_key<precomputed_key_tag<curve25519xchacha20poly1305>> result;
+    if (crypto_box_curve25519xchacha20poly1305_beforenm(
+                POTASSIUM_MUTABLE_BYTES(result.writable_bytes().data()), POTASSIUM_CONST_BYTES(peer.bytes().data()), POTASSIUM_CONST_BYTES(key.bytes().data())) != 0)
+        return std::unexpected(errc::crypto_failed);
+    return result;
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
 }
 
 secret_key<precomputed_key_tag<curve25519xchacha20poly1305>> precompute(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer)

@@ -880,18 +880,16 @@ std::expected<secure_buffer, errc> open(xchacha_precomputed_ref key, seal_result
 /// @return Key pair, or errc::crypto_failed on generation failure or errc::allocation_failed on allocation failure.
 template <class A = box_default>
 std::expected<keypair<A>, errc> generate_keypair(std::nothrow_t tag) noexcept
+try
 {
-    try
-    {
-        keypair<A> pair;
-        auto status = generate_keypair_into(pair.public_key, pair.secret_key.writable_bytes(), std::nothrow);
-        if (!status) return std::unexpected(status.error());
-        return pair;
-    }
-    catch (std::bad_alloc const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
+    keypair<A> pair;
+    auto status = generate_keypair_into(pair.public_key, pair.secret_key.writable_bytes(), std::nothrow);
+    if (!status) return std::unexpected(status.error());
+    return pair;
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
 }
 
 /// Generate a local key pair directly in its owning storage.

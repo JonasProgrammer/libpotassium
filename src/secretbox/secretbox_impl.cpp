@@ -40,22 +40,20 @@ T unwrap(std::expected<T, errc> result)
 
 template <class Buffer, class Operation>
 std::expected<Buffer, errc> allocate_and_transform(std::size_t size, Operation operation) noexcept
+try
 {
-    try
-    {
-        Buffer out(size);
-        auto result = operation(out);
-        if (!result) return std::unexpected(result.error());
-        return out;
-    }
-    catch (std::bad_alloc const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
-    catch (std::length_error const&)
-    {
-        return std::unexpected(errc::allocation_failed);
-    }
+    Buffer out(size);
+    auto result = operation(out);
+    if (!result) return std::unexpected(result.error());
+    return out;
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
+}
+catch (std::length_error const&)
+{
+    return std::unexpected(errc::allocation_failed);
 }
 
 template <class A, class Function>

@@ -224,17 +224,27 @@ public:
 template <class KeyTag>
 class secret_key
 {
-    secure_buffer storage_{key_traits<KeyTag>::size};
+    using key_bytes = std::array<std::byte, key_traits<KeyTag>::size>;
+    std::indirect<key_bytes, allocator<key_bytes>> storage_;
 
 public:
-    /// Writable destination for key generation or derivation.
-    std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return storage_.bytes().template first<key_traits<KeyTag>::size>(); }
-
     /// Generates a fresh key directly in guarded storage.
-    secret_key() { random_fill(storage_.bytes()); }
+    secret_key() { random_fill(writable_bytes()); }
 
-    /// @pre The owner remains alive and owns its original allocation while the view is in use.
-    key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{storage_.bytes().template first<key_traits<KeyTag>::size>()}; }
+    secret_key(secret_key const&) = delete;
+    secret_key& operator=(secret_key const&) = delete;
+
+    /// Transfers ownership of the guarded allocation.
+    secret_key(secret_key&&) noexcept = default;
+    /// Releases the current allocation and takes ownership of the source allocation.
+    secret_key& operator=(secret_key&&) noexcept = default;
+
+    /// Writable destination for key generation or derivation.
+    /// @pre The owner has a live allocation and retains it while the span is in use.
+    std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return *storage_; }
+
+    /// @pre The owner has a live allocation and retains it while the view is in use.
+    key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{*storage_}; }
 
     /// Borrowing from a temporary owner would allow a dangling key view.
     key_ref<KeyTag> ref() && POTASSIUM_DELETE_KEY_BORROW("A key view can dangle when borrowed from a temporary owner");
@@ -243,6 +253,7 @@ public:
 
     /// @return A borrowed view of this key.
     /// @see ref()
+    /// @pre The owner has a live allocation and retains it while the view is in use.
     operator key_ref<KeyTag>() const& noexcept { return ref(); }
 
     /// Borrowing from a temporary owner would allow a dangling key view.

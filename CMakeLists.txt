@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 4.5)
 project(libpotassium LANGUAGES CXX VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
@@ -22,7 +22,7 @@ if (POTASSIUM_HAS_DELETE_REASON)
     target_compile_definitions(libpotassium PRIVATE POTASSIUM_HAS_DELETE_REASON)
 endif ()
 set_target_properties(libpotassium PROPERTIES OUTPUT_NAME potassium)
-target_compile_features(libpotassium PUBLIC cxx_std_23)
+target_compile_features(libpotassium PUBLIC cxx_std_26)
 target_sources(libpotassium PUBLIC
         FILE_SET CXX_MODULES
         FILES

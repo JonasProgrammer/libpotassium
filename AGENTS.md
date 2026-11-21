@@ -2,7 +2,7 @@
 
 - Read `AGENTS-local.md` if present for additional local development instructions.
 - Format C++ code with clang-format using the repository's `.clang-format`.
-- Target C++23.
+- Build in C++26 mode and use C++23 as the source baseline.
 - Use a module-first approach and put public C++ APIs in named modules.
 - Use `import std;` for the C++ standard library.
 - Use a C++26 feature only when it is explicitly enabled in this file.
@@ -50,7 +50,8 @@ Include an `Assisted-By` trailer for AI-assisted commits as specified in the REA
 
 ## C++26 features
 
-Deleted-function reasons are enabled for rvalue key borrowing on compilers that accept them in C++23 mode.
+- `std::indirect` is enabled for fixed-size guarded key storage.
+- Deleted-function reasons are enabled for rvalue key borrowing when supported by the compiler.
 
 ## Forbidden features
 

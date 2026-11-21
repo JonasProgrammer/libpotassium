@@ -31,7 +31,10 @@ Peer identity and acceptance of the encoded key are separate questions.
 ## Confidential storage
 
 Operations borrow confidential keys independently of the storage policy.
-The default heap owner uses guarded allocation and transfers ownership on move without copying key bytes.
+The default heap owner stores a key-sized byte array in `std::indirect` using the guarded allocator.
+Moving the owner transfers the allocation without copying key bytes.
+Move assignment wipes and releases the destination's previous allocation.
+Borrowing requires a live allocation, so a moved-from owner must receive a new allocation before it can be borrowed from.
 A stack-local `key_buffer_storage<KeyTag>` owns a fixed-size buffer, disallows copying and moving, and wipes its contents on destruction.
 Generate or derive keys directly in their final writable storage and make any duplication explicit.
 

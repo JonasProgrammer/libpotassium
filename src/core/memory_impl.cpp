@@ -8,7 +8,8 @@ module;
 module potassium.core;
 import std;
 
-static_assert(std::is_trivial_v<potassium::raw_allocator>);
+static_assert(std::is_trivially_default_constructible_v<potassium::raw_allocator>);
+static_assert(std::is_trivially_copyable_v<potassium::raw_allocator>);
 
 namespace potassium
 {
@@ -88,8 +89,7 @@ using ByteAllocator = std::allocator_traits<A>::template rebind_alloc<std::byte>
 
 // Check the allocator interface and rebinding used by standard containers.
 template <typename A>
-concept Allocator = std::copyable<A> && std::equality_comparable<A> && requires(A a, typename std::allocator_traits<A>::pointer ptr, typename std::allocator_traits<A>::size_type count)
-{
+concept Allocator = std::copyable<A> && std::equality_comparable<A> && requires(A a, typename std::allocator_traits<A>::pointer ptr, typename std::allocator_traits<A>::size_type count) {
     { a.allocate(count) } -> std::same_as<typename std::allocator_traits<A>::pointer>;
     { a.deallocate(ptr, count) } noexcept -> std::same_as<void>;
     typename ByteAllocator<A>;

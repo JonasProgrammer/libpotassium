@@ -4,6 +4,7 @@
 module;
 
 #include <sodium.h>
+#include <cassert>
 
 module potassium.secretbox;
 
@@ -57,9 +58,20 @@ catch (std::length_error const&)
     return std::unexpected(errc::allocation_failed);
 }
 
-template <class A, class Function>
+enum class direction
+{
+    seal,
+    open,
+};
+
+template <direction Mode, class A, class Function>
 std::expected<void, errc> transform(Function function, key_ref<A> key, std::span<std::byte const> input, std::span<std::byte> out, nonce_ref<A> nonce) noexcept
 {
+    constexpr auto mac_size = algorithm_traits<A>::mac_size;
+    if constexpr (Mode == direction::open)
+        assert(input.size() < mac_size || out.size() == input.size() - mac_size);
+    else
+        assert(out.size() >= mac_size && out.size() - mac_size == input.size());
     unsigned char empty{};
     auto const status = function(out.empty() ? &empty : sodium_bytes(out.data()),
                                  input.empty() ? &empty : sodium_bytes(input.data()),
@@ -80,7 +92,7 @@ void seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::s
 
 std::expected<void, errc> seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_secretbox_xchacha20poly1305_easy, key, plaintext, out, nonce);
+    return transform<direction::seal>(crypto_secretbox_xchacha20poly1305_easy, key, plaintext, out, nonce);
 }
 
 void open_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xchacha_nonce_ref nonce)
@@ -90,7 +102,7 @@ void open_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, std::
 
 std::expected<void, errc> open_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_secretbox_xchacha20poly1305_open_easy, key, ciphertext, out, nonce);
+    return transform<direction::open>(crypto_secretbox_xchacha20poly1305_open_easy, key, ciphertext, out, nonce);
 }
 
 xchacha_nonce_buffer seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -160,7 +172,7 @@ void seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::sp
 
 std::expected<void, errc> seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_secretbox_easy, key, plaintext, out, nonce);
+    return transform<direction::seal>(crypto_secretbox_easy, key, plaintext, out, nonce);
 }
 
 void open_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xsalsa_nonce_ref nonce)
@@ -170,7 +182,7 @@ void open_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, std::s
 
 std::expected<void, errc> open_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_secretbox_open_easy, key, ciphertext, out, nonce);
+    return transform<direction::open>(crypto_secretbox_open_easy, key, ciphertext, out, nonce);
 }
 
 xsalsa_nonce_buffer seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)

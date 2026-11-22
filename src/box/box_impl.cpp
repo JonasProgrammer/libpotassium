@@ -4,6 +4,7 @@
 module;
 
 #include <sodium.h>
+#include <cassert>
 
 module potassium.box;
 
@@ -59,9 +60,20 @@ catch (std::length_error const&)
     return std::unexpected(errc::allocation_failed);
 }
 
-template <class Function, class A, class... Keys>
+enum class direction
+{
+    seal,
+    open,
+};
+
+template <direction Mode, class Function, class A, class... Keys>
 std::expected<void, errc> transform(Function function, std::span<std::byte const> input, std::span<std::byte> out, nonce_ref<A> nonce, Keys... keys) noexcept
 {
+    constexpr auto mac_size = algorithm_traits<A>::mac_size;
+    if constexpr (Mode == direction::open)
+        assert(input.size() < mac_size || out.size() == input.size() - mac_size);
+    else
+        assert(out.size() >= mac_size && out.size() - mac_size == input.size());
     unsigned char empty{};
     if (function(out.empty() ? &empty : sodium_bytes(out.data()),
                  input.empty() ? &empty : sodium_bytes(input.data()),
@@ -114,7 +126,7 @@ std::expected<void, errc> seal_into(xsalsa_private_ref key,
                                     nonce_ref<curve25519xsalsa20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform(crypto_box_easy, plaintext, out, nonce, peer, key);
+    return transform<direction::seal>(crypto_box_easy, plaintext, out, nonce, peer, key);
 }
 
 void open_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -129,7 +141,7 @@ std::expected<void, errc> open_into(xsalsa_private_ref key,
                                     nonce_ref<curve25519xsalsa20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform(crypto_box_open_easy, ciphertext, out, nonce, peer, key);
+    return transform<direction::open>(crypto_box_open_easy, ciphertext, out, nonce, peer, key);
 }
 
 nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -213,7 +225,7 @@ void seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext,
 
 std::expected<void, errc> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_box_easy_afternm, plaintext, out, nonce, key);
+    return transform<direction::seal>(crypto_box_easy_afternm, plaintext, out, nonce, key);
 }
 
 void open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -223,7 +235,7 @@ void open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext
 
 std::expected<void, errc> open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_box_open_easy_afternm, ciphertext, out, nonce, key);
+    return transform<direction::open>(crypto_box_open_easy_afternm, ciphertext, out, nonce, key);
 }
 
 nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -327,7 +339,7 @@ std::expected<void, errc> seal_into(xchacha_private_ref key,
                                     nonce_ref<curve25519xchacha20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform(crypto_box_curve25519xchacha20poly1305_easy, plaintext, out, nonce, peer, key);
+    return transform<direction::seal>(crypto_box_curve25519xchacha20poly1305_easy, plaintext, out, nonce, peer, key);
 }
 
 void open_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -342,7 +354,7 @@ std::expected<void, errc> open_into(xchacha_private_ref key,
                                     nonce_ref<curve25519xchacha20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform(crypto_box_curve25519xchacha20poly1305_open_easy, ciphertext, out, nonce, peer, key);
+    return transform<direction::open>(crypto_box_curve25519xchacha20poly1305_open_easy, ciphertext, out, nonce, peer, key);
 }
 
 nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -426,7 +438,7 @@ void seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext
 
 std::expected<void, errc> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_box_curve25519xchacha20poly1305_easy_afternm, plaintext, out, nonce, key);
+    return transform<direction::seal>(crypto_box_curve25519xchacha20poly1305_easy_afternm, plaintext, out, nonce, key);
 }
 
 void open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -436,7 +448,7 @@ void open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertex
 
 std::expected<void, errc> open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform(crypto_box_curve25519xchacha20poly1305_open_easy_afternm, ciphertext, out, nonce, key);
+    return transform<direction::open>(crypto_box_curve25519xchacha20poly1305_open_easy_afternm, ciphertext, out, nonce, key);
 }
 
 nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)

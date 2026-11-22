@@ -25,6 +25,7 @@ The constructor forwards the generator in its original value category and calls 
 The generator must populate both halves with a matching pair on success and may throw on failure.
 Use `keypair<A>{potassium::for_overwrite}` when importing or deriving both halves, or `keypair<A>{potassium::zero}` for explicitly all-zero storage.
 The existing `generate_keypair<A>(std::nothrow)` factory reports allocation and backend failures through its result.
+Pass a mutable private-key owner directly to `generate_keypair_into` and a precomputed-key owner to `precompute_into`.
 Key generation writes directly into the final destinations, including caller-owned storage in the corresponding generation-into operation.
 Deterministic key generation is a possible extension and would treat its seed as confidential.
 

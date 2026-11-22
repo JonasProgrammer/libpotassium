@@ -394,6 +394,35 @@ public:
     operator key_ref<KeyTag>() const&& = delete ("A key view can dangle when borrowed from a temporary owner");
 };
 
+/// Borrowed writable destination for a specific key purpose.
+template <class KeyTag>
+class key_out
+{
+public:
+    using span_type = std::span<std::byte, key_traits<KeyTag>::size>;
+
+    /// @pre Keep the destination storage alive until the write completes.
+    explicit constexpr key_out(span_type bytes) noexcept
+        : bytes_(bytes)
+    {
+    }
+
+    key_out(secret_key<KeyTag>& key) noexcept
+        : key_out(key.writable_bytes())
+    {
+    }
+
+    key_out(key_buffer_storage<KeyTag>& key) noexcept
+        : key_out(key.writable_bytes())
+    {
+    }
+
+    constexpr span_type bytes() const noexcept { return bytes_; }
+
+private:
+    span_type bytes_;
+};
+
 /// Generate a guarded key and translate allocation or cryptographic failure.
 /// @pre A custom default generator reports failure only through std::bad_alloc or crypto_error.
 template <class KeyTag>

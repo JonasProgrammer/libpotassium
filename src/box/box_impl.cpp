@@ -96,12 +96,26 @@ void generate_keypair_into(public_key<curve25519xsalsa20poly1305>& pub, std::spa
     unwrap(generate_keypair_into(pub, secret, std::nothrow));
 }
 
+std::expected<void, errc> precompute_into(xsalsa_private_ref key,
+                                          public_key_ref<curve25519xsalsa20poly1305> peer,
+                                          key_out<precomputed_key_tag<curve25519xsalsa20poly1305>> out,
+                                          std::nothrow_t) noexcept
+{
+    if (crypto_box_beforenm(sodium_bytes(out.bytes().data()), sodium_bytes(peer.bytes().data()), sodium_bytes(key.bytes().data())) != 0) return std::unexpected(errc::crypto_failed);
+    return {};
+}
+
+void precompute_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, key_out<precomputed_key_tag<curve25519xsalsa20poly1305>> out)
+{
+    unwrap(precompute_into(key, peer, out, std::nothrow));
+}
+
 std::expected<secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>>, errc> precompute(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::nothrow_t) noexcept
 try
 {
     secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>> result{for_overwrite};
-    if (crypto_box_beforenm(sodium_bytes(result.writable_bytes().data()), sodium_bytes(peer.bytes().data()), sodium_bytes(key.bytes().data())) != 0)
-        return std::unexpected(errc::crypto_failed);
+    auto status = precompute_into(key, peer, result, std::nothrow);
+    if (!status) return std::unexpected(status.error());
     return result;
 }
 catch (std::bad_alloc const&)
@@ -308,13 +322,27 @@ void generate_keypair_into(public_key<curve25519xchacha20poly1305>& pub, std::sp
     unwrap(generate_keypair_into(pub, secret, std::nothrow));
 }
 
+std::expected<void, errc> precompute_into(xchacha_private_ref key,
+                                          public_key_ref<curve25519xchacha20poly1305> peer,
+                                          key_out<precomputed_key_tag<curve25519xchacha20poly1305>> out,
+                                          std::nothrow_t) noexcept
+{
+    if (crypto_box_curve25519xchacha20poly1305_beforenm(sodium_bytes(out.bytes().data()), sodium_bytes(peer.bytes().data()), sodium_bytes(key.bytes().data())) != 0)
+        return std::unexpected(errc::crypto_failed);
+    return {};
+}
+
+void precompute_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, key_out<precomputed_key_tag<curve25519xchacha20poly1305>> out)
+{
+    unwrap(precompute_into(key, peer, out, std::nothrow));
+}
+
 std::expected<secret_key<precomputed_key_tag<curve25519xchacha20poly1305>>, errc> precompute(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::nothrow_t) noexcept
 try
 {
     secret_key<precomputed_key_tag<curve25519xchacha20poly1305>> result{for_overwrite};
-    if (crypto_box_curve25519xchacha20poly1305_beforenm(
-                sodium_bytes(result.writable_bytes().data()), sodium_bytes(peer.bytes().data()), sodium_bytes(key.bytes().data())) != 0)
-        return std::unexpected(errc::crypto_failed);
+    auto status = precompute_into(key, peer, result, std::nothrow);
+    if (!status) return std::unexpected(status.error());
     return result;
 }
 catch (std::bad_alloc const&)

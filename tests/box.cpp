@@ -102,9 +102,11 @@ TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium"
     keypair<A> alice;
     public_key<A> bob_public;
     key_buffer_storage<private_key_tag<A>> bob_secret{for_overwrite};
-    generate_keypair_into(bob_public, bob_secret.writable_bytes());
+    generate_keypair_into(bob_public, bob_secret);
     auto sender = precompute(alice.secret_key, bob_public);
-    auto recipient = precompute(bob_secret, alice.public_key);
+    key_buffer_storage<precomputed_key_tag<A>> recipient{for_overwrite};
+    precompute_into(bob_secret, alice.public_key, recipient);
+    static_assert(!std::convertible_to<decltype(bob_secret)&, key_out<precomputed_key_tag<A>>>);
     std::vector<std::byte> message;
     SECTION("empty") {}
     SECTION("binary")

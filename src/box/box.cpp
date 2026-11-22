@@ -169,6 +169,15 @@ using xsalsa_private_ref = key_ref<private_key_tag<curve25519xsalsa20poly1305>>;
 /// Borrowed shared key for a peer.
 using xsalsa_precomputed_ref = key_ref<precomputed_key_tag<curve25519xsalsa20poly1305>>;
 
+/// Derive the pairwise key into caller-owned storage.
+/// @pre The output is disjoint from the input keys.
+std::expected<void, errc> precompute_into(xsalsa_private_ref key,
+                                          public_key_ref<curve25519xsalsa20poly1305> peer,
+                                          key_out<precomputed_key_tag<curve25519xsalsa20poly1305>> out,
+                                          std::nothrow_t) noexcept;
+/// @copydetails precompute_into
+void precompute_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, key_out<precomputed_key_tag<curve25519xsalsa20poly1305>> out);
+
 /// Generate a key pair directly in caller-owned storage.
 /// @param[out] pub Public key to distribute to peers.
 /// @param[out] secret Private key bytes. The caller protects and wipes this storage.
@@ -547,6 +556,15 @@ std::expected<secure_buffer, errc> open(xsalsa_precomputed_ref key, seal_result<
 using xchacha_private_ref = key_ref<private_key_tag<curve25519xchacha20poly1305>>;
 /// Borrowed shared key for a peer.
 using xchacha_precomputed_ref = key_ref<precomputed_key_tag<curve25519xchacha20poly1305>>;
+
+/// Derive the pairwise key into caller-owned storage.
+/// @pre The output is disjoint from the input keys.
+std::expected<void, errc> precompute_into(xchacha_private_ref key,
+                                          public_key_ref<curve25519xchacha20poly1305> peer,
+                                          key_out<precomputed_key_tag<curve25519xchacha20poly1305>> out,
+                                          std::nothrow_t) noexcept;
+/// @copydetails precompute_into
+void precompute_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, key_out<precomputed_key_tag<curve25519xchacha20poly1305>> out);
 
 /// Generate a key pair directly in caller-owned storage.
 /// @param[out] pub Public key to distribute to peers.
@@ -942,6 +960,22 @@ struct key_traits<box::keypair<A>>
 
 export namespace potassium::box
 {
+/// Generate into a public key and a private-key destination of the same algorithm.
+/// @pre The destinations are disjoint.
+template <class A>
+std::expected<void, errc> generate_keypair_into(public_key<A>& pub, std::type_identity_t<key_out<private_key_tag<A>>> secret, std::nothrow_t) noexcept
+{
+    return generate_keypair_into(pub, secret.bytes(), std::nothrow);
+}
+
+/// @copydetails generate_keypair_into
+template <class A>
+void generate_keypair_into(public_key<A>& pub, std::type_identity_t<key_out<private_key_tag<A>>> secret)
+{
+    auto result = generate_keypair_into(pub, secret, std::nothrow);
+    if (!result) throw_error(result.error());
+}
+
 /// @name Owning key-pair generation
 /// @{
 

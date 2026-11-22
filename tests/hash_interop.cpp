@@ -40,7 +40,9 @@ void check_key(std::string_view expected)
     auto one_shot = h::hash<default_hash>(key, message);
     CHECK(std::ranges::equal(one_shot.bytes(), std::as_bytes(std::span{reference})));
 
-    h::digest_buffer<default_hash> output;
+    static_assert(std::same_as<decltype(one_shot), h::tag_buffer<default_hash>>);
+    static_assert(!std::convertible_to<h::digest_buffer<default_hash>, decltype(one_shot)>);
+    h::tag_buffer<default_hash> output;
     h::hash_into<default_hash>(key.ref(), message, output.storage);
     CHECK(output == one_shot);
 

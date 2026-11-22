@@ -59,7 +59,8 @@ Use a dedicated password-hashing construction for passwords because all five has
 
 ## One-shot and streaming state
 
-`hash<A>(message)` and `hash<A>(key, message)` return a typed digest.
+`hash<A>(message)` and unkeyed stream finalization return `digest_buffer<A>`.
+Keyed calls and keyed stream finalization return `tag_buffer<A>`, a distinct fixed-size value with the same byte access and constant-time equality.
 Use `hash_into<A>(message, output)` or `hash_into<A>(key, message, output)` with writable storage of exactly `hash_traits<A>::digest_size` bytes.
 These calls go directly to the matching libsodium one-shot function, avoiding stream construction and guarded allocation.
 The module pins BLAKE2b to the explicit `crypto_generichash_blake2b` family and requires libsodium 1.0.22 or newer for SHA-3.

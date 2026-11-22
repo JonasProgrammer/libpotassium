@@ -262,9 +262,14 @@ concept hash_algorithm = requires { sizeof(detail::ops<A>); } && hash_traits_typ
 template <class A>
 concept keyed_hash_algorithm = hash_algorithm<A> && std::derived_from<detail::ops<A>, detail::blake2b_ops> && keyed_hash_traits_type<keyed_hash_traits<A>>;
 
+namespace detail
+{
+struct digest_kind;
+struct tag_kind;
+
 /// Copyable public digest. Equality compares every byte.
-template <hash_algorithm A>
-struct digest_buffer
+template <hash_algorithm A, class Kind>
+struct hash_output
 {
     /// Digest bytes in wire order.
     std::array<std::byte, hash_traits<A>::digest_size> storage{};
@@ -275,8 +280,16 @@ struct digest_buffer
     auto bytes() const&& = delete;
 
     /// Compare digests in constant time.
-    bool operator==(digest_buffer const& other) const noexcept { return detail::equal(storage, other.storage); }
+    bool operator==(hash_output const& other) const noexcept { return detail::equal(storage, other.storage); }
 };
+}  // namespace detail
+
+template <hash_algorithm A>
+using digest_buffer = detail::hash_output<A, detail::digest_kind>;
+
+/// Authentication tag produced by keyed hashing.
+template <keyed_hash_algorithm A>
+using tag_buffer = detail::hash_output<A, detail::tag_kind>;
 }  // namespace potassium::hash
 
 namespace potassium::hash::detail
@@ -335,9 +348,9 @@ void hash_into(K&& key, std::span<std::byte const> message, std::span<std::byte,
 
 /// Compute a keyed digest without allocating guarded stream state.
 template <keyed_hash_algorithm A, detail::compatible_key K>
-[[nodiscard]] digest_buffer<A> hash(K&& key, std::span<std::byte const> message) noexcept
+[[nodiscard]] tag_buffer<A> hash(K&& key, std::span<std::byte const> message) noexcept
 {
-    digest_buffer<A> result;
+    tag_buffer<A> result;
     hash_into<A>(std::forward<K>(key), message, result.storage);
     return result;
 }
@@ -406,10 +419,11 @@ public:
     }
 
     /// Finish the digest and erase the state. @pre The stream is active.
-    [[nodiscard]] digest_buffer<A> finish() noexcept
+    template <class Result>
+    [[nodiscard]] Result finish() noexcept
     {
         if (phase_ != phase::active) std::terminate();
-        digest_buffer<A> result;
+        Result result;
         ops<A>::final(storage_.get(), result.storage);
         erase(storage_.get());
         phase_ = phase::finalized;
@@ -440,7 +454,7 @@ public:
     void update(std::span<std::byte const> message) & noexcept { state_.update(message); }
 
     /// Finish the digest and wipe the state. @pre The stream is active.
-    [[nodiscard]] digest_buffer<A> finalize() && noexcept { return state_.finish(); }
+    [[nodiscard]] digest_buffer<A> finalize() && noexcept { return state_.template finish<digest_buffer<A>>(); }
 
     /// A named stream must explicitly be consumed.
     digest_buffer<A> finalize() & = delete ("finalize() consumes the hasher: use std::move(hasher).finalize()");
@@ -478,14 +492,14 @@ public:
     void update(std::span<std::byte const> message) & noexcept { state_.update(message); }
 
     /// Finish the digest and wipe the state. @pre The stream is active.
-    [[nodiscard]] digest_buffer<A> finalize() && noexcept { return state_.finish(); }
+    [[nodiscard]] tag_buffer<A> finalize() && noexcept { return state_.template finish<tag_buffer<A>>(); }
 
     /// A named stream must explicitly be consumed.
-    digest_buffer<A> finalize() & = delete ("finalize() consumes the hasher: use std::move(hasher).finalize()");
+    tag_buffer<A> finalize() & = delete ("finalize() consumes the hasher: use std::move(hasher).finalize()");
     /// Finalization requires a mutable stream.
-    digest_buffer<A> finalize() const& = delete ("finalize() requires a mutable hasher: use std::move(hasher).finalize()");
+    tag_buffer<A> finalize() const& = delete ("finalize() requires a mutable hasher: use std::move(hasher).finalize()");
     /// Finalization requires a mutable stream.
-    digest_buffer<A> finalize() const&& = delete ("finalize() requires a mutable rvalue hasher");
+    tag_buffer<A> finalize() const&& = delete ("finalize() requires a mutable rvalue hasher");
 
     /// Restart under the supplied key. @pre The stream owns its storage.
     template <detail::compatible_key K>

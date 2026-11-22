@@ -49,7 +49,9 @@ TEMPLATE_TEST_CASE("SecretBox key construction writes into the selected storage"
 
 TEMPLATE_TEST_CASE("SecretBox authenticates a message", "[secretbox]", xsalsa20poly1305, xchacha20poly1305)
 {
-    secret_key<TestType> key;
+    auto generated = make_secret_key<TestType>(std::nothrow);
+    REQUIRE(generated.has_value());
+    auto& key = *generated;
     std::array message{std::byte{0x42}};
     auto sealed = seal(key, message);
     CHECK(sealed.ciphertext.size() == message.size() + algorithm_traits<TestType>::mac_size);

@@ -394,6 +394,35 @@ public:
     operator key_ref<KeyTag>() const&& = delete ("A key view can dangle when borrowed from a temporary owner");
 };
 
+/// Generate a guarded key and translate allocation or cryptographic failure.
+/// @pre A custom default generator reports failure only through std::bad_alloc or crypto_error.
+template <class KeyTag>
+    requires detail::HasDefaultKeyGenerator<KeyTag>
+std::expected<secret_key<KeyTag>, errc> make_secret_key(std::nothrow_t) noexcept
+try
+{
+    return std::expected<secret_key<KeyTag>, errc>{std::in_place};
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
+}
+catch (crypto_error const&)
+{
+    return std::unexpected(errc::crypto_failed);
+}
+
+/// Generate a guarded key using the same error contract as the nonthrowing factory.
+/// @copydetails make_secret_key(std::nothrow_t)
+template <class KeyTag>
+    requires detail::HasDefaultKeyGenerator<KeyTag>
+secret_key<KeyTag> make_secret_key()
+{
+    auto result = make_secret_key<KeyTag>(std::nothrow);
+    if (!result) throw_error(result.error());
+    return std::move(*result);
+}
+
 /// @tparam A Algorithm whose nonce size determines the number of random bytes.
 /// @return A freshly generated nonce for A.
 template <Algorithm A>

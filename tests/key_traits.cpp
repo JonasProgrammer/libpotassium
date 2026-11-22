@@ -12,6 +12,8 @@ namespace
 {
 struct PrivateKeyTag;
 struct SharedKeyTag;
+template <class Error>
+struct FailingKeyTag;
 struct RuntimeNonceSize;
 }  // namespace
 
@@ -40,6 +42,30 @@ struct potassium::key_traits<SharedKeyTag>
 {
     static constexpr std::size_t size = 48;
 };
+
+template <class Error>
+struct potassium::key_traits<FailingKeyTag<Error>>
+{
+    static constexpr std::size_t size = 32;
+
+    struct generator
+    {
+        void operator()(std::span<std::byte, size> out) const
+        {
+            out.front() = std::byte{1};
+            throw Error{};
+        }
+    };
+};
+
+TEST_CASE("Guarded key factories translate generator failures", "[keys]")
+{
+    using namespace potassium;
+    CHECK(make_secret_key<FailingKeyTag<std::bad_alloc>>(std::nothrow) == std::unexpected(errc::allocation_failed));
+    CHECK(make_secret_key<FailingKeyTag<crypto_error>>(std::nothrow) == std::unexpected(errc::crypto_failed));
+    CHECK_THROWS_AS(make_secret_key<FailingKeyTag<std::bad_alloc>>(), std::bad_alloc);
+    CHECK_THROWS_AS(make_secret_key<FailingKeyTag<crypto_error>>(), crypto_error);
+}
 
 // Compile the owner constructors and borrowing bodies with no algorithm traits.
 template class potassium::secret_key<PrivateKeyTag>;

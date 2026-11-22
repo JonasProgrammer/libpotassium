@@ -91,8 +91,8 @@ void check_vector(key_ref<A> key, nonce_ref<A> nonce, std::span<std::byte const>
     auto opened = open(key, ciphertext, nonce);
     CHECK(std::ranges::equal(opened.bytes(), plaintext));
 
-    auto wrong_nonce = nonce_buffer<A>{};
-    std::ranges::copy(nonce.bytes(), wrong_nonce.storage.begin());
+    static_assert(!std::default_initializable<nonce_buffer<A>>);
+    auto wrong_nonce = nonce_buffer<A>{nonce.bytes()};
     wrong_nonce.storage.back() ^= std::byte{1};
     CHECK_THROWS_AS(open(key, ciphertext, wrong_nonce), crypto_error);
 

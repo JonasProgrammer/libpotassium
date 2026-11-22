@@ -63,7 +63,7 @@ Applications transport the nonce separately and define framing, versioning, repl
 | `open_into(ciphertext, out, nonce)` | Writes authenticated plaintext |
 
 Sealing without an explicit nonce uses the secure RNG, also available through `generate_nonce<A>()`.
-Default construction of nonce storage does not generate randomness.
+To import a nonce, explicitly construct its owner from a fixed-extent byte span.
 An explicit nonce must be unique for each encryption under the same key across participants, processes and restarts.
 
 Encryption requires plaintext length at most `algorithm_traits<A>::messagebytes_max`.

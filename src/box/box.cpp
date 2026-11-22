@@ -274,7 +274,10 @@ std::expected<void, errc> open_into(xsalsa_private_ref key,
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce.
 /// @throws crypto_error If encryption fails.
-nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out);
+[[nodiscard("Retain the nonce to open the ciphertext")]] nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_private_ref key,
+                                                                                                            public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                                            std::span<std::byte const> plaintext,
+                                                                                                            std::span<std::byte> out);
 
 /// @brief Encrypt and authenticate a message with a generated nonce.
 /// @param key Local private key.
@@ -286,11 +289,11 @@ nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_private_ref key, publi
 /// @pre Output is disjoint from all inputs.
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce, or errc::crypto_failed on encryption failure.
-std::expected<nonce_buffer<curve25519xsalsa20poly1305>, errc> seal_into(xsalsa_private_ref key,
-                                                                        public_key_ref<curve25519xsalsa20poly1305> peer,
-                                                                        std::span<std::byte const> plaintext,
-                                                                        std::span<std::byte> out,
-                                                                        std::nothrow_t tag) noexcept;
+[[nodiscard("Retain the nonce to open the ciphertext")]] std::expected<nonce_buffer<curve25519xsalsa20poly1305>, errc> seal_into(xsalsa_private_ref key,
+                                                                                                                                 public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                                                                 std::span<std::byte const> plaintext,
+                                                                                                                                 std::span<std::byte> out,
+                                                                                                                                 std::nothrow_t tag) noexcept;
 
 /// @brief Encrypt and authenticate a message.
 /// @param key Local private key.
@@ -449,7 +452,7 @@ std::expected<void, errc> open_into(xsalsa_precomputed_ref key,
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce.
 /// @throws crypto_error If encryption fails.
-nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
+[[nodiscard("Retain the nonce to open the ciphertext")]] nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
 
 /// @brief Encrypt and authenticate a message with a generated nonce.
 /// @param key Shared key derived by precompute for this peer.
@@ -460,7 +463,10 @@ nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_precomputed_ref key, s
 /// @pre Output is disjoint from all inputs.
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce, or errc::crypto_failed on encryption failure.
-std::expected<nonce_buffer<curve25519xsalsa20poly1305>, errc> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t tag) noexcept;
+[[nodiscard("Retain the nonce to open the ciphertext")]] std::expected<nonce_buffer<curve25519xsalsa20poly1305>, errc> seal_into(xsalsa_precomputed_ref key,
+                                                                                                                                 std::span<std::byte const> plaintext,
+                                                                                                                                 std::span<std::byte> out,
+                                                                                                                                 std::nothrow_t tag) noexcept;
 
 /// @brief Encrypt and authenticate a message.
 /// @param key Shared key derived by precompute for this peer.
@@ -651,7 +657,10 @@ std::expected<void, errc> open_into(xchacha_private_ref key,
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce.
 /// @throws crypto_error If encryption fails.
-nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out);
+[[nodiscard("Retain the nonce to open the ciphertext")]] nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_private_ref key,
+                                                                                                             public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                                             std::span<std::byte const> plaintext,
+                                                                                                             std::span<std::byte> out);
 
 /// @brief Encrypt and authenticate a message with a generated nonce.
 /// @param key Local private key.
@@ -663,11 +672,11 @@ nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_private_ref key, pub
 /// @pre Output is disjoint from all inputs.
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce, or errc::crypto_failed on encryption failure.
-std::expected<nonce_buffer<curve25519xchacha20poly1305>, errc> seal_into(xchacha_private_ref key,
-                                                                         public_key_ref<curve25519xchacha20poly1305> peer,
-                                                                         std::span<std::byte const> plaintext,
-                                                                         std::span<std::byte> out,
-                                                                         std::nothrow_t tag) noexcept;
+[[nodiscard("Retain the nonce to open the ciphertext")]] std::expected<nonce_buffer<curve25519xchacha20poly1305>, errc> seal_into(xchacha_private_ref key,
+                                                                                                                                  public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                                                                  std::span<std::byte const> plaintext,
+                                                                                                                                  std::span<std::byte> out,
+                                                                                                                                  std::nothrow_t tag) noexcept;
 
 /// @brief Encrypt and authenticate a message.
 /// @param key Local private key.
@@ -826,7 +835,9 @@ std::expected<void, errc> open_into(xchacha_precomputed_ref key,
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce.
 /// @throws crypto_error If encryption fails.
-nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
+[[nodiscard("Retain the nonce to open the ciphertext")]] nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_precomputed_ref key,
+                                                                                                             std::span<std::byte const> plaintext,
+                                                                                                             std::span<std::byte> out);
 
 /// @brief Encrypt and authenticate a message with a generated nonce.
 /// @param key Shared key derived by precompute for this peer.
@@ -837,7 +848,10 @@ nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_precomputed_ref key,
 /// @pre Output is disjoint from all inputs.
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce, or errc::crypto_failed on encryption failure.
-std::expected<nonce_buffer<curve25519xchacha20poly1305>, errc> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t tag) noexcept;
+[[nodiscard("Retain the nonce to open the ciphertext")]] std::expected<nonce_buffer<curve25519xchacha20poly1305>, errc> seal_into(xchacha_precomputed_ref key,
+                                                                                                                                  std::span<std::byte const> plaintext,
+                                                                                                                                  std::span<std::byte> out,
+                                                                                                                                  std::nothrow_t tag) noexcept;
 
 /// @brief Encrypt and authenticate a message.
 /// @param key Shared key derived by precompute for this peer.

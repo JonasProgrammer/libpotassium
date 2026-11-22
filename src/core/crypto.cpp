@@ -173,13 +173,16 @@ public:
     std::span<std::byte const> bytes() const&& = delete;
 };
 
-/// Copyable public nonce. Default initialization yields zero bytes.
+/// Copyable public nonce imported from wire bytes or returned by generate_nonce.
 template <Algorithm A>
 class nonce_buffer
 {
 public:
     /// Nonce bytes in transmission order.
-    std::array<std::byte, algorithm_traits<A>::nonce_size> storage{};
+    std::array<std::byte, algorithm_traits<A>::nonce_size> storage;
+
+    /// Copy an explicitly supplied nonce.
+    explicit constexpr nonce_buffer(typename nonce_ref<A>::span_type bytes) noexcept { std::ranges::copy(bytes, storage.begin()); }
 
     /// @pre The owner remains alive while the view is in use.
     nonce_ref<A> ref() const& noexcept { return nonce_ref<A>{storage}; }
@@ -396,9 +399,9 @@ public:
 template <Algorithm A>
 nonce_buffer<A> generate_nonce() noexcept
 {
-    nonce_buffer<A> nonce;
-    random_fill(nonce.storage);
-    return nonce;
+    std::array<std::byte, algorithm_traits<A>::nonce_size> bytes;
+    random_fill(bytes);
+    return nonce_buffer<A>{bytes};
 }
 
 }  // namespace potassium

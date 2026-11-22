@@ -156,7 +156,7 @@ std::expected<void, errc> open_into(xchacha_key_ref key, std::span<std::byte con
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce.
 /// @throws crypto_error If encryption fails.
-xchacha_nonce_buffer seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
+[[nodiscard("Retain the nonce to open the ciphertext")]] xchacha_nonce_buffer seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
 
 /// @brief Encrypt and authenticate a message with a generated nonce.
 /// @param key Secret key for encryption.
@@ -167,7 +167,10 @@ xchacha_nonce_buffer seal_into(xchacha_key_ref key, std::span<std::byte const> p
 /// @pre Output is disjoint from all inputs.
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce, or errc::crypto_failed on encryption failure.
-std::expected<xchacha_nonce_buffer, errc> seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t tag) noexcept;
+[[nodiscard("Retain the nonce to open the ciphertext")]] std::expected<xchacha_nonce_buffer, errc> seal_into(xchacha_key_ref key,
+                                                                                                             std::span<std::byte const> plaintext,
+                                                                                                             std::span<std::byte> out,
+                                                                                                             std::nothrow_t tag) noexcept;
 
 /// @brief Encrypt and authenticate a message.
 /// @param key Secret key for encryption.
@@ -308,7 +311,7 @@ std::expected<void, errc> open_into(xsalsa_key_ref key, std::span<std::byte cons
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce.
 /// @throws crypto_error If encryption fails.
-xsalsa_nonce_buffer seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
+[[nodiscard("Retain the nonce to open the ciphertext")]] xsalsa_nonce_buffer seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out);
 
 /// @brief Encrypt and authenticate a message with a generated nonce.
 /// @param key Secret key for encryption.
@@ -319,7 +322,10 @@ xsalsa_nonce_buffer seal_into(xsalsa_key_ref key, std::span<std::byte const> pla
 /// @pre Output is disjoint from all inputs.
 /// @pre Output length equals plaintext length plus 16.
 /// @return The generated nonce, or errc::crypto_failed on encryption failure.
-std::expected<xsalsa_nonce_buffer, errc> seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t tag) noexcept;
+[[nodiscard("Retain the nonce to open the ciphertext")]] std::expected<xsalsa_nonce_buffer, errc> seal_into(xsalsa_key_ref key,
+                                                                                                            std::span<std::byte const> plaintext,
+                                                                                                            std::span<std::byte> out,
+                                                                                                            std::nothrow_t tag) noexcept;
 
 /// @brief Encrypt and authenticate a message.
 /// @param key Secret key for encryption.

@@ -28,6 +28,11 @@ template <>
 struct potassium::key_traits<PrivateKeyTag>
 {
     static constexpr std::size_t size = 48;
+
+    struct generator
+    {
+        void operator()(std::span<std::byte, size> out) && { std::ranges::fill(out, std::byte{0x42}); }
+    };
 };
 
 template <>
@@ -58,6 +63,10 @@ using RawKey = std::span<std::byte const, 48>;
 using PrivateRef = potassium::key_ref<PrivateKeyTag>;
 using SharedRef = potassium::key_ref<SharedKeyTag>;
 using SecretKey = potassium::secret_key<PrivateKeyTag>;
+using Generator = potassium::key_traits<PrivateKeyTag>::generator;
+
+static_assert(potassium::KeyGenerator<Generator, PrivateKeyTag>);
+static_assert(!potassium::KeyGenerator<Generator&, PrivateKeyTag>);
 
 static_assert(std::same_as<PrivateRef::span_type, RawKey>);
 static_assert(std::same_as<SharedRef::span_type, RawKey>);
@@ -66,6 +75,8 @@ static_assert(std::constructible_from<PrivateRef, RawKey>);
 static_assert(!std::convertible_to<RawKey, PrivateRef>);
 static_assert(!std::convertible_to<PrivateRef, SharedRef>);
 static_assert(!std::convertible_to<SharedRef, PrivateRef>);
+static_assert(!std::default_initializable<potassium::secret_key<SharedKeyTag>>);
+static_assert(!std::default_initializable<potassium::key_buffer_storage<SharedKeyTag>>);
 
 template <class Owner>
 concept CanBorrow = requires(Owner&& key) { std::forward<Owner>(key).ref(); };
@@ -99,6 +110,9 @@ static_assert(std::is_nothrow_move_assignable_v<SecretKey>);
 TEST_CASE("Guarded key moves transfer the fixed-size allocation", "[memory]")
 {
     SecretKey original;
+    potassium::key_buffer_storage<PrivateKeyTag> stack;
+    CHECK(std::ranges::all_of(original.ref().bytes(), [](auto b) { return b == std::byte{0x42}; }));
+    CHECK(std::ranges::equal(stack.ref().bytes(), original.ref().bytes()));
     std::array<std::byte, 48> const expected{std::byte{0x42}, std::byte{0x17}};
     auto const writable = original.writable_bytes();
     std::ranges::copy(expected, writable.begin());

@@ -19,6 +19,13 @@ Its `key_traits<A>::size` equals `algorithm_traits<A>::key_size`.
 Both constructions use a 32-byte key, a 24-byte nonce and a 16-byte MAC.
 Each publishes its backend's platform-specific `messagebytes_max`.
 
+Both `secret_key<A>` and `key_buffer_storage<A>` default to `key_traits<A>::generator`, which fills the final storage with secure random bytes for both SecretBox algorithms.
+An explicit generator receives a writable fixed-extent byte span, fills all bytes on success, and returns `void`.
+If the generator throws, construction propagates the exception and the owner wipes the secret storage during cleanup.
+Guarded allocation can also throw `std::bad_alloc` before the generator runs.
+Use `potassium::for_overwrite` to construct a destination for key import and fill every byte before use.
+Use `potassium::zero` when a known all-zero key is intentional.
+
 ## Operations and interoperability
 
 All message operations take the shared key as their first argument.

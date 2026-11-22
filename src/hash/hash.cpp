@@ -43,6 +43,9 @@ export namespace potassium
 template <std::size_t K>
 struct key_traits<hash::blake2b_key_tag<K>>
 {
+    /// Default generator for this key purpose.
+    using generator = random_key_generator;
+
     /// Key length in bytes.
     static constexpr std::size_t size = K;
 };

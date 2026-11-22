@@ -54,6 +54,9 @@ struct algorithm_traits<secretbox::xsalsa20poly1305>
 template <>
 struct key_traits<secretbox::xsalsa20poly1305>
 {
+    /// Default generator for this key purpose.
+    using generator = random_key_generator;
+
     /// Secret key length in bytes.
     static constexpr std::size_t size = algorithm_traits<secretbox::xsalsa20poly1305>::key_size;
 };
@@ -76,6 +79,9 @@ struct algorithm_traits<secretbox::xchacha20poly1305>
 template <>
 struct key_traits<secretbox::xchacha20poly1305>
 {
+    /// Default generator for this key purpose.
+    using generator = random_key_generator;
+
     /// Secret key length in bytes.
     static constexpr std::size_t size = algorithm_traits<secretbox::xchacha20poly1305>::key_size;
 };

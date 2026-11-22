@@ -64,10 +64,38 @@ concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits>
 template <class A>
 concept Algorithm = SecretKeyAlgorithmTraits<algorithm_traits<A>> || PublicKeyAlgorithmTraits<algorithm_traits<A>>;
 
-/// Specialize for each confidential key purpose with a static constexpr std::size_t size in bytes.
+/// Define size in bytes and optionally a default generator type for a confidential key purpose.
 /// @tparam KeyTag Tag identifying the purpose of the key.
 template <class KeyTag>
 struct key_traits;
+
+/// Select all-zero key bytes.
+struct zero_t
+{
+    explicit constexpr zero_t() = default;
+};
+
+inline constexpr zero_t zero{};
+
+/// Select storage whose contents the caller will fully overwrite.
+struct for_overwrite_t
+{
+    explicit constexpr for_overwrite_t() = default;
+};
+
+inline constexpr for_overwrite_t for_overwrite{};
+
+/// A generator writes the entire destination on success and may throw on failure.
+template <class G, class KeyTag>
+concept KeyGenerator = requires(G&& generate, std::span<std::byte, key_traits<KeyTag>::size> out) {
+    { std::forward<G>(generate)(std::move(out)) } -> std::same_as<void>;
+};
+
+/// Generates a key for purposes that accept uniformly random bytes.
+struct random_key_generator
+{
+    void operator()(std::span<std::byte> out) const noexcept { random_fill(out); }
+};
 
 /// Read-only borrowed key. @pre The source storage outlives every use.
 template <class KeyTag>
@@ -201,18 +229,45 @@ public:
     operator public_key_ref<A>() const&& = delete;
 };
 
-/// Immobile stack key, generated on construction and wiped on destruction.
+namespace detail
+{
+template <class KeyTag>
+concept HasDefaultKeyGenerator = std::default_initializable<typename key_traits<KeyTag>::generator> && KeyGenerator<typename key_traits<KeyTag>::generator, KeyTag>;
+}
+
+/// Immobile stack key, wiped on destruction.
 template <class KeyTag>
 class key_buffer_storage
 {
-    std::array<std::byte, key_traits<KeyTag>::size> storage_{};
+    std::array<std::byte, key_traits<KeyTag>::size> storage_;
 
 public:
     /// Writable destination for key generation or derivation.
     std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return storage_; }
 
-    /// Generates a fresh key in the stack buffer.
-    key_buffer_storage() { random_fill(storage_); }
+    /// Generate directly in the stack buffer using the key purpose's generator.
+    key_buffer_storage()
+        requires detail::HasDefaultKeyGenerator<KeyTag>
+        : key_buffer_storage(typename key_traits<KeyTag>::generator{})
+    {
+    }
+
+    /// Invoke generate once on the final storage and propagate any exception.
+    template <KeyGenerator<KeyTag> G>
+    explicit key_buffer_storage(G&& generate)
+        : key_buffer_storage(for_overwrite)
+    {
+        std::forward<G>(generate)(writable_bytes());
+    }
+
+    /// @warning All-zero key bytes are publicly known.
+    explicit key_buffer_storage(zero_t) noexcept
+        : storage_{}
+    {
+    }
+
+    /// @pre Write all bytes before reading or using the key.
+    explicit key_buffer_storage(for_overwrite_t) noexcept {}
 
     /// Wipes the key bytes before releasing the buffer.
     ~key_buffer_storage() { wipe(storage_); }
@@ -242,12 +297,47 @@ public:
 template <class KeyTag>
 class secret_key
 {
-    using key_bytes = std::array<std::byte, key_traits<KeyTag>::size>;
+    struct key_bytes
+    {
+        std::array<std::byte, key_traits<KeyTag>::size> bytes;
+
+        explicit key_bytes(zero_t) noexcept
+            : bytes{}
+        {
+        }
+
+        explicit key_bytes(for_overwrite_t) noexcept {}
+    };
+
     std::indirect<key_bytes, allocator<key_bytes>> storage_;
 
 public:
-    /// Generates a fresh key directly in guarded storage.
-    secret_key() { random_fill(writable_bytes()); }
+    /// Generate directly in guarded storage using the key purpose's generator.
+    secret_key()
+        requires detail::HasDefaultKeyGenerator<KeyTag>
+        : secret_key(typename key_traits<KeyTag>::generator{})
+    {
+    }
+
+    /// Invoke generate once on the final storage and propagate any exception.
+    template <KeyGenerator<KeyTag> G>
+    explicit secret_key(G&& generate)
+        : secret_key(for_overwrite)
+    {
+        std::forward<G>(generate)(writable_bytes());
+    }
+
+    /// @warning All-zero key bytes are publicly known.
+    explicit secret_key(zero_t tag)
+        : storage_(std::in_place, tag)
+    {
+    }
+
+    /// @pre Write all bytes before reading or using the key.
+    explicit secret_key(for_overwrite_t tag)
+        : storage_(std::in_place, tag)
+    {
+    }
 
     secret_key(secret_key const&) = delete;
     secret_key& operator=(secret_key const&) = delete;
@@ -259,10 +349,10 @@ public:
 
     /// Writable destination for key generation or derivation.
     /// @pre The owner has a live allocation and retains it while the span is in use.
-    std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return *storage_; }
+    std::span<std::byte, key_traits<KeyTag>::size> writable_bytes() & noexcept { return storage_->bytes; }
 
     /// @pre The owner has a live allocation and retains it while the view is in use.
-    key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{*storage_}; }
+    key_ref<KeyTag> ref() const& noexcept { return key_ref<KeyTag>{storage_->bytes}; }
 
     /// Borrowing from a temporary owner would allow a dangling key view.
     key_ref<KeyTag> ref() && = delete ("A key view can dangle when borrowed from a temporary owner");

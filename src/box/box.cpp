@@ -106,6 +106,9 @@ struct algorithm_traits<box::curve25519xchacha20poly1305>
 template <class A>
 struct key_traits<box::private_key_tag<A>>
 {
+    /// Default generator for this key purpose.
+    using generator = random_key_generator;
+
     /// Confidential key length in bytes.
     static constexpr std::size_t size = algorithm_traits<A>::secret_key_size;
 };
@@ -114,6 +117,9 @@ struct key_traits<box::private_key_tag<A>>
 template <class A>
 struct key_traits<box::precomputed_key_tag<A>>
 {
+    /// Default generator for this key purpose.
+    using generator = random_key_generator;
+
     /// Confidential key length in bytes.
     static constexpr std::size_t size = algorithm_traits<A>::precomputed_key_size;
 };

@@ -10,6 +10,43 @@ using namespace potassium::secretbox;
 static_assert(std::same_as<secretbox_default, xsalsa20poly1305>);
 static_assert(!std::convertible_to<secret_key<secretbox_default>&&, key_ref<secretbox_default>>);
 
+TEMPLATE_TEST_CASE("SecretBox key construction writes into the selected storage",
+                   "[secretbox][keys]",
+                   secret_key<xsalsa20poly1305>,
+                   secret_key<xchacha20poly1305>,
+                   key_buffer_storage<xsalsa20poly1305>,
+                   key_buffer_storage<xchacha20poly1305>)
+{
+    using output = decltype(std::declval<TestType&>().writable_bytes());
+    static_assert(!std::constructible_from<TestType, int (*)(output)>);
+    static_assert(!std::constructible_from<TestType, void (*)(std::span<std::byte, 16>)>);
+
+    TestType zeroed{zero};
+    CHECK(std::ranges::all_of(zeroed.ref().bytes(), [](auto b) { return b == std::byte{}; }));
+
+    TestType imported{for_overwrite};
+    std::ranges::fill(imported.writable_bytes(), std::byte{0xa5});
+    unsigned calls{};
+    std::byte* destination{};
+    auto generate = [&](output out)
+    {
+        ++calls;
+        destination = out.data();
+        std::ranges::copy(imported.ref().bytes(), out.begin());
+    };
+    TestType generated{generate};
+    CHECK(calls == 1);
+    CHECK(destination == generated.ref().bytes().data());
+    CHECK(std::ranges::equal(generated.ref().bytes(), imported.ref().bytes()));
+
+    auto fail = [](output out)
+    {
+        out.front() = std::byte{1};
+        throw crypto_error{};
+    };
+    CHECK_THROWS_AS(TestType{fail}, crypto_error);
+}
+
 TEMPLATE_TEST_CASE("SecretBox authenticates a message", "[secretbox]", xsalsa20poly1305, xchacha20poly1305)
 {
     secret_key<TestType> key;

@@ -37,6 +37,8 @@ Move assignment wipes and releases the destination's previous allocation.
 Borrowing requires a live allocation, so a moved-from owner must receive a new allocation before it can be borrowed from.
 A stack-local `key_buffer_storage<KeyTag>` owns a fixed-size buffer, disallows copying and moving, and wipes its contents on destruction.
 Generate or derive keys directly in their final writable storage and make any duplication explicit.
+Default construction of either confidential owner requires a default-constructible `key_traits<KeyTag>::generator` satisfying `KeyGenerator<G, KeyTag>`.
+Size-only key traits support explicit generator, `zero`, and `for_overwrite` construction.
 
 Guarded allocation attempts page locking on a best-effort basis.
 Stack storage does not acquire a lock automatically because disjoint objects may occupy the same page.

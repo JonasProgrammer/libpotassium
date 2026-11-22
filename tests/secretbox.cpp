@@ -55,6 +55,13 @@ TEMPLATE_TEST_CASE("SecretBox authenticates a message", "[secretbox]", xsalsa20p
     CHECK(sealed.ciphertext.size() == message.size() + algorithm_traits<TestType>::mac_size);
     auto clear = open(key, sealed);
     CHECK(std::ranges::equal(clear.bytes(), message));
+    std::array<std::byte, algorithm_traits<TestType>::mac_size> invalid{};
+    for (auto length : {std::size_t{0}, invalid.size() - 1, invalid.size()})
+    {
+        auto ciphertext = std::span{invalid}.first(length);
+        CHECK(open_into(key, ciphertext, {}, sealed.nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK_THROWS_AS(open(key, ciphertext, sealed.nonce), crypto_error);
+    }
     auto truncated = open(key, std::span<std::byte const>{}, sealed.nonce, std::nothrow);
     REQUIRE_FALSE(truncated.has_value());
     CHECK(truncated.error() == errc::crypto_failed);

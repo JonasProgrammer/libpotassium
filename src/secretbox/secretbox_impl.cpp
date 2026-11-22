@@ -136,7 +136,8 @@ secure_buffer open(xchacha_key_ref key, std::span<std::byte const> ciphertext, x
 
 std::expected<secure_buffer, errc> open(xchacha_key_ref key, std::span<std::byte const> ciphertext, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    auto const plaintext_size = ciphertext.size() - std::min(ciphertext.size(), xchacha20poly1305_traits::mac_size);
+    if (ciphertext.size() < xchacha20poly1305_traits::mac_size) return std::unexpected(errc::crypto_failed);
+    auto const plaintext_size = ciphertext.size() - xchacha20poly1305_traits::mac_size;
     return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
@@ -215,7 +216,8 @@ secure_buffer open(xsalsa_key_ref key, std::span<std::byte const> ciphertext, xs
 
 std::expected<secure_buffer, errc> open(xsalsa_key_ref key, std::span<std::byte const> ciphertext, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    auto const plaintext_size = ciphertext.size() - std::min(ciphertext.size(), xsalsa20poly1305_traits::mac_size);
+    if (ciphertext.size() < xsalsa20poly1305_traits::mac_size) return std::unexpected(errc::crypto_failed);
+    auto const plaintext_size = ciphertext.size() - xsalsa20poly1305_traits::mac_size;
     return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 

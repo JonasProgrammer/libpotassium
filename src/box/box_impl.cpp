@@ -129,7 +129,6 @@ std::expected<void, errc> open_into(xsalsa_private_ref key,
                                     nonce_ref<curve25519xsalsa20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xsalsa20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
     return transform(crypto_box_open_easy, ciphertext, out, nonce, peer, key);
 }
 
@@ -224,7 +223,6 @@ void open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext
 
 std::expected<void, errc> open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xsalsa20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
     return transform(crypto_box_open_easy_afternm, ciphertext, out, nonce, key);
 }
 
@@ -344,7 +342,6 @@ std::expected<void, errc> open_into(xchacha_private_ref key,
                                     nonce_ref<curve25519xchacha20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xchacha20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
     return transform(crypto_box_curve25519xchacha20poly1305_open_easy, ciphertext, out, nonce, peer, key);
 }
 
@@ -439,7 +436,6 @@ void open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertex
 
 std::expected<void, errc> open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xchacha20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
     return transform(crypto_box_curve25519xchacha20poly1305_open_easy_afternm, ciphertext, out, nonce, key);
 }
 

@@ -29,6 +29,7 @@ target_sources(libpotassium PUBLIC
         src/core/crypto.cpp
         src/core/memory.cpp
         src/hash/hash.cpp
+        src/internal/internal.cpp
         src/secretbox/secretbox.cpp
         PRIVATE
         # implementations

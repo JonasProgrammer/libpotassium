@@ -7,9 +7,10 @@ module;
 
 module potassium.secretbox;
 
+import potassium.internal;
 import std;
 
-#include "../internal/sodium_interop_macros.hpp"
+using potassium::internal::sodium_bytes;
 
 namespace potassium::secretbox
 {
@@ -60,11 +61,11 @@ template <class A, class Function>
 std::expected<void, errc> transform(Function function, key_ref<A> key, std::span<std::byte const> input, std::span<std::byte> out, nonce_ref<A> nonce) noexcept
 {
     unsigned char empty{};
-    auto const status = function(out.empty() ? &empty : POTASSIUM_MUTABLE_BYTES(out.data()),
-                                 input.empty() ? &empty : POTASSIUM_CONST_BYTES(input.data()),
+    auto const status = function(out.empty() ? &empty : sodium_bytes(out.data()),
+                                 input.empty() ? &empty : sodium_bytes(input.data()),
                                  input.size(),
-                                 POTASSIUM_CONST_BYTES(nonce.bytes().data()),
-                                 POTASSIUM_CONST_BYTES(key.bytes().data()));
+                                 sodium_bytes(nonce.bytes().data()),
+                                 sodium_bytes(key.bytes().data()));
     if (status != 0) return std::unexpected(errc::crypto_failed);
     return {};
 }

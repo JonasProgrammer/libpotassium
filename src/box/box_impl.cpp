@@ -7,9 +7,10 @@ module;
 
 module potassium.box;
 
+import potassium.internal;
 import std;
 
-#include "../internal/sodium_interop_macros.hpp"
+using potassium::internal::sodium_bytes;
 
 namespace potassium::box
 {
@@ -62,11 +63,11 @@ template <class Function, class A, class... Keys>
 std::expected<void, errc> transform(Function function, std::span<std::byte const> input, std::span<std::byte> out, nonce_ref<A> nonce, Keys... keys) noexcept
 {
     unsigned char empty{};
-    if (function(out.empty() ? &empty : POTASSIUM_MUTABLE_BYTES(out.data()),
-                 input.empty() ? &empty : POTASSIUM_CONST_BYTES(input.data()),
+    if (function(out.empty() ? &empty : sodium_bytes(out.data()),
+                 input.empty() ? &empty : sodium_bytes(input.data()),
                  input.size(),
-                 POTASSIUM_CONST_BYTES(nonce.bytes().data()),
-                 POTASSIUM_CONST_BYTES(keys.bytes().data())...) != 0)
+                 sodium_bytes(nonce.bytes().data()),
+                 sodium_bytes(keys.bytes().data())...) != 0)
         return std::unexpected(errc::crypto_failed);
     return {};
 }
@@ -74,7 +75,7 @@ std::expected<void, errc> transform(Function function, std::span<std::byte const
 
 std::expected<void, errc> generate_keypair_into(public_key<curve25519xsalsa20poly1305>& pub, std::span<std::byte, 32> secret, std::nothrow_t) noexcept
 {
-    if (crypto_box_keypair(POTASSIUM_MUTABLE_BYTES(pub.storage.data()), POTASSIUM_MUTABLE_BYTES(secret.data())) != 0) return std::unexpected(errc::crypto_failed);
+    if (crypto_box_keypair(sodium_bytes(pub.storage.data()), sodium_bytes(secret.data())) != 0) return std::unexpected(errc::crypto_failed);
     return {};
 }
 
@@ -87,7 +88,7 @@ std::expected<secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>>, errc>
 try
 {
     secret_key<precomputed_key_tag<curve25519xsalsa20poly1305>> result;
-    if (crypto_box_beforenm(POTASSIUM_MUTABLE_BYTES(result.writable_bytes().data()), POTASSIUM_CONST_BYTES(peer.bytes().data()), POTASSIUM_CONST_BYTES(key.bytes().data())) != 0)
+    if (crypto_box_beforenm(sodium_bytes(result.writable_bytes().data()), sodium_bytes(peer.bytes().data()), sodium_bytes(key.bytes().data())) != 0)
         return std::unexpected(errc::crypto_failed);
     return result;
 }
@@ -288,7 +289,7 @@ std::expected<secure_buffer, errc> open(xsalsa_precomputed_ref key, seal_result<
 
 std::expected<void, errc> generate_keypair_into(public_key<curve25519xchacha20poly1305>& pub, std::span<std::byte, 32> secret, std::nothrow_t) noexcept
 {
-    if (crypto_box_curve25519xchacha20poly1305_keypair(POTASSIUM_MUTABLE_BYTES(pub.storage.data()), POTASSIUM_MUTABLE_BYTES(secret.data())) != 0) return std::unexpected(errc::crypto_failed);
+    if (crypto_box_curve25519xchacha20poly1305_keypair(sodium_bytes(pub.storage.data()), sodium_bytes(secret.data())) != 0) return std::unexpected(errc::crypto_failed);
     return {};
 }
 
@@ -302,7 +303,7 @@ try
 {
     secret_key<precomputed_key_tag<curve25519xchacha20poly1305>> result;
     if (crypto_box_curve25519xchacha20poly1305_beforenm(
-                POTASSIUM_MUTABLE_BYTES(result.writable_bytes().data()), POTASSIUM_CONST_BYTES(peer.bytes().data()), POTASSIUM_CONST_BYTES(key.bytes().data())) != 0)
+                sodium_bytes(result.writable_bytes().data()), sodium_bytes(peer.bytes().data()), sodium_bytes(key.bytes().data())) != 0)
         return std::unexpected(errc::crypto_failed);
     return result;
 }

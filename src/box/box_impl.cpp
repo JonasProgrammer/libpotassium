@@ -4,7 +4,6 @@
 module;
 
 #include <sodium.h>
-#include <cassert>
 
 module potassium.box;
 
@@ -12,6 +11,7 @@ import potassium.internal;
 import std;
 
 using potassium::internal::sodium_bytes;
+using potassium::internal::unwrap;
 
 namespace potassium::box
 {
@@ -35,54 +35,6 @@ static_assert(algorithm_traits<curve25519xchacha20poly1305>::nonce_size == crypt
 static_assert(algorithm_traits<curve25519xchacha20poly1305>::mac_size == crypto_box_curve25519xchacha20poly1305_MACBYTES);
 static_assert(algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max == crypto_box_curve25519xchacha20poly1305_MESSAGEBYTES_MAX);
 
-template <class T>
-T unwrap(std::expected<T, errc> result)
-{
-    if (!result) throw_error(result.error());
-    if constexpr (!std::is_void_v<T>) return std::move(*result);
-}
-
-template <class Buffer, class Operation>
-std::expected<Buffer, errc> allocate_and_transform(std::size_t size, Operation operation) noexcept
-try
-{
-    Buffer out(size);
-    auto result = operation(out);
-    if (!result) return std::unexpected(result.error());
-    return out;
-}
-catch (std::bad_alloc const&)
-{
-    return std::unexpected(errc::allocation_failed);
-}
-catch (std::length_error const&)
-{
-    return std::unexpected(errc::allocation_failed);
-}
-
-enum class direction
-{
-    seal,
-    open,
-};
-
-template <direction Mode, class Function, class A, class... Keys>
-std::expected<void, errc> transform(Function function, std::span<std::byte const> input, std::span<std::byte> out, nonce_ref<A> nonce, Keys... keys) noexcept
-{
-    constexpr auto mac_size = algorithm_traits<A>::mac_size;
-    if constexpr (Mode == direction::open)
-        assert(input.size() < mac_size || out.size() == input.size() - mac_size);
-    else
-        assert(out.size() >= mac_size && out.size() - mac_size == input.size());
-    unsigned char empty{};
-    if (function(out.empty() ? &empty : sodium_bytes(out.data()),
-                 input.empty() ? &empty : sodium_bytes(input.data()),
-                 input.size(),
-                 sodium_bytes(nonce.bytes().data()),
-                 sodium_bytes(keys.bytes().data())...) != 0)
-        return std::unexpected(errc::crypto_failed);
-    return {};
-}
 }  // namespace
 
 std::expected<void, errc> generate_keypair_into(public_key<curve25519xsalsa20poly1305>& pub, std::span<std::byte, 32> secret, std::nothrow_t) noexcept
@@ -140,7 +92,7 @@ std::expected<void, errc> seal_into(xsalsa_private_ref key,
                                     nonce_ref<curve25519xsalsa20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform<direction::seal>(crypto_box_easy, plaintext, out, nonce, peer, key);
+    return internal::transform<internal::direction::seal>(crypto_box_easy, plaintext, out, nonce, peer, key);
 }
 
 void open_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -155,7 +107,7 @@ std::expected<void, errc> open_into(xsalsa_private_ref key,
                                     nonce_ref<curve25519xsalsa20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform<direction::open>(crypto_box_open_easy, ciphertext, out, nonce, peer, key);
+    return internal::transform<internal::direction::open>(crypto_box_open_easy, ciphertext, out, nonce, peer, key);
 }
 
 nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -169,10 +121,7 @@ std::expected<nonce_buffer<curve25519xsalsa20poly1305>, errc> seal_into(xsalsa_p
                                                                         std::span<std::byte> out,
                                                                         std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xsalsa20poly1305>();
-    auto result = seal_into(key, peer, plaintext, out, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return nonce;
+    return internal::seal_into_with_nonce<curve25519xsalsa20poly1305>([&](auto& nonce) { return seal_into(key, peer, plaintext, out, nonce, std::nothrow); });
 }
 
 std::vector<std::byte> seal(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> plaintext, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -186,8 +135,7 @@ std::expected<std::vector<std::byte>, errc> seal(xsalsa_private_ref key,
                                                  nonce_ref<curve25519xsalsa20poly1305> nonce,
                                                  std::nothrow_t) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext.size() + algorithm_traits<curve25519xsalsa20poly1305>::mac_size,
-                                                          [&](auto& out) { return seal_into(key, peer, plaintext, out, nonce, std::nothrow); });
+    return internal::allocate_ciphertext<curve25519xsalsa20poly1305>(plaintext.size(), [&](auto& out) { return seal_into(key, peer, plaintext, out, nonce, std::nothrow); });
 }
 
 seal_result<curve25519xsalsa20poly1305> seal(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> plaintext)
@@ -200,10 +148,7 @@ std::expected<seal_result<curve25519xsalsa20poly1305>, errc> seal(xsalsa_private
                                                                   std::span<std::byte const> plaintext,
                                                                   std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xsalsa20poly1305>();
-    auto result = seal(key, peer, plaintext, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return seal_result<curve25519xsalsa20poly1305>{std::move(*result), nonce};
+    return internal::seal_with_nonce<curve25519xsalsa20poly1305, seal_result<curve25519xsalsa20poly1305>>([&](auto& nonce) { return seal(key, peer, plaintext, nonce, std::nothrow); });
 }
 
 secure_buffer open(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> ciphertext, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -217,9 +162,7 @@ std::expected<secure_buffer, errc> open(xsalsa_private_ref key,
                                         nonce_ref<curve25519xsalsa20poly1305> nonce,
                                         std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xsalsa20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
-    auto const plaintext_size = ciphertext.size() - algorithm_traits<curve25519xsalsa20poly1305>::mac_size;
-    return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, peer, ciphertext, out.bytes(), nonce, std::nothrow); });
+    return internal::allocate_plaintext<curve25519xsalsa20poly1305>(ciphertext.size(), [&](auto& out) { return open_into(key, peer, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
 secure_buffer open(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, seal_result<curve25519xsalsa20poly1305> const& sealed)
@@ -239,7 +182,7 @@ void seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext,
 
 std::expected<void, errc> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::seal>(crypto_box_easy_afternm, plaintext, out, nonce, key);
+    return internal::transform<internal::direction::seal>(crypto_box_easy_afternm, plaintext, out, nonce, key);
 }
 
 void open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -249,7 +192,7 @@ void open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext
 
 std::expected<void, errc> open_into(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::open>(crypto_box_open_easy_afternm, ciphertext, out, nonce, key);
+    return internal::transform<internal::direction::open>(crypto_box_open_easy_afternm, ciphertext, out, nonce, key);
 }
 
 nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -259,10 +202,7 @@ nonce_buffer<curve25519xsalsa20poly1305> seal_into(xsalsa_precomputed_ref key, s
 
 std::expected<nonce_buffer<curve25519xsalsa20poly1305>, errc> seal_into(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xsalsa20poly1305>();
-    auto result = seal_into(key, plaintext, out, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return nonce;
+    return internal::seal_into_with_nonce<curve25519xsalsa20poly1305>([&](auto& nonce) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 std::vector<std::byte> seal(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -272,8 +212,7 @@ std::vector<std::byte> seal(xsalsa_precomputed_ref key, std::span<std::byte cons
 
 std::expected<std::vector<std::byte>, errc> seal(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext.size() + algorithm_traits<curve25519xsalsa20poly1305>::mac_size,
-                                                          [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
+    return internal::allocate_ciphertext<curve25519xsalsa20poly1305>(plaintext.size(), [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 seal_result<curve25519xsalsa20poly1305> seal(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext)
@@ -283,10 +222,7 @@ seal_result<curve25519xsalsa20poly1305> seal(xsalsa_precomputed_ref key, std::sp
 
 std::expected<seal_result<curve25519xsalsa20poly1305>, errc> seal(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xsalsa20poly1305>();
-    auto result = seal(key, plaintext, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return seal_result<curve25519xsalsa20poly1305>{std::move(*result), nonce};
+    return internal::seal_with_nonce<curve25519xsalsa20poly1305, seal_result<curve25519xsalsa20poly1305>>([&](auto& nonce) { return seal(key, plaintext, nonce, std::nothrow); });
 }
 
 secure_buffer open(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, nonce_ref<curve25519xsalsa20poly1305> nonce)
@@ -296,9 +232,7 @@ secure_buffer open(xsalsa_precomputed_ref key, std::span<std::byte const> cipher
 
 std::expected<secure_buffer, errc> open(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, nonce_ref<curve25519xsalsa20poly1305> nonce, std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xsalsa20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
-    auto const plaintext_size = ciphertext.size() - algorithm_traits<curve25519xsalsa20poly1305>::mac_size;
-    return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
+    return internal::allocate_plaintext<curve25519xsalsa20poly1305>(ciphertext.size(), [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
 secure_buffer open(xsalsa_precomputed_ref key, seal_result<curve25519xsalsa20poly1305> const& sealed)
@@ -367,7 +301,7 @@ std::expected<void, errc> seal_into(xchacha_private_ref key,
                                     nonce_ref<curve25519xchacha20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform<direction::seal>(crypto_box_curve25519xchacha20poly1305_easy, plaintext, out, nonce, peer, key);
+    return internal::transform<internal::direction::seal>(crypto_box_curve25519xchacha20poly1305_easy, plaintext, out, nonce, peer, key);
 }
 
 void open_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -382,7 +316,7 @@ std::expected<void, errc> open_into(xchacha_private_ref key,
                                     nonce_ref<curve25519xchacha20poly1305> nonce,
                                     std::nothrow_t) noexcept
 {
-    return transform<direction::open>(crypto_box_curve25519xchacha20poly1305_open_easy, ciphertext, out, nonce, peer, key);
+    return internal::transform<internal::direction::open>(crypto_box_curve25519xchacha20poly1305_open_easy, ciphertext, out, nonce, peer, key);
 }
 
 nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -396,10 +330,7 @@ std::expected<nonce_buffer<curve25519xchacha20poly1305>, errc> seal_into(xchacha
                                                                          std::span<std::byte> out,
                                                                          std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xchacha20poly1305>();
-    auto result = seal_into(key, peer, plaintext, out, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return nonce;
+    return internal::seal_into_with_nonce<curve25519xchacha20poly1305>([&](auto& nonce) { return seal_into(key, peer, plaintext, out, nonce, std::nothrow); });
 }
 
 std::vector<std::byte> seal(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -413,8 +344,7 @@ std::expected<std::vector<std::byte>, errc> seal(xchacha_private_ref key,
                                                  nonce_ref<curve25519xchacha20poly1305> nonce,
                                                  std::nothrow_t) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext.size() + algorithm_traits<curve25519xchacha20poly1305>::mac_size,
-                                                          [&](auto& out) { return seal_into(key, peer, plaintext, out, nonce, std::nothrow); });
+    return internal::allocate_ciphertext<curve25519xchacha20poly1305>(plaintext.size(), [&](auto& out) { return seal_into(key, peer, plaintext, out, nonce, std::nothrow); });
 }
 
 seal_result<curve25519xchacha20poly1305> seal(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext)
@@ -427,10 +357,7 @@ std::expected<seal_result<curve25519xchacha20poly1305>, errc> seal(xchacha_priva
                                                                    std::span<std::byte const> plaintext,
                                                                    std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xchacha20poly1305>();
-    auto result = seal(key, peer, plaintext, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return seal_result<curve25519xchacha20poly1305>{std::move(*result), nonce};
+    return internal::seal_with_nonce<curve25519xchacha20poly1305, seal_result<curve25519xchacha20poly1305>>([&](auto& nonce) { return seal(key, peer, plaintext, nonce, std::nothrow); });
 }
 
 secure_buffer open(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> ciphertext, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -444,9 +371,7 @@ std::expected<secure_buffer, errc> open(xchacha_private_ref key,
                                         nonce_ref<curve25519xchacha20poly1305> nonce,
                                         std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xchacha20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
-    auto const plaintext_size = ciphertext.size() - algorithm_traits<curve25519xchacha20poly1305>::mac_size;
-    return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, peer, ciphertext, out.bytes(), nonce, std::nothrow); });
+    return internal::allocate_plaintext<curve25519xchacha20poly1305>(ciphertext.size(), [&](auto& out) { return open_into(key, peer, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
 secure_buffer open(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, seal_result<curve25519xchacha20poly1305> const& sealed)
@@ -466,7 +391,7 @@ void seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext
 
 std::expected<void, errc> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::seal>(crypto_box_curve25519xchacha20poly1305_easy_afternm, plaintext, out, nonce, key);
+    return internal::transform<internal::direction::seal>(crypto_box_curve25519xchacha20poly1305_easy_afternm, plaintext, out, nonce, key);
 }
 
 void open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -476,7 +401,7 @@ void open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertex
 
 std::expected<void, errc> open_into(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::open>(crypto_box_curve25519xchacha20poly1305_open_easy_afternm, ciphertext, out, nonce, key);
+    return internal::transform<internal::direction::open>(crypto_box_curve25519xchacha20poly1305_open_easy_afternm, ciphertext, out, nonce, key);
 }
 
 nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -486,10 +411,7 @@ nonce_buffer<curve25519xchacha20poly1305> seal_into(xchacha_precomputed_ref key,
 
 std::expected<nonce_buffer<curve25519xchacha20poly1305>, errc> seal_into(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xchacha20poly1305>();
-    auto result = seal_into(key, plaintext, out, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return nonce;
+    return internal::seal_into_with_nonce<curve25519xchacha20poly1305>([&](auto& nonce) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 std::vector<std::byte> seal(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -499,8 +421,7 @@ std::vector<std::byte> seal(xchacha_precomputed_ref key, std::span<std::byte con
 
 std::expected<std::vector<std::byte>, errc> seal(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext.size() + algorithm_traits<curve25519xchacha20poly1305>::mac_size,
-                                                          [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
+    return internal::allocate_ciphertext<curve25519xchacha20poly1305>(plaintext.size(), [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 seal_result<curve25519xchacha20poly1305> seal(xchacha_precomputed_ref key, std::span<std::byte const> plaintext)
@@ -510,10 +431,7 @@ seal_result<curve25519xchacha20poly1305> seal(xchacha_precomputed_ref key, std::
 
 std::expected<seal_result<curve25519xchacha20poly1305>, errc> seal(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<curve25519xchacha20poly1305>();
-    auto result = seal(key, plaintext, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return seal_result<curve25519xchacha20poly1305>{std::move(*result), nonce};
+    return internal::seal_with_nonce<curve25519xchacha20poly1305, seal_result<curve25519xchacha20poly1305>>([&](auto& nonce) { return seal(key, plaintext, nonce, std::nothrow); });
 }
 
 secure_buffer open(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, nonce_ref<curve25519xchacha20poly1305> nonce)
@@ -523,9 +441,7 @@ secure_buffer open(xchacha_precomputed_ref key, std::span<std::byte const> ciphe
 
 std::expected<secure_buffer, errc> open(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, nonce_ref<curve25519xchacha20poly1305> nonce, std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < algorithm_traits<curve25519xchacha20poly1305>::mac_size) return std::unexpected(errc::crypto_failed);
-    auto const plaintext_size = ciphertext.size() - algorithm_traits<curve25519xchacha20poly1305>::mac_size;
-    return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
+    return internal::allocate_plaintext<curve25519xchacha20poly1305>(ciphertext.size(), [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
 secure_buffer open(xchacha_precomputed_ref key, seal_result<curve25519xchacha20poly1305> const& sealed)

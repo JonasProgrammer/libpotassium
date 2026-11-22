@@ -4,14 +4,13 @@
 module;
 
 #include <sodium.h>
-#include <cassert>
 
 module potassium.secretbox;
 
 import potassium.internal;
 import std;
 
-using potassium::internal::sodium_bytes;
+using potassium::internal::unwrap;
 
 namespace potassium::secretbox
 {
@@ -33,54 +32,6 @@ static_assert(xchacha20poly1305_traits::nonce_size == crypto_secretbox_xchacha20
 static_assert(xchacha20poly1305_traits::mac_size == crypto_secretbox_xchacha20poly1305_MACBYTES);
 static_assert(xchacha20poly1305_traits::messagebytes_max == crypto_secretbox_xchacha20poly1305_MESSAGEBYTES_MAX);
 
-template <class T>
-T unwrap(std::expected<T, errc> result)
-{
-    if (!result) throw_error(result.error());
-    if constexpr (!std::is_void_v<T>) return std::move(*result);
-}
-
-template <class Buffer, class Operation>
-std::expected<Buffer, errc> allocate_and_transform(std::size_t size, Operation operation) noexcept
-try
-{
-    Buffer out(size);
-    auto result = operation(out);
-    if (!result) return std::unexpected(result.error());
-    return out;
-}
-catch (std::bad_alloc const&)
-{
-    return std::unexpected(errc::allocation_failed);
-}
-catch (std::length_error const&)
-{
-    return std::unexpected(errc::allocation_failed);
-}
-
-enum class direction
-{
-    seal,
-    open,
-};
-
-template <direction Mode, class A, class Function>
-std::expected<void, errc> transform(Function function, key_ref<A> key, std::span<std::byte const> input, std::span<std::byte> out, nonce_ref<A> nonce) noexcept
-{
-    constexpr auto mac_size = algorithm_traits<A>::mac_size;
-    if constexpr (Mode == direction::open)
-        assert(input.size() < mac_size || out.size() == input.size() - mac_size);
-    else
-        assert(out.size() >= mac_size && out.size() - mac_size == input.size());
-    unsigned char empty{};
-    auto const status = function(out.empty() ? &empty : sodium_bytes(out.data()),
-                                 input.empty() ? &empty : sodium_bytes(input.data()),
-                                 input.size(),
-                                 sodium_bytes(nonce.bytes().data()),
-                                 sodium_bytes(key.bytes().data()));
-    if (status != 0) return std::unexpected(errc::crypto_failed);
-    return {};
-}
 }  // namespace
 
 // XChaCha20-Poly1305
@@ -92,7 +43,7 @@ void seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::s
 
 std::expected<void, errc> seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::seal>(crypto_secretbox_xchacha20poly1305_easy, key, plaintext, out, nonce);
+    return internal::transform<internal::direction::seal>(crypto_secretbox_xchacha20poly1305_easy, plaintext, out, nonce, key);
 }
 
 void open_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xchacha_nonce_ref nonce)
@@ -102,7 +53,7 @@ void open_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, std::
 
 std::expected<void, errc> open_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::open>(crypto_secretbox_xchacha20poly1305_open_easy, key, ciphertext, out, nonce);
+    return internal::transform<internal::direction::open>(crypto_secretbox_xchacha20poly1305_open_easy, ciphertext, out, nonce, key);
 }
 
 xchacha_nonce_buffer seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -112,10 +63,7 @@ xchacha_nonce_buffer seal_into(xchacha_key_ref key, std::span<std::byte const> p
 
 std::expected<xchacha_nonce_buffer, errc> seal_into(xchacha_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<xchacha20poly1305>();
-    auto result = seal_into(key, plaintext, out, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return nonce;
+    return internal::seal_into_with_nonce<xchacha20poly1305>([&](auto& nonce) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 std::vector<std::byte> seal(xchacha_key_ref key, std::span<std::byte const> plaintext, xchacha_nonce_ref nonce)
@@ -125,7 +73,7 @@ std::vector<std::byte> seal(xchacha_key_ref key, std::span<std::byte const> plai
 
 std::expected<std::vector<std::byte>, errc> seal(xchacha_key_ref key, std::span<std::byte const> plaintext, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext.size() + xchacha20poly1305_traits::mac_size, [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
+    return internal::allocate_ciphertext<xchacha20poly1305>(plaintext.size(), [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 xchacha_seal_result seal(xchacha_key_ref key, std::span<std::byte const> plaintext)
@@ -135,10 +83,7 @@ xchacha_seal_result seal(xchacha_key_ref key, std::span<std::byte const> plainte
 
 std::expected<xchacha_seal_result, errc> seal(xchacha_key_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<xchacha20poly1305>();
-    auto result = seal(key, plaintext, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return xchacha_seal_result{std::move(*result), nonce};
+    return internal::seal_with_nonce<xchacha20poly1305, xchacha_seal_result>([&](auto& nonce) { return seal(key, plaintext, nonce, std::nothrow); });
 }
 
 secure_buffer open(xchacha_key_ref key, std::span<std::byte const> ciphertext, xchacha_nonce_ref nonce)
@@ -148,9 +93,7 @@ secure_buffer open(xchacha_key_ref key, std::span<std::byte const> ciphertext, x
 
 std::expected<secure_buffer, errc> open(xchacha_key_ref key, std::span<std::byte const> ciphertext, xchacha_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < xchacha20poly1305_traits::mac_size) return std::unexpected(errc::crypto_failed);
-    auto const plaintext_size = ciphertext.size() - xchacha20poly1305_traits::mac_size;
-    return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
+    return internal::allocate_plaintext<xchacha20poly1305>(ciphertext.size(), [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
 secure_buffer open(xchacha_key_ref key, xchacha_seal_result const& sealed)
@@ -172,7 +115,7 @@ void seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::sp
 
 std::expected<void, errc> seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::seal>(crypto_secretbox_easy, key, plaintext, out, nonce);
+    return internal::transform<internal::direction::seal>(crypto_secretbox_easy, plaintext, out, nonce, key);
 }
 
 void open_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xsalsa_nonce_ref nonce)
@@ -182,7 +125,7 @@ void open_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, std::s
 
 std::expected<void, errc> open_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, std::span<std::byte> out, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return transform<direction::open>(crypto_secretbox_open_easy, key, ciphertext, out, nonce);
+    return internal::transform<internal::direction::open>(crypto_secretbox_open_easy, ciphertext, out, nonce, key);
 }
 
 xsalsa_nonce_buffer seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out)
@@ -192,10 +135,7 @@ xsalsa_nonce_buffer seal_into(xsalsa_key_ref key, std::span<std::byte const> pla
 
 std::expected<xsalsa_nonce_buffer, errc> seal_into(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<xsalsa20poly1305>();
-    auto result = seal_into(key, plaintext, out, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return nonce;
+    return internal::seal_into_with_nonce<xsalsa20poly1305>([&](auto& nonce) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 std::vector<std::byte> seal(xsalsa_key_ref key, std::span<std::byte const> plaintext, xsalsa_nonce_ref nonce)
@@ -205,7 +145,7 @@ std::vector<std::byte> seal(xsalsa_key_ref key, std::span<std::byte const> plain
 
 std::expected<std::vector<std::byte>, errc> seal(xsalsa_key_ref key, std::span<std::byte const> plaintext, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext.size() + xsalsa20poly1305_traits::mac_size, [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
+    return internal::allocate_ciphertext<xsalsa20poly1305>(plaintext.size(), [&](auto& out) { return seal_into(key, plaintext, out, nonce, std::nothrow); });
 }
 
 xsalsa_seal_result seal(xsalsa_key_ref key, std::span<std::byte const> plaintext)
@@ -215,10 +155,7 @@ xsalsa_seal_result seal(xsalsa_key_ref key, std::span<std::byte const> plaintext
 
 std::expected<xsalsa_seal_result, errc> seal(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept
 {
-    auto nonce = generate_nonce<xsalsa20poly1305>();
-    auto result = seal(key, plaintext, nonce, std::nothrow);
-    if (!result) return std::unexpected(result.error());
-    return xsalsa_seal_result{std::move(*result), nonce};
+    return internal::seal_with_nonce<xsalsa20poly1305, xsalsa_seal_result>([&](auto& nonce) { return seal(key, plaintext, nonce, std::nothrow); });
 }
 
 secure_buffer open(xsalsa_key_ref key, std::span<std::byte const> ciphertext, xsalsa_nonce_ref nonce)
@@ -228,9 +165,7 @@ secure_buffer open(xsalsa_key_ref key, std::span<std::byte const> ciphertext, xs
 
 std::expected<secure_buffer, errc> open(xsalsa_key_ref key, std::span<std::byte const> ciphertext, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept
 {
-    if (ciphertext.size() < xsalsa20poly1305_traits::mac_size) return std::unexpected(errc::crypto_failed);
-    auto const plaintext_size = ciphertext.size() - xsalsa20poly1305_traits::mac_size;
-    return allocate_and_transform<secure_buffer>(plaintext_size, [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
+    return internal::allocate_plaintext<xsalsa20poly1305>(ciphertext.size(), [&](auto& out) { return open_into(key, ciphertext, out.bytes(), nonce, std::nothrow); });
 }
 
 secure_buffer open(xsalsa_key_ref key, xsalsa_seal_result const& sealed)

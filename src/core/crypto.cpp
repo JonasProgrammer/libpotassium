@@ -17,6 +17,11 @@ concept AuthenticatedEncryptionTraits = requires {
 
 export namespace potassium
 {
+/// Initialize libsodium. Returns false on initialization failure.
+bool init(std::nothrow_t const&) noexcept;
+/// Initialize libsodium or throw std::runtime_error on failure.
+void init();
+
 /// Operational failures returned by the nonthrowing API.
 enum class errc
 {

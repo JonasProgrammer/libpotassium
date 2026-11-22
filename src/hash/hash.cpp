@@ -6,7 +6,7 @@ module;
 
 /// @brief Fixed-output one-shot and streaming hashes.
 export module potassium.hash;
-import potassium.core;
+export import potassium.core;
 import std;
 
 export namespace potassium::hash

@@ -7,6 +7,8 @@
 It uses the combined message format and operation contracts defined in [core](core.md).
 The interface covers whole messages without associated data, detached tags or stream state.
 
+Import `potassium.secretbox` to access the construction, its core key types, and `potassium::init()`.
+
 ## Algorithms and keys
 
 | Tag in `potassium::secretbox` | libsodium seal / open functions |

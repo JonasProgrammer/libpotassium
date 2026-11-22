@@ -9,6 +9,21 @@ import std;
 namespace potassium
 {
 
+/// @brief Initializes libpotassium and libsodium.
+/// @return @c true on success, @c false on failure.
+bool init(std::nothrow_t const&) noexcept
+{
+    // will return -1 on error, 0 on first init and 1 for subsequent inits
+    return sodium_init() != -1;
+}
+
+/// @brief Initializes libpotassium and libsodium.
+/// @throws std::runtime_error If libsodium initialization fails.
+void init()
+{
+    if (!init(std::nothrow)) throw std::runtime_error{"Failed to initialize sodium"};
+}
+
 crypto_error::crypto_error()
     : std::runtime_error{"Cryptographic operation failed"}
 {

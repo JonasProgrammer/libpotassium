@@ -5,7 +5,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 import potassium.hash;
-import potassium.core;
 import std;
 
 namespace

@@ -7,7 +7,7 @@ module;
 /// @brief Public-key authenticated encryption using Curve25519 with XSalsa20-Poly1305 or XChaCha20-Poly1305.
 /// @details Import @c potassium.box to use the key-pair and message operations in @ref potassium::box.
 export module potassium.box;
-import potassium.core;
+export import potassium.core;
 import std;
 
 /// @brief Seal and open messages using a local private key and a peer public key.

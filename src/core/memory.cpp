@@ -113,7 +113,7 @@ struct allocator : raw_allocator
 /// Disjoint byte ranges can share a page and its lock.
 ///
 /// @code{.cpp}
-/// import libpotassium;
+/// import potassium.core;
 /// import std;
 ///
 /// int main()

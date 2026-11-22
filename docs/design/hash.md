@@ -3,11 +3,11 @@
 
 # Hashing with potassium.hash
 
-Import `potassium.hash` for hashing, or `potassium` for the complete API, including initialization and confidential key owners.
+Import `potassium.hash` for hashing, initialization, and the core key owners, or `potassium` for the complete API.
 Call `potassium::init()` once before using either interface.
 
 ```cpp
-import potassium;
+import potassium.hash;
 import std;
 
 namespace h = potassium::hash;

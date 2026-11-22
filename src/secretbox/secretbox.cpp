@@ -6,7 +6,7 @@ module;
 
 export module potassium.secretbox;
 
-import potassium.core;
+export import potassium.core;
 import std;
 
 /// Symmetric authenticated encryption with a separate nonce.

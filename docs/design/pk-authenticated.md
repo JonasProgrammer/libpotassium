@@ -6,6 +6,8 @@
 The proposed `potassium.box` module provides sender-authenticated encryption between a local key holder and a peer.
 Both direct and precomputed operations follow the [core key, nonce, buffer and error contracts](core.md).
 
+Import `potassium.box` to access the construction, its core key types, and `potassium::init()`.
+
 ## Algorithms and key pairs
 
 | Tag in `potassium::box` | libsodium function prefix |

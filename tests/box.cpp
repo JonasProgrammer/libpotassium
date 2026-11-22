@@ -5,7 +5,7 @@
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-import potassium;
+import potassium.box;
 import std;
 
 using namespace potassium;

@@ -3,7 +3,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
-import potassium;
+import potassium.secretbox;
 import std;
 using namespace potassium;
 using namespace potassium::secretbox;

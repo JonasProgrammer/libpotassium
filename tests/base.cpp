@@ -3,7 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-import potassium;
+import potassium.core;
 import std;
 
 TEST_CASE("Multi-init works", "[base]")

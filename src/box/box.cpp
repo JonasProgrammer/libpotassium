@@ -55,6 +55,42 @@ struct keypair
     potassium::public_key<A> public_key;
     /// Local private key in guarded storage.
     potassium::secret_key<private_key_tag<A>> secret_key;
+
+    /// Generate a matching pair directly in its final storage.
+    keypair()
+        requires std::default_initializable<typename key_traits<keypair>::generator> && KeyPairGenerator<typename key_traits<keypair>::generator, A>
+        : keypair(typename key_traits<keypair>::generator{})
+    {
+    }
+
+    /// Invoke generate once on both destinations and propagate any exception.
+    template <KeyPairGenerator<A> G>
+    explicit keypair(G&& generate)
+        : keypair(for_overwrite)
+    {
+        std::forward<G>(generate)(public_key, secret_key.writable_bytes());
+    }
+
+    /// @warning Both halves contain publicly known all-zero bytes.
+    explicit keypair(zero_t)
+        : public_key{}
+        , secret_key(zero)
+    {
+    }
+
+    /// @pre Populate both halves with a matching pair before cryptographic use.
+    explicit keypair(for_overwrite_t)
+        : secret_key(for_overwrite)
+    {
+    }
+
+    /// Adopt a pair from existing owners.
+    /// @pre The public key corresponds to the private key.
+    keypair(potassium::public_key<A> pub, potassium::secret_key<private_key_tag<A>>&& secret) noexcept
+        : public_key(pub)
+        , secret_key(std::move(secret))
+    {
+    }
 };
 
 }  // namespace potassium::box
@@ -117,9 +153,6 @@ struct key_traits<box::private_key_tag<A>>
 template <class A>
 struct key_traits<box::precomputed_key_tag<A>>
 {
-    /// Default generator for this key purpose.
-    using generator = random_key_generator;
-
     /// Confidential key length in bytes.
     static constexpr std::size_t size = algorithm_traits<A>::precomputed_key_size;
 };
@@ -877,6 +910,24 @@ std::expected<secure_buffer, errc> open(xchacha_precomputed_ref key, seal_result
 
 /// @}
 
+}  // namespace potassium::box
+
+export namespace potassium
+{
+/// Select the native Box generator for algorithms with a keypair backend.
+template <class A>
+    requires requires(public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret) { box::generate_keypair_into(pub, secret); }
+struct key_traits<box::keypair<A>>
+{
+    struct generator
+    {
+        void operator()(public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret) const { box::generate_keypair_into(pub, secret); }
+    };
+};
+}  // namespace potassium
+
+export namespace potassium::box
+{
 /// @name Owning key-pair generation
 /// @{
 
@@ -888,7 +939,7 @@ template <class A = box_default>
 std::expected<keypair<A>, errc> generate_keypair(std::nothrow_t tag) noexcept
 try
 {
-    keypair<A> pair;
+    keypair<A> pair{for_overwrite};
     auto status = generate_keypair_into(pair.public_key, pair.secret_key.writable_bytes(), std::nothrow);
     if (!status) return std::unexpected(status.error());
     return pair;

@@ -11,6 +11,83 @@ import std;
 using namespace potassium;
 using namespace potassium::box;
 
+TEMPLATE_TEST_CASE("Box invokes the supplied generator in its original value category", "[box][keys]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+{
+    using A = TestType;
+    using output = std::span<std::byte, algorithm_traits<A>::secret_key_size>;
+
+    struct generator
+    {
+        std::array<unsigned, 3>& calls;
+
+        explicit generator(std::array<unsigned, 3>& counts)
+            : calls(counts)
+        {
+        }
+
+        generator(generator const&) = delete;
+
+        void operator()(public_key<A>& pub, output secret) &
+        {
+            ++calls[0];
+            generate_keypair_into(pub, secret);
+        }
+
+        void operator()(public_key<A>& pub, output secret) const&
+        {
+            ++calls[1];
+            generate_keypair_into(pub, secret);
+        }
+
+        void operator()(public_key<A>& pub, output secret) &&
+        {
+            ++calls[2];
+            generate_keypair_into(pub, secret);
+        }
+
+        void operator()(public_key<A>&, output) const&& = delete;
+    };
+
+    static_assert(!std::constructible_from<keypair<A>, generator const&&>);
+    static_assert(!std::constructible_from<keypair<A>, int (*)(public_key<A>&, output)>);
+    std::array<unsigned, 3> calls{};
+    generator gen{calls};
+    keypair<A> sender{gen};
+    keypair<A> recipient{std::as_const(gen)};
+    keypair<A> other{std::move(gen)};
+    CHECK(calls == std::array{1U, 1U, 1U});
+    auto sealed = seal(sender.secret_key, recipient.public_key, {});
+    auto opened = open(recipient.secret_key, sender.public_key, sealed);
+    CHECK(opened.bytes().empty());
+
+    auto fail = [](public_key<A>&, output secret)
+    {
+        secret.front() = std::byte{1};
+        throw crypto_error{};
+    };
+    CHECK_THROWS_AS(keypair<A>{fail}, crypto_error);
+}
+
+TEMPLATE_TEST_CASE("Box supports zeroed, overwrite and factory keypairs", "[box][keys]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+{
+    using A = TestType;
+    keypair<A> zeroed{zero};
+    auto is_zero = [](std::byte b)
+    {
+        return b == std::byte{};
+    };
+    CHECK(std::ranges::all_of(zeroed.public_key.storage, is_zero));
+    CHECK(std::ranges::all_of(zeroed.secret_key.ref().bytes(), is_zero));
+    keypair<A> pair{for_overwrite};
+    generate_keypair_into(pair.public_key, pair.secret_key.writable_bytes());
+    auto sender = generate_keypair<A>(std::nothrow);
+    REQUIRE(sender.has_value());
+    auto sealed = seal(sender->secret_key, pair.public_key, {});
+    auto opened = open(pair.secret_key, sender->public_key, sealed);
+    CHECK(opened.bytes().empty());
+    static_assert(!std::default_initializable<secret_key<precomputed_key_tag<A>>>);
+}
+
 TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium", "[box]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
 {
     using A = TestType;
@@ -22,9 +99,9 @@ TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium"
     static_assert(!std::convertible_to<public_key<A> const&&, public_key_ref<A>>);
     static_assert(!std::convertible_to<public_key<A>&&, public_key_ref<A>>);
     static_assert(!std::convertible_to<secret_key<private_key_tag<A>>&, key_ref<precomputed_key_tag<A>>>);
-    auto alice = generate_keypair<A>();
+    keypair<A> alice;
     public_key<A> bob_public;
-    key_buffer_storage<private_key_tag<A>> bob_secret;
+    key_buffer_storage<private_key_tag<A>> bob_secret{for_overwrite};
     generate_keypair_into(bob_public, bob_secret.writable_bytes());
     auto sender = precompute(alice.secret_key, bob_public);
     auto recipient = precompute(bob_secret, alice.public_key);

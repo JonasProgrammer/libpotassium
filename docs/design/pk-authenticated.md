@@ -18,7 +18,13 @@ Each specialization publishes the backend's platform-specific `messagebytes_max`
 Backend assertions verify these dimensions and the default `crypto_box_PRIMITIVE` value of `"curve25519xsalsa20poly1305"`.
 The XChaCha variant requires its named backend symbols.
 
-For algorithm `A`, `generate_keypair<A>()` produces a move-only pair containing a `public_key<A>` and a confidential owner tagged with `private_key_tag<A>`.
+For algorithm `A`, both `keypair<A>{}` and `generate_keypair<A>()` produce a matching public key and guarded private key in a move-only owner.
+Default construction selects `key_traits<keypair<A>>::generator`.
+A custom generator passed to the explicit constructor receives the public owner by mutable reference and the private destination as a fixed-extent writable byte span.
+The constructor forwards the generator in its original value category and calls it once.
+The generator must populate both halves with a matching pair on success and may throw on failure.
+Use `keypair<A>{potassium::for_overwrite}` when importing or deriving both halves, or `keypair<A>{potassium::zero}` for explicitly all-zero storage.
+The existing `generate_keypair<A>(std::nothrow)` factory reports allocation and backend failures through its result.
 Key generation writes directly into the final destinations, including caller-owned storage in the corresponding generation-into operation.
 Deterministic key generation is a possible extension and would treat its seed as confidential.
 
@@ -36,6 +42,7 @@ Direct operations use the backend's `easy` and `open_easy` functions.
 The name `box::seal` denotes sender-authenticated encryption here, whereas libsodium reserves `crypto_box_seal` for anonymous sealed boxes.
 
 For repeated messages, `box::precompute(local.secret_key, peer.public_key)` uses `beforenm` to derive a confidential owner tagged with `precomputed_key_tag<A>`.
+Precomputed key owners require derivation or explicit initialization.
 The shared-key overloads take this one key in place of the direct key arguments and call `easy_afternm` or `open_easy_afternm`.
 Private, precomputed and SecretBox keys cannot implicitly convert between roles.
 With matching keys, plaintext and nonce, direct and precomputed encryption produce identical ciphertext.

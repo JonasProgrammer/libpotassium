@@ -229,6 +229,12 @@ public:
     operator public_key_ref<A>() const&& = delete;
 };
 
+/// A generator writes a matching public and private key into both destinations or throws.
+template <class G, class A>
+concept KeyPairGenerator = requires(G&& generate, public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret) {
+    { std::forward<G>(generate)(pub, std::move(secret)) } -> std::same_as<void>;
+};
+
 namespace detail
 {
 template <class KeyTag>

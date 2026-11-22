@@ -112,6 +112,11 @@ public:
     {
     }
 
+    template <class Byte>
+    key_ref(std::array<Byte, span_type::extent> const&&) = delete ("A temporary array cannot back a borrowed view");
+    template <std::size_t N>
+    key_ref(std::byte const (&&)[N]) = delete ("A temporary array cannot back a borrowed view");
+
     /// @return The borrowed byte range.
     constexpr span_type bytes() const noexcept { return bytes_; }
 
@@ -133,6 +138,11 @@ public:
         : bytes_(bytes)
     {
     }
+
+    template <class Byte>
+    nonce_ref(std::array<Byte, span_type::extent> const&&) = delete ("A temporary array cannot back a borrowed view");
+    template <std::size_t N>
+    nonce_ref(std::byte const (&&)[N]) = delete ("A temporary array cannot back a borrowed view");
 
     /// @return The borrowed byte range.
     constexpr span_type bytes() const noexcept { return bytes_; }
@@ -199,6 +209,11 @@ public:
         : bytes_(bytes)
     {
     }
+
+    template <class Byte>
+    public_key_ref(std::array<Byte, span_type::extent> const&&) = delete ("A temporary array cannot back a borrowed view");
+    template <std::size_t N>
+    public_key_ref(std::byte const (&&)[N]) = delete ("A temporary array cannot back a borrowed view");
 
     /// @return The borrowed byte range.
     constexpr span_type bytes() const noexcept { return bytes_; }

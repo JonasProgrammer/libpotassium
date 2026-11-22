@@ -59,6 +59,22 @@ static_assert(potassium::Algorithm<BoxAlgorithm>);
 static_assert(!potassium::Algorithm<PrivateKeyTag>);
 static_assert(!potassium::Algorithm<RuntimeNonceSize>);
 
+template <class Ref>
+consteval bool borrows_only_live_arrays()
+{
+    using Array = std::array<std::byte, Ref::span_type::extent>;
+    using ConstElements = std::array<std::byte const, Ref::span_type::extent>;
+    using Raw = std::byte[Ref::span_type::extent];
+    static_assert(std::constructible_from<Ref, Raw&> && !std::constructible_from<Ref, Raw&&>);
+    static_assert(std::constructible_from<Ref, ConstElements&> && !std::constructible_from<Ref, ConstElements&&>);
+    return std::constructible_from<Ref, Array&> && std::constructible_from<Ref, Array const&> && !std::constructible_from<Ref, Array&&> && !std::constructible_from<Ref, Array const&&> &&
+           std::constructible_from<Ref, typename Ref::span_type>;
+}
+
+static_assert(borrows_only_live_arrays<potassium::key_ref<PrivateKeyTag>>());
+static_assert(borrows_only_live_arrays<potassium::nonce_ref<BoxAlgorithm>>());
+static_assert(borrows_only_live_arrays<potassium::public_key_ref<BoxAlgorithm>>());
+
 using RawKey = std::span<std::byte const, 48>;
 using PrivateRef = potassium::key_ref<PrivateKeyTag>;
 using SharedRef = potassium::key_ref<SharedKeyTag>;

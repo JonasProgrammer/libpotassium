@@ -25,6 +25,23 @@ template <class S>
 concept finalizable = requires(S&& s) { std::forward<S>(s).finalize(); };
 
 template <class S>
+concept finalizable_for_reuse = requires(S&& s) { std::forward<S>(s).finalize_for_reuse(); };
+
+template <class S>
+constexpr bool reuses_only_as_mutable_rvalue = finalizable_for_reuse<S> && !finalizable_for_reuse<S&> && !finalizable_for_reuse<S const&> && !finalizable_for_reuse<S const>;
+
+static_assert(reuses_only_as_mutable_rvalue<unkeyed_stream> && reuses_only_as_mutable_rvalue<keyed_stream>);
+
+using inplace_token = h::hash_traits<default_hash>::default_storage::transfer_token;
+using guarded_token = h::keyed_hash_traits<default_hash>::default_storage::transfer_token;
+static_assert(std::is_empty_v<inplace_token>);
+static_assert(!std::default_initializable<inplace_token> && !std::default_initializable<guarded_token>);
+static_assert(noexcept(std::declval<unkeyed_stream>().finalize_for_reuse()));
+static_assert(noexcept(std::declval<keyed_stream>().finalize_for_reuse()));
+static_assert(noexcept(std::declval<unkeyed_stream&>().reset(std::declval<inplace_token>())));
+static_assert(noexcept(std::declval<keyed_stream&>().reset(std::declval<key&>(), std::declval<guarded_token>())));
+
+template <class S>
 constexpr bool finalizes_only_as_mutable_rvalue = finalizable<S> && !finalizable<S&> && !finalizable<S const&> && !finalizable<S const>;
 
 static_assert(finalizes_only_as_mutable_rvalue<unkeyed_stream> && finalizes_only_as_mutable_rvalue<keyed_stream>);
@@ -94,8 +111,9 @@ void check_vector(std::span<std::byte const> message, std::string_view expected)
         stream.update({});
         stream.update(message.subspan(n));
 
-        CHECK(std::move(stream).finalize() == result);
-        stream.reset();
+        auto [digest, reuse] = std::move(stream).finalize_for_reuse();
+        CHECK(digest == result);
+        stream.reset(std::move(reuse));
     }
 
     CHECK(std::move(stream).finalize() == h::hash<A>({}));
@@ -165,8 +183,9 @@ TEMPLATE_TEST_CASE("Resetting a hash stream produces the same digest as a fresh 
 
     SECTION("Reset after finalizing the previous message")
     {
-        REQUIRE(std::move(reused).finalize() == h::hash<TestType>(previous_message));
-        reused.reset();
+        auto [digest, reuse] = std::move(reused).finalize_for_reuse();
+        REQUIRE(digest == h::hash<TestType>(previous_message));
+        reused.reset(std::move(reuse));
     }
 
     auto message = std::as_bytes(std::span{"second message"sv});
@@ -192,8 +211,9 @@ TEMPLATE_TEST_CASE("Resetting a keyed BLAKE2b stream uses the replacement key", 
 
     SECTION("Replace the key after finalization")
     {
-        REQUIRE(std::move(reused).finalize() == h::hash<TestType>(original_key, previous_message));
-        reused.reset(replacement_key);
+        auto [tag, reuse] = std::move(reused).finalize_for_reuse();
+        REQUIRE(tag == h::hash<TestType>(original_key, previous_message));
+        reused.reset(replacement_key, std::move(reuse));
     }
 
     auto message = std::as_bytes(std::span{"second message"sv});
@@ -208,22 +228,23 @@ namespace
 {
 using State = h::hash_traits<default_hash>::state_type;
 
-class observed_storage
+class observed_storage : public h::inplace_hash_state<State>
 {
-    State state_{};
-
 public:
     static inline State* current;
     static inline bool clean_at_release;
 
-    observed_storage() { current = &state_; }
-
-    observed_storage(observed_storage const&) = delete;
-    observed_storage& operator=(observed_storage const&) = delete;
+    observed_storage() { current = &get(); }
 
     static bool erased()
     {
         return std::ranges::all_of(std::as_bytes(std::span{current, 1}), [](std::byte b) { return b == std::byte{}; });
+    }
+
+    void assign_token(transfer_token&& token) & noexcept
+    {
+        CHECK(erased());
+        h::inplace_hash_state<State>::assign_token(std::move(token));
     }
 
     ~observed_storage()
@@ -231,8 +252,6 @@ public:
         clean_at_release = erased();
         current = nullptr;
     }
-
-    State& get() & noexcept { return state_; }
 };
 
 struct failing_storage : h::guarded_hash_state<State>
@@ -250,10 +269,11 @@ TEST_CASE("Keyed hash state is wiped on finalization and destruction", "[hash]")
         h::keyed_hasher<default_hash, observed_storage> stream(secret);
         stream.update(message);
 
-        CHECK(std::move(stream).finalize() == h::hash<default_hash>(secret, message));
+        auto [tag, reuse] = std::move(stream).finalize_for_reuse();
+        CHECK(tag == h::hash<default_hash>(secret, message));
         CHECK(observed_storage::erased());
 
-        stream.reset(secret);
+        stream.reset(secret, std::move(reuse));
     }
 
     CHECK(observed_storage::clean_at_release);
@@ -268,14 +288,26 @@ TEST_CASE("Unkeyed hash state is wiped on finalization and destruction", "[hash]
         stream.update(message);
         stream.reset();
 
-        CHECK(std::move(stream).finalize() == h::hash<default_hash>({}));
+        auto [digest, reuse] = std::move(stream).finalize_for_reuse();
+        CHECK(digest == h::hash<default_hash>({}));
         CHECK(observed_storage::erased());
 
-        stream.reset();
+        stream.reset(std::move(reuse));
         stream.update(message);
     }
 
     CHECK(observed_storage::clean_at_release);
+}
+
+TEST_CASE("An in-place token restarts an active destination after its source is destroyed", "[hash][reset]")
+{
+    auto [digest, reuse] = unkeyed_stream{}.finalize_for_reuse();
+    CHECK(digest == h::hash<default_hash>({}));
+
+    h::hasher<default_hash, observed_storage> destination;
+    destination.update(std::as_bytes(std::span{"abandoned input"sv}));
+    destination.reset(std::move(reuse));
+    CHECK(std::move(destination).finalize() == h::hash<default_hash>({}));
 }
 
 TEST_CASE("Hash stream factories report allocation failure", "[hash]")
@@ -311,6 +343,46 @@ TEST_CASE("Guarded hash storage preserves alignment and address across moves", "
     h::guarded_hash_state<State> replacement;
     replacement = std::move(transferred);
     CHECK(address == &replacement.get());
+}
+
+TEST_CASE("Keyed BLAKE2b returns the original guarded allocation wiped after reuse", "[hash][reset]")
+{
+    h::guarded_hash_state<State> storage;
+    auto* original = &storage.get();
+    key first_key;
+    key next_key;
+    keyed_stream stream(first_key);
+    auto message = std::as_bytes(std::span{"guarded reuse"sv});
+    stream.update(message);
+
+    stream.reset(next_key, storage.make_token());
+    REQUIRE_FALSE(storage.has_value());
+    stream.update(message);
+    auto [tag, reuse] = std::move(stream).finalize_for_reuse();
+    CHECK(tag == h::hash<default_hash>(next_key, message));
+
+    storage.assign_token(std::move(reuse));
+    REQUIRE(storage.has_value());
+    REQUIRE(&storage.get() == original);
+    CHECK(std::ranges::all_of(std::as_bytes(std::span{&storage.get(), 1}), [](std::byte b) { return b == std::byte{}; }));
+}
+
+TEST_CASE("A token restarts a moved-from keyed stream independently of its new owner", "[hash][reset]")
+{
+    key original;
+    key replacement;
+    auto message = std::as_bytes(std::span{"pending input"sv});
+    keyed_stream stream(original);
+    stream.update(message);
+    auto owner = std::move(stream);
+
+    auto [tag, reuse] = keyed_stream(replacement).finalize_for_reuse();
+    CHECK(tag == h::hash<default_hash>(replacement, {}));
+    stream.reset(replacement, std::move(reuse));
+    stream.update(message);
+
+    CHECK(std::move(owner).finalize() == h::hash<default_hash>(original, message));
+    CHECK(std::move(stream).finalize() == h::hash<default_hash>(replacement, message));
 }
 
 TEST_CASE("Moving a keyed hash stream preserves its computation", "[hash]")

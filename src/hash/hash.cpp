@@ -4,6 +4,10 @@
 module;
 #include <sodium.h>
 
+#ifdef POTASSIUM_HASH_ASSERTS
+#include <cassert>
+#endif
+
 /// @brief Fixed-output one-shot and streaming hashes.
 export module potassium.hash;
 export import potassium.core;
@@ -60,12 +64,21 @@ void erase(State& state) noexcept
 {
     wipe(std::as_writable_bytes(std::span{&state, 1}));
 }
+
+template <class StorageType>
+constexpr bool always_holds_value = false;
+
+template <typename E, std::size_t N>
+    requires std::is_trivial_v<E>
+constexpr bool always_holds_value<std::array<E, N>> = true;
+
 }  // namespace potassium::hash::detail
 
 export namespace potassium::hash
 {
 /// Immobile state, erased before its storage is released.
 template <class State>
+    requires detail::always_holds_value<State>
 class inplace_hash_state
 {
     State state_{};
@@ -79,6 +92,26 @@ public:
 
     /// Return the owned state.
     State& get() & noexcept { return state_; }
+
+    /// Move-only token for reuse of this storage policy.
+    class transfer_token
+    {
+        friend class inplace_hash_state;
+        transfer_token() = default;
+
+    public:
+        transfer_token(transfer_token&&) noexcept = default;
+        transfer_token& operator=(transfer_token&&) noexcept = default;
+    };
+
+    /// Whether get() can access the state.
+    bool has_value() const noexcept { return true; }
+
+    /// Issue a reuse token. @pre This owner holds a state.
+    [[nodiscard]] transfer_token make_token() & noexcept { return transfer_token{}; }
+
+    /// Provide storage for a fresh computation. @pre The token is unconsumed.
+    void assign_token(transfer_token&&) & noexcept {}
 };
 
 /// Guarded state whose allocation transfers intact across moves.
@@ -98,13 +131,45 @@ public:
 
     /// @pre This owner holds a live allocation.
     State& get() & noexcept { return *state_; }
+
+    /// Move-only token for reuse of this storage policy.
+    class transfer_token
+    {
+        friend class guarded_hash_state;
+        decltype(state_) allocation_;
+
+        explicit transfer_token(decltype(state_)&& allocation) noexcept
+            : allocation_(std::move(allocation))
+        {
+        }
+
+    public:
+        transfer_token(transfer_token&&) noexcept = default;
+        transfer_token& operator=(transfer_token&&) noexcept = default;
+    };
+
+    /// Whether get() can access the state.
+    bool has_value() const noexcept { return !state_.valueless_after_move(); }
+
+    /// Issue a reuse token. @pre This owner holds a state.
+    [[nodiscard]] transfer_token make_token() & noexcept { return transfer_token{std::move(state_)}; }
+
+    /// Provide storage for a fresh computation. @pre The token is unconsumed.
+    void assign_token(transfer_token&& token) & noexcept { state_ = std::move(token.allocation_); }
 };
 
 /// Storage owns a state, erases it on release, and transfers ownership on any move.
 template <class Storage, class State>
-concept hash_state_storage = std::default_initializable<Storage> && !std::is_copy_constructible_v<Storage> && !std::is_copy_assignable_v<Storage> && requires(Storage& s) {
-    { s.get() } noexcept -> std::same_as<State&>;
-};
+concept hash_state_storage =
+        std::default_initializable<Storage> && !std::is_copy_constructible_v<Storage> && !std::is_copy_assignable_v<Storage> && requires(Storage& s, typename Storage::transfer_token&& token) {
+            { s.get() } noexcept -> std::same_as<State&>;
+            requires std::is_nothrow_move_constructible_v<typename Storage::transfer_token>;
+            requires std::is_nothrow_destructible_v<typename Storage::transfer_token>;
+            requires(!std::is_copy_constructible_v<typename Storage::transfer_token> && !std::is_copy_assignable_v<typename Storage::transfer_token>);
+            { std::as_const(s).has_value() } noexcept -> std::same_as<bool>;
+            { s.make_token() } noexcept -> std::same_as<typename Storage::transfer_token>;
+            { s.assign_token(std::move(token)) } noexcept -> std::same_as<void>;
+        };
 template <class A>
 struct hash_traits;
 template <class A>
@@ -149,6 +214,10 @@ struct ops<blake2b<N>> : blake2b_ops
 
 export namespace potassium::hash
 {
+
+template <>
+constexpr bool detail::always_holds_value<crypto_generichash_blake2b_state> = true;
+
 template <std::size_t N>
 struct hash_traits<blake2b<N>> : detail::traits<crypto_generichash_blake2b_state, N>
 {
@@ -171,9 +240,15 @@ struct keyed_hash_traits<blake2b<N>>
 };
 
 template <>
+constexpr bool detail::always_holds_value<crypto_hash_sha256_state> = true;
+
+template <>
 struct hash_traits<sha256> : detail::traits<crypto_hash_sha256_state, crypto_hash_sha256_BYTES>
 {
 };
+
+template <>
+constexpr bool detail::always_holds_value<crypto_hash_sha512_state> = true;
 
 template <>
 struct hash_traits<sha512> : detail::traits<crypto_hash_sha512_state, crypto_hash_sha512_BYTES>
@@ -181,9 +256,15 @@ struct hash_traits<sha512> : detail::traits<crypto_hash_sha512_state, crypto_has
 };
 
 template <>
+constexpr bool detail::always_holds_value<crypto_hash_sha3256_state> = true;
+
+template <>
 struct hash_traits<sha3_256> : detail::traits<crypto_hash_sha3256_state, crypto_hash_sha3256_BYTES>
 {
 };
+
+template <>
+constexpr bool detail::always_holds_value<crypto_hash_sha3512_state> = true;
 
 template <>
 struct hash_traits<sha3_512> : detail::traits<crypto_hash_sha3512_state, crypto_hash_sha3512_BYTES>
@@ -358,34 +439,31 @@ template <keyed_hash_algorithm A, detail::compatible_key K>
 
 namespace potassium::hash::detail
 {
-// Inactive finalized streams still own storage. A moved-from stream has none.
-enum class phase
-{
-    active,
-    finalized,
-    moved_from,
-};
 
 /// Common ownership and consumption rules for streaming hashes.
 template <class A, class Storage>
 class stream_state
 {
     Storage storage_;
-    phase phase_ = phase::finalized;
+#ifdef POTASSIUM_HASH_ASSERTS
+    bool active_ = false;
+#endif
 
 public:
     stream_state() = default;
 
     ~stream_state()
     {
-        if (phase_ == phase::active) erase(storage_.get());
+        if (storage_.has_value()) erase(storage_.get());
     }
 
     /// Transfer ownership and invalidate the source.
     stream_state(stream_state&& other) noexcept
         requires std::is_nothrow_move_constructible_v<Storage>
         : storage_(std::move(other.storage_))
-        , phase_(std::exchange(other.phase_, phase::moved_from))
+#ifdef POTASSIUM_HASH_ASSERTS
+        , active_(std::exchange(other.active_, false))
+#endif
     {
     }
 
@@ -396,25 +474,49 @@ public:
         if (this != &other)
         {
             storage_ = std::move(other.storage_);
-            phase_ = std::exchange(other.phase_, phase::moved_from);
+#ifdef POTASSIUM_HASH_ASSERTS
+            active_ = std::exchange(other.active_, false);
+#endif
         }
         return *this;
     }
 
-    /// Erase any pending input and return storage for initialization.
-    auto& restart() noexcept
+    /// Initialize a fresh or wiped state.
+    void initialize(std::span<std::byte const> key = {}) noexcept
     {
-        if (phase_ == phase::moved_from) std::terminate();
-        auto& state = storage_.get();
-        if (phase_ == phase::active) erase(state);
-        phase_ = phase::active;
-        return state;
+        if constexpr (keyed_hash_algorithm<A>)
+            ops<A>::init(storage_.get(), hash_traits<A>::digest_size, key);
+        else
+            ops<A>::init(storage_.get());
+#ifdef POTASSIUM_HASH_ASSERTS
+        active_ = true;
+#endif
+    }
+
+    /// Discard pending input. @pre The stream is active.
+    void reset(std::span<std::byte const> key = {}) noexcept
+    {
+#ifdef POTASSIUM_HASH_ASSERTS
+        assert(active_);
+#endif
+        erase(storage_.get());
+        initialize(key);
+    }
+
+    /// Start a computation using a live token, including on a moved-from stream.
+    void reset(typename Storage::transfer_token&& token, std::span<std::byte const> key = {}) noexcept
+    {
+        if (storage_.has_value()) erase(storage_.get());
+        storage_.assign_token(std::move(token));
+        initialize(key);
     }
 
     /// Absorb a chunk. @pre The stream is active.
     void update(std::span<std::byte const> message) & noexcept
     {
-        if (phase_ != phase::active) std::terminate();
+#ifdef POTASSIUM_HASH_ASSERTS
+        assert(active_);
+#endif
         ops<A>::update(storage_.get(), message);
     }
 
@@ -422,12 +524,19 @@ public:
     template <class Result>
     [[nodiscard]] Result finish() noexcept
     {
-        if (phase_ != phase::active) std::terminate();
+#ifdef POTASSIUM_HASH_ASSERTS
+        assert(std::exchange(active_, false));
+#endif
         Result result;
         ops<A>::final(storage_.get(), result.storage);
         erase(storage_.get());
-        phase_ = phase::finalized;
         return result;
+    }
+
+    template <class Result>
+    [[nodiscard]] std::pair<Result, typename Storage::transfer_token> finish_for_reuse() noexcept
+    {
+        return {finish<Result>(), storage_.make_token()};
     }
 };
 }  // namespace potassium::hash::detail
@@ -448,13 +557,16 @@ class hasher
     detail::stream_state<A, Storage> state_;
 
 public:
-    hasher() noexcept(std::is_nothrow_default_constructible_v<Storage>) { reset(); }
+    hasher() noexcept(std::is_nothrow_default_constructible_v<Storage>) { state_.initialize(); }
 
     /// Absorb a chunk. @pre The stream is active.
     void update(std::span<std::byte const> message) & noexcept { state_.update(message); }
 
     /// Finish the digest and wipe the state. @pre The stream is active.
     [[nodiscard]] digest_buffer<A> finalize() && noexcept { return state_.template finish<digest_buffer<A>>(); }
+
+    /// Finish and wipe the state, returning the result and a reuse token. @pre The stream is active.
+    [[nodiscard]] auto finalize_for_reuse() && noexcept { return state_.template finish_for_reuse<digest_buffer<A>>(); }
 
     /// A named stream must explicitly be consumed.
     digest_buffer<A> finalize() & = delete ("finalize() consumes the hasher: use std::move(hasher).finalize()");
@@ -463,14 +575,11 @@ public:
     /// Finalization requires a mutable stream.
     digest_buffer<A> finalize() const&& = delete ("finalize() requires a mutable rvalue hasher");
 
-    /// Discard any partial input and start again. @pre The stream owns its storage.
-    void reset() & noexcept LIBPOTASSIUM_MOVE_RESET
-    {
-        if constexpr (keyed_hash_algorithm<A>)
-            detail::ops<A>::init(state_.restart(), hash_traits<A>::digest_size);
-        else
-            detail::ops<A>::init(state_.restart());
-    }
+    /// Discard any partial input and start again. @pre The stream is active.
+    void reset() & noexcept { state_.reset(); }
+
+    /// Start again from any stream state. @pre The token is unconsumed.
+    LIBPOTASSIUM_MOVE_RESET void reset(typename Storage::transfer_token&& token) & noexcept { state_.reset(std::move(token)); }
 };
 
 /// Keyed BLAKE2b stream with move-only guarded state by default.
@@ -485,7 +594,7 @@ public:
     template <detail::compatible_key K>
     explicit keyed_hasher(K&& key) noexcept(std::is_nothrow_default_constructible_v<Storage>)
     {
-        reset(std::forward<K>(key));
+        state_.initialize(detail::key_view(std::forward<K>(key)).bytes());
     }
 
     /// Absorb a chunk. @pre The stream is active.
@@ -494,6 +603,9 @@ public:
     /// Finish the digest and wipe the state. @pre The stream is active.
     [[nodiscard]] tag_buffer<A> finalize() && noexcept { return state_.template finish<tag_buffer<A>>(); }
 
+    /// Finish and wipe the state, returning the result and a reuse token. @pre The stream is active.
+    [[nodiscard]] auto finalize_for_reuse() && noexcept { return state_.template finish_for_reuse<tag_buffer<A>>(); }
+
     /// A named stream must explicitly be consumed.
     tag_buffer<A> finalize() & = delete ("finalize() consumes the hasher: use std::move(hasher).finalize()");
     /// Finalization requires a mutable stream.
@@ -501,11 +613,18 @@ public:
     /// Finalization requires a mutable stream.
     tag_buffer<A> finalize() const&& = delete ("finalize() requires a mutable rvalue hasher");
 
-    /// Restart under the supplied key. @pre The stream owns its storage.
+    /// Restart under the supplied key. @pre The stream is active.
     template <detail::compatible_key K>
     void reset(K&& key) & noexcept
     {
-        detail::ops<A>::init(state_.restart(), hash_traits<A>::digest_size, detail::key_view(std::forward<K>(key)).bytes());
+        state_.reset(detail::key_view(std::forward<K>(key)).bytes());
+    }
+
+    /// Start under the supplied key from any stream state. @pre The token is unconsumed.
+    template <detail::compatible_key K>
+    LIBPOTASSIUM_MOVE_RESET void reset(K&& key, typename Storage::transfer_token&& token) & noexcept
+    {
+        state_.reset(std::move(token), detail::key_view(std::forward<K>(key)).bytes());
     }
 };
 

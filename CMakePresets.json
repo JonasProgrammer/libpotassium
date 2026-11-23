@@ -21,7 +21,8 @@
       "displayName": "Debug",
       "inherits": "ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LIBPOTASSIUM_HASH_ASSERTS": true
       }
     },
     {

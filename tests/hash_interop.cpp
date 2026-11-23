@@ -52,14 +52,16 @@ void check_key(std::string_view expected)
     stream->update(message.first(127));
     stream->update({});
     stream->update(message.subspan(127));
-    CHECK(std::move(*stream).finalize() == one_shot);
+    auto [chunked, chunked_token] = std::move(*stream).finalize_for_reuse();
+    CHECK(chunked == one_shot);
 
-    stream->reset(key);
+    stream->reset(key, std::move(chunked_token));
     stream->update(message);
     key.writable_bytes()[0] ^= std::byte{1};
-    CHECK(std::move(*stream).finalize() == one_shot);
+    auto [whole, whole_token] = std::move(*stream).finalize_for_reuse();
+    CHECK(whole == one_shot);
 
-    stream->reset(key);
+    stream->reset(key, std::move(whole_token));
     stream->update(message);
 
     stream->reset(key);

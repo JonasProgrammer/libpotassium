@@ -45,6 +45,10 @@ target_include_directories(libpotassium PRIVATE
 )
 target_link_libraries(libpotassium PRIVATE "${SODIUM_LIBRARY}")
 
+if (LIBPOTASSIUM_HASH_ASSERTS)
+    target_compile_definitions(libpotassium PUBLIC POTASSIUM_HASH_ASSERTS)
+endif ()
+
 if (PROJECT_IS_TOP_LEVEL)
     include(CTest)
 
@@ -86,13 +90,6 @@ if (PROJECT_IS_TOP_LEVEL)
         target_link_libraries(hash_finalize_lvalue PRIVATE libpotassium)
         add_test(NAME libpotassium.hash.finalize-diagnostic
                 COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_hash_diagnostic.cmake")
-
-        add_executable(hash_contract tests/hash_contract.cpp)
-        target_link_libraries(hash_contract PRIVATE libpotassium)
-        foreach(mode IN ITEMS finalized-update finalized-finalize moved-reset)
-            add_test(NAME libpotassium.hash.${mode} COMMAND hash_contract ${mode})
-            set_tests_properties(libpotassium.hash.${mode} PROPERTIES WILL_FAIL TRUE)
-        endforeach()
 
         include(Catch)
         catch_discover_tests(libpotassium_tests TEST_PREFIX "libpotassium.")

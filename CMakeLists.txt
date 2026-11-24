@@ -12,18 +12,18 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 find_path(SODIUM_INCLUDE_DIR NAMES sodium.h REQUIRED)
 find_library(SODIUM_LIBRARY NAMES sodium REQUIRED)
 
-configure_file(src/internal/version.hpp.in generated/libpotassium/internal/version.hpp @ONLY)
+configure_file(src/base.cpp.in generated/base.cpp @ONLY)
 
 add_library(libpotassium)
-set_target_properties(libpotassium PROPERTIES OUTPUT_NAME potassium)
 target_compile_features(libpotassium PUBLIC cxx_std_26)
 target_sources(libpotassium PUBLIC
         FILE_SET CXX_MODULES
         FILES
         # entry
         src/libpotassium.cpp
+        # configured files
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/base.cpp"
         # partitions
-        src/base.cpp
         src/box/box.cpp
         src/core/core_iface.cpp
         src/core/crypto.cpp
@@ -41,7 +41,6 @@ target_sources(libpotassium PUBLIC
 )
 target_include_directories(libpotassium PRIVATE
         "${SODIUM_INCLUDE_DIR}"
-        "${CMAKE_CURRENT_BINARY_DIR}/generated"
 )
 target_link_libraries(libpotassium PRIVATE "${SODIUM_LIBRARY}")
 

@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2026 libpotassium team
 // SPDX-License-Identifier: BSL-1.0
 
+#include <sodium.h>
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
+
 import potassium.secretbox;
+import potassium.tests.nacl_vector;
 import std;
 using namespace potassium;
 using namespace potassium::secretbox;
@@ -75,20 +78,7 @@ TEMPLATE_TEST_CASE("SecretBox authenticates a message", "[secretbox]", xsalsa20p
 
 namespace
 {
-template <std::size_t N>
-consteval auto hex_bytes(char const (&hex)[N])
-{
-    static_assert((N - 1) % 2 == 0);
-    auto digit = [](char c)
-    {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-        throw "Invalid hex digit in test vector";
-    };
-    std::array<std::byte, (N - 1) / 2> bytes{};
-    for (std::size_t i = 0; i < bytes.size(); ++i) bytes[i] = static_cast<std::byte>(16 * digit(hex[2 * i]) + digit(hex[2 * i + 1]));
-    return bytes;
-}
+using test_vectors::hex_bytes;
 
 template <class A>
 void check_vector(key_ref<A> key, nonce_ref<A> nonce, std::span<std::byte const> plaintext, std::span<std::byte const> ciphertext)
@@ -118,21 +108,8 @@ void check_vector(key_ref<A> key, nonce_ref<A> nonce, std::span<std::byte const>
 // The combined-mode fixture omits its 32 plaintext and 16 ciphertext padding bytes.
 TEST_CASE("XSalsa20-Poly1305 matches the NaCl SecretBox vector", "[secretbox][vectors]")
 {
-    constexpr auto key = hex_bytes("1b27556473e985d462cd51197a9a46c76009549eac6474f206c4ee0844f68389");
-    constexpr auto nonce = hex_bytes("69696ee955b62b73cd62bda875fc73d68219e0036b7a0b37");
-    constexpr auto message = hex_bytes(
-            "be075fc53c81f2d5cf141316ebeb0c7b5228c52a4c62cbd44b66849b64244ffc"
-            "e5ecbaaf33bd751a1ac728d45e6c61296cdc3c01233561f41db66cce314adb31"
-            "0e3be8250c46f06dceea3a7fa1348057e2f6556ad6b1318a024a838f21af1fde"
-            "048977eb48f59ffd4924ca1c60902e52f0a089bc76897040e082f93776384864"
-            "5e0705");
-    constexpr auto ciphertext = hex_bytes(
-            "f3ffc7703f9400e52a7dfb4b3d3305d98e993b9f48681273c29650ba32fc76ce"
-            "48332ea7164d96a4476fb8c531a1186ac0dfc17c98dce87b4da7f011ec48c972"
-            "71d2c20f9b928fe2270d6fb863d51738b48eeee314a7cc8ab932164548e526ae"
-            "90224368517acfeabd6bb3732bc0e9da99832b61ca01b6de56244a9e88d5f9b3"
-            "7973f622a43d14a6599b1f654cb45a74e355a5");
-    check_vector<xsalsa20poly1305>(key_ref<xsalsa20poly1305>{key}, nonce_ref<xsalsa20poly1305>{nonce}, message, ciphertext);
+    using namespace test_vectors::nacl;
+    check_vector<xsalsa20poly1305>(key_ref<xsalsa20poly1305>{shared_key}, nonce_ref<xsalsa20poly1305>{nonce}, message, ciphertext);
 }
 
 // test/default/xchacha20.c, tv_secretbox_xchacha20 vectors 0, 6 and 1.
@@ -169,4 +146,66 @@ TEST_CASE("XChaCha20-Poly1305 matches the multi-block SecretBox vector", "[secre
             "1d88890663f7b2f5c6b1d7deccf5c91b4df5865dc55cc7e04d6793fc2db8f9e3"
             "b418f95cb796d67a7f3f7e097150cb607c435dacf82eac3d669866e5092ace");
     check_vector<xchacha20poly1305>(key_ref<xchacha20poly1305>{key}, nonce_ref<xchacha20poly1305>{nonce}, message, ciphertext);
+}
+
+// libsodium test/default/xchacha20.c, tv_secretbox_xchacha20 vector 4.
+TEST_CASE("XChaCha20-Poly1305 matches the 60-byte SecretBox vector", "[secretbox][vectors]")
+{
+    constexpr auto key = hex_bytes("6f149c2ec27af45176030c8dd7ab0e1e488f5803f26f75045d7a56f59a587a85");
+    constexpr auto nonce = hex_bytes("952aff2f39bc70016f04ac7fb8b55fd22764ba16b56e255d");
+    constexpr auto message = hex_bytes(
+            "8fde598c4bde5786abdc6ab83fce66d59782b6ce36afe028c447ad4086a748764"
+            "afa88a520e837a9d56d0b7693b0476649f24c2aa44b94615a1efc75");
+    constexpr auto ciphertext = hex_bytes(
+            "9bccf07974836fa4609d32d9527d928d184d9c6c0823af2f703e0e257a162d26"
+            "d3678fa15ab1c4db76ac42084d32cefca8efaf77814c199b310999e327a3e3d"
+            "aa2e235b175979504ede87b58");
+    check_vector<xchacha20poly1305>(key_ref<xchacha20poly1305>{key}, nonce_ref<xchacha20poly1305>{nonce}, message, ciphertext);
+}
+
+TEMPLATE_TEST_CASE("SecretBox interoperates with libsodium combined mode", "[secretbox][interop]", xsalsa20poly1305, xchacha20poly1305)
+{
+    using A = TestType;
+    constexpr bool xsalsa = std::same_as<A, xsalsa20poly1305>;
+    auto raw_seal = xsalsa ? crypto_secretbox_easy : crypto_secretbox_xchacha20poly1305_easy;
+    auto raw_open = xsalsa ? crypto_secretbox_open_easy : crypto_secretbox_xchacha20poly1305_open_easy;
+
+    std::array<unsigned char, 32> key_bytes;
+    std::iota(key_bytes.begin(), key_bytes.end(), 0u);
+    key_ref<A> key{std::as_bytes(std::span{key_bytes})};
+    std::array<unsigned char, 24> nonce_bytes;
+    std::iota(nonce_bytes.begin(), nonce_bytes.end(), 32u);
+    nonce_ref<A> nonce{std::as_bytes(std::span{nonce_bytes})};
+    std::array<unsigned char, 257> input;
+    std::iota(input.begin(), input.end(), 0u);
+
+    for (auto length : {0u, 1u, 31u, 32u, 33u, 63u, 64u, 65u, 257u})
+    {
+        CAPTURE(length);
+        auto message = std::span{input}.first(length);
+        std::vector<unsigned char> raw_ciphertext(length + algorithm_traits<A>::mac_size);
+        REQUIRE(raw_seal(raw_ciphertext.data(), message.data(), message.size(), nonce_bytes.data(), key_bytes.data()) == 0);
+
+        auto opened = open(key, std::as_bytes(std::span{raw_ciphertext}), nonce, std::nothrow);
+        REQUIRE(opened.has_value());
+        CHECK(std::ranges::equal(opened->bytes(), std::as_bytes(message)));
+
+        auto sealed = seal(key, std::as_bytes(message));
+        std::array<unsigned char, input.size()> output{};
+        REQUIRE(raw_open(output.data(),
+                         reinterpret_cast<unsigned char const*>(sealed.ciphertext.data()),
+                         sealed.ciphertext.size(),
+                         reinterpret_cast<unsigned char const*>(sealed.nonce.storage.data()),
+                         key_bytes.data()) == 0);
+        CHECK(std::ranges::equal(std::span{output}.first(length), message));
+
+        if (length != 0)
+        {
+            raw_ciphertext.back() ^= 1;
+            auto destination = std::span{output}.first(length);
+            std::ranges::fill(destination, 0x55);
+            CHECK(open_into(key, std::as_bytes(std::span{raw_ciphertext}), std::as_writable_bytes(destination), nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+            CHECK(std::ranges::all_of(destination, [](auto b) { return b == 0x55; }));
+        }
+    }
 }

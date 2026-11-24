@@ -102,7 +102,7 @@ void check_vector(std::span<std::byte const> message, std::string_view expected)
     CHECK(result != output);
 
     h::hasher<A> stream;
-    for (auto split : {0u, 1u, 63u, 64u, 65u, 127u, 128u, 129u, 135u, 136u})
+    for (auto split : {0u, 1u, 63u, 64u, 65u, 71u, 72u, 73u, 127u, 128u, 129u, 135u, 136u, 137u})
     {
         auto n = std::min<std::size_t>(split, message.size());
         CAPTURE(n);
@@ -405,4 +405,36 @@ TEST_CASE("BLAKE2b output length selects the construction", "[hash]")
     auto full = h::hash<h::blake2b<64>>({});
     auto shorter = h::hash<default_hash>({});
     CHECK_FALSE(std::ranges::equal(full.bytes().first<32>(), shorter.bytes()));
+}
+
+TEST_CASE("SHA-2 and SHA-3 match the million-a vectors", "[hash][vectors]")
+{
+    auto input = std::string(1'000'000, 'a');
+    auto message = std::as_bytes(std::span{input});
+    // RFC 6234 section 8.5 for SHA-2. SHA-3 digests cross-checked with Python hashlib.
+    check_vector<h::sha256>(message, "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
+    check_vector<h::sha512>(message,
+                            "e718483d0ce769644e2e42c7bc15b4638e1f98b13b2044285632a803afa973ebde"
+                            "0ff244877ea60a4cb0432ce577c31beb009c5c2c49aa2e4eadb217ad8cc09b");
+    check_vector<h::sha3_256>(message, "5c8875ae474a3634ba4fd55ec85bffd661f32aca75c6d699d0cdcb6c115891c1");
+    check_vector<h::sha3_512>(message,
+                              "3c3a876da14034ab60627c077bb98f7e120a2a5370212dffb3385a18d4f38859"
+                              "ed311d0a9d5141ce9cc5c66ee689b266a8aa18ace8282a0e0db596c90b0a7b87");
+}
+
+TEST_CASE("BLAKE2b matches full-block vectors at several digest sizes", "[hash][vectors]")
+{
+    std::array<unsigned char, 128> input;
+    std::iota(input.begin(), input.end(), 0u);
+    auto message = std::as_bytes(std::span{input});
+    // Fixed reference outputs from Python hashlib.
+    check_vector<h::blake2b<16>>(message, "a74787004ef589e31149183900d0294a");
+    check_vector<h::blake2b<17>>(message, "7ca092935197a0c95bbc183b11cf4879f6");
+    check_vector<h::blake2b<32>>(message, "c3582f71ebb2be66fa5dd750f80baae97554f3b015663c8be377cfcb2488c1d1");
+    check_vector<h::blake2b<63>>(message,
+                                 "8dc4e0cbde009d052d947c59301820164e42f479ce1fa29878dde91772b63e2eb94"
+                                 "ce0851c13388c8b25586bab69327482b4622877d1d1449c84aa6b67c770");
+    check_vector<h::blake2b<64>>(message,
+                                 "2319e3789c47e2daa5fe807f61bec2a1a6537fa03f19ff32e87eecbfd64b7e0e8"
+                                 "ccff439ac333b040f19b0c4ddd11a61e24ac1fe0f10a039806c5dcc0da3d115");
 }

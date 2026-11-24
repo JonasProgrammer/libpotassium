@@ -82,6 +82,7 @@ if (PROJECT_IS_TOP_LEVEL)
                 tests/memory.cpp
                 tests/secretbox.cpp
         )
+        target_sources(libpotassium_tests PRIVATE FILE_SET CXX_MODULES FILES tests/nacl_vector.cpp)
         target_include_directories(libpotassium_tests PRIVATE "${SODIUM_INCLUDE_DIR}")
         target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2 "${SODIUM_LIBRARY}")
 

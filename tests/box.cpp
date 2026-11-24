@@ -6,6 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 import potassium.box;
+import potassium.tests.nacl_vector;
 import std;
 
 using namespace potassium;
@@ -88,7 +89,7 @@ TEMPLATE_TEST_CASE("Box supports zeroed, overwrite and factory keypairs", "[box]
     static_assert(!std::default_initializable<secret_key<precomputed_key_tag<A>>>);
 }
 
-TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium", "[box]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium", "[box][interop]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
 {
     using A = TestType;
     static_assert(!std::copy_constructible<keypair<A>>);
@@ -114,6 +115,11 @@ TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium"
         message = {std::byte{0xff}, std::byte{}, std::byte{1}};
     }
 
+    SECTION("multi-block binary")
+    {
+        message.assign(test_vectors::nacl::message.begin(), test_vectors::nacl::message.end());
+    }
+
     auto sealed = seal(alice.secret_key, bob_public, message);
     CHECK(seal(sender, message, sealed.nonce) == sealed.ciphertext);
     auto opened = open(recipient, sealed);
@@ -125,10 +131,14 @@ TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium"
     CHECK(clear == message);
 
     auto raw_seal = crypto_box_easy;
+    auto raw_precompute = crypto_box_beforenm;
+    auto raw_open_precomputed = crypto_box_open_easy_afternm;
     auto raw_open = crypto_box_open_easy;
     if constexpr (std::same_as<A, curve25519xchacha20poly1305>)
     {
         raw_seal = crypto_box_curve25519xchacha20poly1305_easy;
+        raw_precompute = crypto_box_curve25519xchacha20poly1305_beforenm;
+        raw_open_precomputed = crypto_box_curve25519xchacha20poly1305_open_easy_afternm;
         raw_open = crypto_box_curve25519xchacha20poly1305_open_easy;
     }
     unsigned char empty{};
@@ -139,12 +149,22 @@ TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium"
     auto raw_cipher = reinterpret_cast<unsigned char*>(out.data());
     REQUIRE(raw_seal(raw_cipher, message.empty() ? &empty : bytes(message), message.size(), bytes(sealed.nonce.storage), bytes(bob_public.storage), bytes(alice.secret_key.ref().bytes())) == 0);
     CHECK(out == sealed.ciphertext);
+    std::ranges::fill(clear, std::byte{0x55});
     REQUIRE(raw_open(clear.empty() ? &empty : reinterpret_cast<unsigned char*>(clear.data()),
-                     raw_cipher,
-                     out.size(),
+                     bytes(sealed.ciphertext),
+                     sealed.ciphertext.size(),
                      bytes(sealed.nonce.storage),
                      bytes(alice.public_key.storage),
                      bytes(bob_secret.ref().bytes())) == 0);
+    CHECK(clear == message);
+    auto from_sodium = open(recipient, out, sealed.nonce);
+    CHECK(std::ranges::equal(from_sodium.bytes(), message));
+    std::array<unsigned char, algorithm_traits<A>::precomputed_key_size> raw_shared{};
+    REQUIRE(raw_precompute(raw_shared.data(), bytes(alice.public_key.storage), bytes(bob_secret.ref().bytes())) == 0);
+    CHECK(std::ranges::equal(recipient.ref().bytes(), std::as_bytes(std::span{raw_shared})));
+    std::ranges::fill(clear, std::byte{0x55});
+    REQUIRE(raw_open_precomputed(
+                    clear.empty() ? &empty : reinterpret_cast<unsigned char*>(clear.data()), bytes(sealed.ciphertext), sealed.ciphertext.size(), bytes(sealed.nonce.storage), raw_shared.data()) == 0);
     CHECK(clear == message);
     out.front() ^= std::byte{1};
     std::ranges::fill(clear, std::byte{0x55});
@@ -159,4 +179,41 @@ TEMPLATE_TEST_CASE("Box direct and precomputed keys interoperate with libsodium"
     public_key<A> invalid;
     CHECK(precompute(alice.secret_key, invalid, std::nothrow) == std::unexpected(errc::crypto_failed));
     CHECK(seal(alice.secret_key, invalid, message, std::nothrow) == std::unexpected(errc::crypto_failed));
+}
+
+TEMPLATE_TEST_CASE("Box matches fixed vectors with the NaCl keypairs", "[box][vectors]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+{
+    using A = TestType;
+    using namespace test_vectors::nacl;
+    using test_vectors::hex_bytes;
+
+    // XChaCha20 fixture derived using X25519, HChaCha20 with a zero input, and XChaCha20 SecretBox.
+    constexpr auto xchacha_key = hex_bytes("8e47ca376bdc7e59d2ced8107ceb2c27f4a80e8575f996baffb1a869ffcd5179");
+    constexpr auto xchacha_ciphertext = hex_bytes(
+            "0b4ff00742f3c1aa99a6321e3883b03cef2c6061b7bcec0cfd723055f61f1ccca"
+            "2946d5a04dbf83151f4894223ac9bc790c660e19dc64cc0d7f9c7689ad190995"
+            "5e7a9a7bdac777d6a7967d000ce841fc0f8f31d6d8720b374bc28982764a7dbe"
+            "b4daa977aae1b7350fac79a177ece7541fed264461ea93e6d7ad9fc08c91e774"
+            "abe79036e7f79ddcc6aab3abf527631048ce1");
+    constexpr bool xsalsa = std::same_as<A, curve25519xsalsa20poly1305>;
+    auto const& expected_key = xsalsa ? shared_key : xchacha_key;
+    auto const& expected_ciphertext = xsalsa ? ciphertext : xchacha_ciphertext;
+
+    auto alice = key_ref<private_key_tag<A>>{alice_secret};
+    auto bob = key_ref<private_key_tag<A>>{bob_secret};
+    auto alice_peer = public_key_ref<A>{alice_public};
+    auto bob_peer = public_key_ref<A>{bob_public};
+    auto fixed_nonce = nonce_ref<A>{nonce};
+
+    auto sender = precompute(alice, bob_peer);
+    auto recipient = precompute(bob, alice_peer);
+    CHECK(std::ranges::equal(sender.ref().bytes(), expected_key));
+    CHECK(std::ranges::equal(recipient.ref().bytes(), expected_key));
+    CHECK(std::ranges::equal(seal(alice, bob_peer, message, fixed_nonce), expected_ciphertext));
+    CHECK(std::ranges::equal(seal(sender, message, fixed_nonce), expected_ciphertext));
+
+    auto direct = open(bob, alice_peer, expected_ciphertext, fixed_nonce);
+    auto precomputed = open(recipient, expected_ciphertext, fixed_nonce);
+    CHECK(std::ranges::equal(direct.bytes(), message));
+    CHECK(std::ranges::equal(precomputed.bytes(), message));
 }

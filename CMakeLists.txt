@@ -17,9 +17,9 @@ find_library(SODIUM_LIBRARY NAMES sodium REQUIRED)
 
 configure_file(src/base.cpp.in generated/base.cpp @ONLY)
 
-add_library(libpotassium)
-target_compile_features(libpotassium PUBLIC cxx_std_26)
-target_sources(libpotassium PUBLIC
+add_library(potassium)
+target_compile_features(potassium PUBLIC cxx_std_26)
+target_sources(potassium PUBLIC
         FILE_SET CXX_MODULES
         FILES
         # entry
@@ -45,10 +45,10 @@ target_sources(libpotassium PUBLIC
         src/hash/hash_impl.cpp
         src/secretbox/secretbox_impl.cpp
 )
-target_link_libraries(libpotassium PUBLIC PkgConfig::libsodium)
+target_link_libraries(potassium PUBLIC PkgConfig::libsodium)
 
 if (LIBPOTASSIUM_HASH_ASSERTS)
-    target_compile_definitions(libpotassium PUBLIC POTASSIUM_HASH_ASSERTS)
+    target_compile_definitions(potassium PUBLIC POTASSIUM_HASH_ASSERTS)
 endif ()
 
 if (PROJECT_IS_TOP_LEVEL)
@@ -60,22 +60,22 @@ if (PROJECT_IS_TOP_LEVEL)
         if (Doxygen_FOUND)
             set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs")
             set(DOXYGEN_GENERATE_LATEX NO)
-            get_target_property(module_interfaces libpotassium CXX_MODULE_SET)
+            get_target_property(module_interfaces potassium CXX_MODULE_SET)
             set(DOXYGEN_EXCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/src/internal")
-            doxygen_add_docs(libpotassium_docs ${module_interfaces})
+            doxygen_add_docs(potassium_docs ${module_interfaces})
         else ()
-            message(WARNING "Doxygen was not found. The libpotassium_docs target is unavailable.")
+            message(WARNING "Doxygen was not found. The potassium_docs target is unavailable.")
         endif ()
     endif ()
 
-    add_executable(libpotassium_example examples/main.cpp)
-    target_link_libraries(libpotassium_example PRIVATE libpotassium)
+    add_executable(potassium_example examples/main.cpp)
+    target_link_libraries(potassium_example PRIVATE potassium)
 
     if (BUILD_TESTING)
-        add_test(NAME libpotassium.example COMMAND libpotassium_example)
+        add_test(NAME potassium.example COMMAND potassium_example)
 
         find_package(Catch2 3 REQUIRED)
-        add_executable(libpotassium_tests
+        add_executable(potassium_tests
                 # entrypoint
                 tests/main.cpp
                 # case files
@@ -88,15 +88,15 @@ if (PROJECT_IS_TOP_LEVEL)
                 tests/memory.cpp
                 tests/secretbox.cpp
         )
-        target_sources(libpotassium_tests PRIVATE FILE_SET CXX_MODULES FILES tests/nacl_vector.cpp)
-        target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2)
+        target_sources(potassium_tests PRIVATE FILE_SET CXX_MODULES FILES tests/nacl_vector.cpp)
+        target_link_libraries(potassium_tests PRIVATE potassium Catch2::Catch2)
 
         add_library(hash_finalize_lvalue OBJECT EXCLUDE_FROM_ALL tests/hash_finalize_lvalue.cpp)
-        target_link_libraries(hash_finalize_lvalue PRIVATE libpotassium)
-        add_test(NAME libpotassium.hash.finalize-diagnostic
+        target_link_libraries(hash_finalize_lvalue PRIVATE potassium)
+        add_test(NAME potassium.hash.finalize-diagnostic
                 COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_hash_diagnostic.cmake")
 
         include(Catch)
-        catch_discover_tests(libpotassium_tests TEST_PREFIX "libpotassium.")
+        catch_discover_tests(potassium_tests TEST_PREFIX "potassium.")
     endif ()
 endif ()

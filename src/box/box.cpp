@@ -11,6 +11,7 @@ export import potassium.core;
 import std;
 
 /// @brief Seal and open messages using a local private key and a peer public key.
+/// @see potassium::box::curve25519xsalsa20poly1305, potassium::box::curve25519xchacha20poly1305
 /// @details For repeated messages with one peer, use @c precompute once and pass the shared key to @c seal or @c open.
 /// Establish the peer's identity before using its public key.
 /// Both participants can produce valid ciphertext and derive the same key in either direction.
@@ -19,10 +20,12 @@ import std;
 export namespace potassium::box
 {
 
-/// Curve25519 with XSalsa20-Poly1305.
+/// @struct potassium::box::curve25519xsalsa20poly1305
+/// @brief Curve25519 with XSalsa20-Poly1305.
 struct curve25519xsalsa20poly1305;
 
-/// Curve25519 with XChaCha20-Poly1305.
+/// @struct potassium::box::curve25519xchacha20poly1305
+/// @brief Curve25519 with XChaCha20-Poly1305.
 struct curve25519xchacha20poly1305;
 
 /// Default algorithm for key-pair generation.
@@ -951,8 +954,10 @@ template <class A>
     requires requires(public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret) { box::generate_keypair_into(pub, secret); }
 struct key_traits<box::keypair<A>>
 {
+    /// Writes a matching public key and private key directly into their destinations.
     struct generator
     {
+        /// Generate a key pair using the backend for A.
         void operator()(public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret) const { box::generate_keypair_into(pub, secret); }
     };
 };
@@ -968,7 +973,9 @@ std::expected<void, errc> generate_keypair_into(public_key<A>& pub, std::type_id
     return generate_keypair_into(pub, secret.bytes(), std::nothrow);
 }
 
-/// @copydetails generate_keypair_into
+/// Generate a key pair directly into the caller's public and private key storage.
+/// @pre The destinations are disjoint.
+/// @throws crypto_error If key generation fails.
 template <class A>
 void generate_keypair_into(public_key<A>& pub, std::type_identity_t<key_out<private_key_tag<A>>> secret)
 {

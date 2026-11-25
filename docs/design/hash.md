@@ -4,7 +4,8 @@
 # Hashing with potassium.hash
 
 Import `potassium.hash` for hashing, initialization, and the core key owners, or `potassium` for the complete API.
-Call `potassium::init()` once before using either interface.
+Import `potassium.auth` for HMAC one-shot authentication and verification.
+Call `potassium::init()` once before using these interfaces.
 
 ```cpp
 import potassium.hash;
@@ -32,11 +33,13 @@ void example(std::span<std::byte const> message)
 
 ## Choosing the construction
 
-| Algorithm tag | Digest bytes | Key bytes |
-| --- | --- | --- |
-| `blake2b<N>` | 16 through 64, default 32 | Unkeyed or 16 through 64, default 32 |
-| `sha256`, `sha3_256` | 32 | Unkeyed |
-| `sha512`, `sha3_512` | 64 | Unkeyed |
+| Algorithm tag                               | Digest bytes              | Key bytes                                    |
+|---------------------------------------------|---------------------------|----------------------------------------------|
+| `blake2b<N>`                                | 16 through 64, default 32 | Unkeyed or 16 through 64, default 32         |
+| `sha256`, `sha3_256`                        | 32                        | Unkeyed                                      |
+| `sha512`, `sha3_512`                        | 64                        | Unkeyed                                      |
+| `auth::hmac_sha256`, `auth::hmac_sha512256` | 32                        | 32 one-shot, any explicit length for streams |
+| `auth::hmac_sha512`                         | 64                        | 32 one-shot, any explicit length for streams |
 
 The stable `default_algorithm` alias selects `blake2b<32>`.
 BLAKE2b incorporates the output length during initialization, so truncating a 64-byte digest produces a different construction from requesting 32 bytes.
@@ -45,8 +48,14 @@ Digests, including keyed authentication tags, are copyable values in ordinary me
 Compare two digests of the same type with `==` or `!=`, which use libsodium's constant-time comparison.
 Use the fixed-extent span from `digest.bytes()` while the digest lives, or copy received bytes into its fixed-size `storage` array.
 
-The `keyed_hash_algorithm` concept limits keyed operations to native keyed BLAKE2b.
-Its key length is an independent initialization parameter, so a single `blake2b_key_tag<K>` applies across digest lengths.
+`SimpleDigest<A>` selects algorithms supporting unkeyed streams and `KeyedDigest<A>` selects algorithms supporting keyed streams.
+BLAKE2b satisfies both concepts, SHA satisfies the first, and HMAC satisfies the second.
+`hash_algorithm` and `keyed_hash_algorithm` are compatibility spellings for these concepts.
+For initialized streams, `Hasher<S>` covers update and both consuming finalizers.
+`SimpleHasher<S>` and `KeyedHasher<S>` add the corresponding construction and reset operations.
+Streams expose `result_type` and `token_type`, and keyed streams also expose their default `key_type` view.
+
+The BLAKE2b key length is an independent initialization parameter, so a single `blake2b_key_tag<K>` applies across digest lengths.
 The purpose tag prevents accidental substitution of a SecretBox key or Box private key of the same size.
 A `secret_key` or `key_buffer_storage` generates the key directly in its final storage.
 Pass a live lvalue owner, or explicitly construct a matching `potassium::key_ref` from a fixed-extent span and keep the referenced bytes alive through the call.
@@ -111,3 +120,39 @@ The Debug preset enables assertions for this precondition.
 Guarded construction can throw `std::bad_alloc`.
 Use `make_keyed_hasher<A>(key, std::nothrow)` or `make_hasher<A, Storage>(std::nothrow)` to receive `std::expected` with `potassium::errc::allocation_failed` on allocation failure.
 One-shot hashing, updating, resetting and finalizing valid inputs have no recoverable backend error.
+
+## HMAC authentication
+
+`auth::default_algorithm` selects HMAC-SHA-512 truncated to 32 bytes, matching libsodium's `crypto_auth`.
+`auth::authenticate` and `authenticate_into` compute tags without allocation and are `noexcept`.
+`auth::verify` verifies a wire tag in constant time and reports a mismatch through `crypto_error` or the `std::nothrow` overload.
+Use same-algorithm tag equality for constant-time comparison of a streamed result.
+An HMAC stream accepts a matching typed key or an explicit span of key bytes, including an empty span.
+Construction and each reset require a key argument.
+Guarded HMAC state holds the inner and outer keyed hash contexts and follows the keyed BLAKE2b wiping and reuse rules.
+Plain finalization wipes the state immediately and retains its storage until replacement or destruction.
+HMAC computation uses the nonthrowing hash interface for update and both finalizers.
+The `std::nothrow` overload of `hash::keyed_hasher<A>::create` reports allocation failure and supports immobile in-place storage.
+
+This example authenticates multiple messages using one guarded allocation.
+
+```cpp
+import potassium.auth;
+import std;
+
+void authenticate_messages(potassium::key_ref<potassium::auth::hmac_key_tag<>> key,
+                           std::span<std::span<std::byte const> const> messages,
+                           auto consume_tag)
+{
+    potassium::hash::keyed_hasher<potassium::auth::default_algorithm> stream(key);
+    for (auto message : messages)
+    {
+        stream.update(message);
+        auto [tag, token] = std::move(stream).finalize_for_reuse();
+        consume_tag(tag);
+        stream.reset(key, std::move(token));
+    }
+}
+```
+
+For a stream with zero heap allocations, select `hash::inplace_hash_state<typename hash::keyed_hash_traits<A>::state_type>` as the second template argument.

@@ -64,6 +64,7 @@ struct allocator : raw_allocator
     /// Element type.
     using value_type = T;
 
+    /// Construct a stateless guarded allocator.
     constexpr allocator() noexcept = default;
 
     /// Constructs an allocator from another element type.

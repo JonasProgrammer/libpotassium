@@ -4,19 +4,24 @@
 module;
 #include <sodium.h>
 
+/// @brief Symmetric authenticated encryption with explicit or generated nonces.
+/// @see potassium::secretbox
 export module potassium.secretbox;
 
 export import potassium.core;
 import std;
 
 /// Symmetric authenticated encryption with a separate nonce.
+/// @see potassium::secretbox::xsalsa20poly1305, potassium::secretbox::xchacha20poly1305
 export namespace potassium::secretbox
 {
 
-/// XSalsa20-Poly1305 SecretBox algorithm tag.
+/// @struct potassium::secretbox::xsalsa20poly1305
+/// @brief XSalsa20-Poly1305 SecretBox algorithm tag.
 struct xsalsa20poly1305;
 
-/// XChaCha20-Poly1305 SecretBox algorithm tag.
+/// @struct potassium::secretbox::xchacha20poly1305
+/// @brief XChaCha20-Poly1305 SecretBox algorithm tag.
 struct xchacha20poly1305;
 
 /// Algorithm selected by default for SecretBox.

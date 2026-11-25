@@ -27,6 +27,8 @@ target_sources(libpotassium PUBLIC
         # configured files
         "${CMAKE_CURRENT_BINARY_DIR}/generated/base.cpp"
         # partitions
+        src/auth/auth.cpp
+        src/auth/hmac.cpp
         src/box/box.cpp
         src/core/core_iface.cpp
         src/core/crypto.cpp
@@ -36,6 +38,7 @@ target_sources(libpotassium PUBLIC
         src/secretbox/secretbox.cpp
         PRIVATE
         # implementations
+        src/auth/auth_impl.cpp
         src/box/box_impl.cpp
         src/core/crypto_impl.cpp
         src/core/memory_impl.cpp
@@ -57,7 +60,9 @@ if (PROJECT_IS_TOP_LEVEL)
         if (Doxygen_FOUND)
             set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs")
             set(DOXYGEN_GENERATE_LATEX NO)
-            doxygen_add_docs(libpotassium_docs src)
+            get_target_property(module_interfaces libpotassium CXX_MODULE_SET)
+            set(DOXYGEN_EXCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/src/internal")
+            doxygen_add_docs(libpotassium_docs ${module_interfaces})
         else ()
             message(WARNING "Doxygen was not found. The libpotassium_docs target is unavailable.")
         endif ()
@@ -74,6 +79,7 @@ if (PROJECT_IS_TOP_LEVEL)
                 # entrypoint
                 tests/main.cpp
                 # case files
+                tests/auth.cpp
                 tests/base.cpp
                 tests/box.cpp
                 tests/hash.cpp

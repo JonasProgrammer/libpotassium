@@ -8,7 +8,8 @@ import std;
 namespace potassium::detail
 {
 template <class Traits>
-concept AuthenticatedEncryptionTraits = requires {
+concept AuthenticatedEncryptionTraits = requires
+{
     typename std::integral_constant<std::size_t, Traits::nonce_size>;
     typename std::integral_constant<std::size_t, Traits::mac_size>;
     typename std::integral_constant<std::size_t, Traits::messagebytes_max>;
@@ -58,14 +59,15 @@ concept SecretKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits>
 
 /// Traits providing compile-time byte sizes and the message limit for public-key authenticated encryption.
 template <class Traits>
-concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits> && requires {
+concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits> && requires
+{
     typename std::integral_constant<std::size_t, Traits::public_key_size>;
     typename std::integral_constant<std::size_t, Traits::secret_key_size>;
     typename std::integral_constant<std::size_t, Traits::seed_size>;
     typename std::integral_constant<std::size_t, Traits::precomputed_key_size>;
 };
 
-/// Algorithm tag whose @ref algorithm_traits satisfy either authenticated-encryption trait contract.
+/// Algorithm tag whose @ref potassium::algorithm_traits satisfy either authenticated-encryption trait contract.
 template <class A>
 concept Algorithm = SecretKeyAlgorithmTraits<algorithm_traits<A>> || PublicKeyAlgorithmTraits<algorithm_traits<A>>;
 
@@ -77,28 +79,34 @@ struct key_traits;
 /// Select all-zero key bytes.
 struct zero_t
 {
+    /// Construct the all-zero initialization tag.
     explicit constexpr zero_t() = default;
 };
 
+/// Request a key initialized to all zero bytes.
 inline constexpr zero_t zero{};
 
 /// Select storage whose contents the caller will fully overwrite.
 struct for_overwrite_t
 {
+    /// Construct the overwrite initialization tag.
     explicit constexpr for_overwrite_t() = default;
 };
 
+/// Request key storage for immediate full overwrite.
 inline constexpr for_overwrite_t for_overwrite{};
 
 /// A generator writes the entire destination on success and may throw on failure.
 template <class G, class KeyTag>
-concept KeyGenerator = requires(G&& generate, std::span<std::byte, key_traits<KeyTag>::size> out) {
+concept KeyGenerator = requires(G&& generate, std::span<std::byte, key_traits<KeyTag>::size> out)
+{
     { std::forward<G>(generate)(std::move(out)) } -> std::same_as<void>;
 };
 
 /// Generates a key for purposes that accept uniformly random bytes.
 struct random_key_generator
 {
+    /// Fill the destination with cryptographically secure random bytes.
     void operator()(std::span<std::byte> out) const noexcept { random_fill(out); }
 };
 
@@ -117,8 +125,10 @@ public:
     {
     }
 
+    /// Reject temporary arrays to keep the borrowed view valid.
     template <class Byte>
     key_ref(std::array<Byte, span_type::extent> const&&) = delete ("A temporary array cannot back a borrowed view");
+    /// Reject temporary arrays to keep the borrowed view valid.
     template <std::size_t N>
     key_ref(std::byte const (&&)[N]) = delete ("A temporary array cannot back a borrowed view");
 
@@ -144,8 +154,10 @@ public:
     {
     }
 
+    /// Reject temporary arrays to keep the borrowed view valid.
     template <class Byte>
     nonce_ref(std::array<Byte, span_type::extent> const&&) = delete ("A temporary array cannot back a borrowed view");
+    /// Reject temporary arrays to keep the borrowed view valid.
     template <std::size_t N>
     nonce_ref(std::byte const (&&)[N]) = delete ("A temporary array cannot back a borrowed view");
 
@@ -175,6 +187,7 @@ public:
     /// @return Read-only bytes in the guarded allocation.
     std::span<std::byte const> bytes() const& noexcept { return storage_; }
 
+    /// Borrowing requires a live lvalue owner.
     std::span<std::byte const> bytes() const&& = delete;
 };
 
@@ -192,13 +205,17 @@ public:
     /// @pre The owner remains alive while the view is in use.
     nonce_ref<A> ref() const& noexcept { return nonce_ref<A>{storage}; }
 
+    /// Borrowing requires a live lvalue owner.
     nonce_ref<A> ref() && = delete;
+    /// Borrowing requires a live lvalue owner.
     nonce_ref<A> ref() const&& = delete;
 
     /// @return A read-only view valid for the lifetime of this nonce.
     operator nonce_ref<A>() const& noexcept { return ref(); }
 
+    /// Borrowing requires a live lvalue owner.
     operator nonce_ref<A>() && = delete;
+    /// Borrowing requires a live lvalue owner.
     operator nonce_ref<A>() const&& = delete;
 };
 
@@ -218,8 +235,10 @@ public:
     {
     }
 
+    /// Reject temporary arrays to keep the borrowed view valid.
     template <class Byte>
     public_key_ref(std::array<Byte, span_type::extent> const&&) = delete ("A temporary array cannot back a borrowed view");
+    /// Reject temporary arrays to keep the borrowed view valid.
     template <std::size_t N>
     public_key_ref(std::byte const (&&)[N]) = delete ("A temporary array cannot back a borrowed view");
 
@@ -242,19 +261,24 @@ public:
     /// @pre The owner remains alive while the view is in use.
     public_key_ref<A> ref() const& noexcept { return public_key_ref<A>{storage}; }
 
+    /// Borrowing requires a live lvalue owner.
     public_key_ref<A> ref() && = delete;
+    /// Borrowing requires a live lvalue owner.
     public_key_ref<A> ref() const&& = delete;
 
     /// @return A read-only view valid for the lifetime of this public key.
     operator public_key_ref<A>() const& noexcept { return ref(); }
 
+    /// Borrowing requires a live lvalue owner.
     operator public_key_ref<A>() && = delete;
+    /// Borrowing requires a live lvalue owner.
     operator public_key_ref<A>() const&& = delete;
 };
 
 /// A generator writes a matching public and private key into both destinations or throws.
 template <class G, class A>
-concept KeyPairGenerator = requires(G&& generate, public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret) {
+concept KeyPairGenerator = requires(G&& generate, public_key<A>& pub, std::span<std::byte, algorithm_traits<A>::secret_key_size> secret)
+{
     { std::forward<G>(generate)(pub, std::move(secret)) } -> std::same_as<void>;
 };
 
@@ -301,7 +325,9 @@ public:
     /// Wipes the key bytes before releasing the buffer.
     ~key_buffer_storage() { wipe(storage_); }
 
+    /// Prevent duplication of confidential key material.
     key_buffer_storage(key_buffer_storage const&) = delete;
+    /// Prevent duplication of confidential key material.
     key_buffer_storage& operator=(key_buffer_storage const&) = delete;
 
     /// @pre The owner remains alive while the view is in use.
@@ -368,7 +394,9 @@ public:
     {
     }
 
+    /// Prevent duplication of confidential key material.
     secret_key(secret_key const&) = delete;
+    /// Prevent duplication of confidential key material.
     secret_key& operator=(secret_key const&) = delete;
 
     /// Transfers ownership of the guarded allocation.
@@ -404,6 +432,7 @@ template <class KeyTag>
 class key_out
 {
 public:
+    /// Writable view with the exact key size.
     using span_type = std::span<std::byte, key_traits<KeyTag>::size>;
 
     /// @pre Keep the destination storage alive until the write completes.
@@ -412,16 +441,19 @@ public:
     {
     }
 
+    /// Borrow the writable bytes of a guarded key.
     key_out(secret_key<KeyTag>& key) noexcept
         : key_out(key.writable_bytes())
     {
     }
 
+    /// Borrow the writable bytes of an in-place key.
     key_out(key_buffer_storage<KeyTag>& key) noexcept
         : key_out(key.writable_bytes())
     {
     }
 
+    /// Return the borrowed output range.
     constexpr span_type bytes() const noexcept { return bytes_; }
 
 private:
@@ -447,7 +479,8 @@ catch (crypto_error const&)
 }
 
 /// Generate a guarded key using the same error contract as the nonthrowing factory.
-/// @copydetails make_secret_key(std::nothrow_t)
+/// @throws std::bad_alloc If guarded allocation fails.
+/// @throws crypto_error If the key generator reports a cryptographic failure.
 template <class KeyTag>
     requires detail::HasDefaultKeyGenerator<KeyTag>
 secret_key<KeyTag> make_secret_key()

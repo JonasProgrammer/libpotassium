@@ -13,8 +13,6 @@ using potassium::internal::sodium_bytes;
 /// @cond INTERNAL
 namespace potassium::hash::detail
 {
-namespace
-{
 static_assert(crypto_generichash_blake2b_BYTES_MIN == 16 && crypto_generichash_blake2b_BYTES_MAX == 64);
 static_assert(hash_traits<default_algorithm>::digest_size == crypto_generichash_blake2b_BYTES);
 
@@ -22,7 +20,6 @@ void check_status(int status) noexcept
 {
     if (status != 0) std::terminate();
 }
-}  // namespace
 
 bool equal(std::span<std::byte const> left, std::span<std::byte const> right) noexcept
 {
@@ -46,8 +43,7 @@ void blake2b_ops::final(state_type& state, std::span<std::byte> output) noexcept
 
 void blake2b_ops::one_shot(std::span<std::byte> output, std::span<std::byte const> message, std::span<std::byte const> key) noexcept
 {
-    check_status(
-            crypto_generichash_blake2b(sodium_bytes(output.data()), output.size(), sodium_bytes(message.data()), message.size(), sodium_bytes(key.data()), key.size()));
+    check_status(crypto_generichash_blake2b(sodium_bytes(output.data()), output.size(), sodium_bytes(message.data()), message.size(), sodium_bytes(key.data()), key.size()));
 }
 
 void ops<sha256>::init(state_type& state) noexcept

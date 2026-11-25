@@ -228,36 +228,42 @@ namespace
 {
 using State = h::hash_traits<default_hash>::state_type;
 
-class observed_storage : public h::inplace_hash_state<State>
+template <class State>
+class observed_inplace : public h::inplace_hash_state<State>
 {
 public:
     static inline State* current;
     static inline bool clean_at_release;
 
-    observed_storage() { current = &get(); }
+    observed_inplace() { current = &this->get(); }
 
     static bool erased()
     {
         return std::ranges::all_of(std::as_bytes(std::span{current, 1}), [](std::byte b) { return b == std::byte{}; });
     }
 
-    void assign_token(transfer_token&& token) & noexcept
+    void assign_token(typename h::inplace_hash_state<State>::transfer_token&& token) & noexcept
     {
         CHECK(erased());
         h::inplace_hash_state<State>::assign_token(std::move(token));
     }
 
-    ~observed_storage()
+    ~observed_inplace()
     {
         clean_at_release = erased();
         current = nullptr;
     }
 };
 
-struct failing_storage : h::guarded_hash_state<State>
+using observed_storage = observed_inplace<State>;
+
+template <class T>
+struct failing_guarded_storage : h::guarded_hash_state<T>
 {
-    failing_storage() { throw std::bad_alloc{}; }
+    failing_guarded_storage() { throw std::bad_alloc{}; }
 };
+
+using failing_storage = failing_guarded_storage<State>;
 }  // namespace
 
 TEST_CASE("Keyed hash state is wiped on finalization and destruction", "[hash]")
@@ -318,6 +324,13 @@ TEST_CASE("Hash stream factories report allocation failure", "[hash]")
     REQUIRE_FALSE(failed_keyed.has_value());
     CHECK(failed_keyed.error() == potassium::errc::allocation_failed);
     CHECK_THROWS_AS((h::make_keyed_hasher<default_hash, failing_storage>(secret)), std::bad_alloc);
+
+    using A = potassium::auth::default_algorithm;
+    using failing_hmac = h::keyed_hasher<A, failing_guarded_storage<typename h::keyed_hash_traits<A>::state_type>>;
+    auto failed_hmac = failing_hmac::create({}, std::nothrow);
+    REQUIRE_FALSE(failed_hmac);
+    CHECK(failed_hmac.error() == potassium::errc::allocation_failed);
+    CHECK_THROWS_AS(failing_hmac::create({}), std::bad_alloc);
 
     auto failed_unkeyed = h::make_hasher<default_hash, failing_storage>(std::nothrow);
     REQUIRE_FALSE(failed_unkeyed.has_value());
@@ -437,4 +450,28 @@ TEST_CASE("BLAKE2b matches full-block vectors at several digest sizes", "[hash][
     check_vector<h::blake2b<64>>(message,
                                  "2319e3789c47e2daa5fe807f61bec2a1a6537fa03f19ff32e87eecbfd64b7e0e8"
                                  "ccff439ac333b040f19b0c4ddd11a61e24ac1fe0f10a039806c5dcc0da3d115");
+}
+
+TEST_CASE("HMAC wipes in-place state on consumption and abandonment", "[auth][hash]")
+{
+    using A = potassium::auth::default_algorithm;
+    using storage = observed_inplace<typename h::keyed_hash_traits<A>::state_type>;
+    using stream_type = h::keyed_hasher<A, storage>;
+    potassium::key_buffer_storage<potassium::auth::hmac_key_tag<A>> key;
+    {
+        stream_type stream(key);
+        stream.update(key.ref().bytes());
+        auto [tag, token] = std::move(stream).finalize_for_reuse();
+        REQUIRE(storage::erased());
+        stream.reset(key, std::move(token));
+        stream.update(key.ref().bytes());
+        CHECK(std::move(stream).finalize() == tag);
+        CHECK(storage::erased());
+    }
+    {
+        stream_type stream(key);
+        stream.update(key.ref().bytes());
+        CHECK_FALSE(storage::erased());
+    }
+    CHECK(storage::clean_at_release);
 }

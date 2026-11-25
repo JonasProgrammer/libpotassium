@@ -1,6 +1,8 @@
+<img src="docs/img/libpotassium-banana-flame.svg" style="float:left; max-height: max(2em, 64px); margin-right: 1em" alt="libpotassium Banana Flame">
+
 # libpotassium
 
-libpotassium is an opinionated C++ wrapper for libsodium.
+libpotassium is an opinionated C++ wrapper for [libsodium](https://libsodium.org).
 
 ## Mapping libsodium APIs
 

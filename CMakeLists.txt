@@ -12,9 +12,6 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libsodium REQUIRED IMPORTED_TARGET libsodium libsodium>=1.0.22)
 
-find_path(SODIUM_INCLUDE_DIR NAMES sodium.h REQUIRED)
-find_library(SODIUM_LIBRARY NAMES sodium REQUIRED)
-
 configure_file(src/base.cpp.in generated/base.cpp @ONLY)
 
 add_library(potassium)
@@ -51,52 +48,22 @@ if (LIBPOTASSIUM_HASH_ASSERTS)
     target_compile_definitions(potassium PUBLIC POTASSIUM_HASH_ASSERTS)
 endif ()
 
+option(LIBPOTASSIUM_BUILD_DOCS "Enable the Doxygen documentation target" OFF)
+if (LIBPOTASSIUM_BUILD_DOCS)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/DoxygenSetup.cmake")
+endif ()
+
+add_executable(potassium_example examples/main.cpp)
+target_link_libraries(potassium_example PRIVATE potassium)
+
+option(LIBPOTASSIUM_BUILD_TESTS "Enable tests" OFF)
 if (PROJECT_IS_TOP_LEVEL)
+    # make BUILD_TESTING variable available
     include(CTest)
+    #  prevent double inclusion
+    set(LIBPOTASSIUM_CTEST_INCLUDED ON)
+endif ()
 
-    option(LIBPOTASSIUM_BUILD_DOCS "Enable the Doxygen documentation target" OFF)
-    if (LIBPOTASSIUM_BUILD_DOCS)
-        find_package(Doxygen QUIET)
-        if (Doxygen_FOUND)
-            set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs")
-            set(DOXYGEN_GENERATE_LATEX NO)
-            get_target_property(module_interfaces potassium CXX_MODULE_SET)
-            set(DOXYGEN_EXCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/src/internal")
-            doxygen_add_docs(potassium_docs ${module_interfaces})
-        else ()
-            message(WARNING "Doxygen was not found. The potassium_docs target is unavailable.")
-        endif ()
-    endif ()
-
-    add_executable(potassium_example examples/main.cpp)
-    target_link_libraries(potassium_example PRIVATE potassium)
-
-    if (BUILD_TESTING)
-        add_test(NAME potassium.example COMMAND potassium_example)
-
-        find_package(Catch2 3 REQUIRED)
-        add_executable(potassium_tests
-                # entrypoint
-                tests/main.cpp
-                # case files
-                tests/auth.cpp
-                tests/base.cpp
-                tests/box.cpp
-                tests/hash.cpp
-                tests/hash_interop.cpp
-                tests/key_traits.cpp
-                tests/memory.cpp
-                tests/secretbox.cpp
-        )
-        target_sources(potassium_tests PRIVATE FILE_SET CXX_MODULES FILES tests/nacl_vector.cpp)
-        target_link_libraries(potassium_tests PRIVATE potassium Catch2::Catch2)
-
-        add_library(hash_finalize_lvalue OBJECT EXCLUDE_FROM_ALL tests/hash_finalize_lvalue.cpp)
-        target_link_libraries(hash_finalize_lvalue PRIVATE potassium)
-        add_test(NAME potassium.hash.finalize-diagnostic
-                COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_hash_diagnostic.cmake")
-
-        include(Catch)
-        catch_discover_tests(potassium_tests TEST_PREFIX "potassium.")
-    endif ()
+if ((PROJECT_IS_TOP_LEVEL AND BUILD_TESTING) OR LIBPOTASSIUM_BUILD_TESTS)
+    add_subdirectory(tests)
 endif ()

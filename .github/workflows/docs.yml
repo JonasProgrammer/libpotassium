@@ -1,0 +1,61 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - master
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v32
+
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Build documentation
+        run: |
+          nix develop .#full --command bash -e -c '
+            cmake -S . -B build -G Ninja \
+              -DLIBPOTASSIUM_BUILD_DOCS=ON \
+              -DBUILD_TESTING=OFF
+
+            cmake --build build \
+              --target libpotassium_docs
+          '
+
+      - name: Publish branch documentation
+        uses: peaceiris/actions-gh-pages@v4
+        if: ( github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') ) && github.event_name != 'pull_request'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: build/docs/html
+          destination_dir: docs/${{ github.ref_name }}
+          keep_files: false
+
+      # build normal site from master
+      - name: Build master site
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        uses: actions/jekyll-build-pages@v1
+        with:
+          destination: main-site
+      - name: Publish master site
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: main-site
+          keep_files: true

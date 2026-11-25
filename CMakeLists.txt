@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(libsodium REQUIRED IMPORTED_TARGET libsodium libsodium>=1.0.22)
+
 find_path(SODIUM_INCLUDE_DIR NAMES sodium.h REQUIRED)
 find_library(SODIUM_LIBRARY NAMES sodium REQUIRED)
 
@@ -39,10 +42,7 @@ target_sources(libpotassium PUBLIC
         src/hash/hash_impl.cpp
         src/secretbox/secretbox_impl.cpp
 )
-target_include_directories(libpotassium PRIVATE
-        "${SODIUM_INCLUDE_DIR}"
-)
-target_link_libraries(libpotassium PRIVATE "${SODIUM_LIBRARY}")
+target_link_libraries(libpotassium PUBLIC PkgConfig::libsodium)
 
 if (LIBPOTASSIUM_HASH_ASSERTS)
     target_compile_definitions(libpotassium PUBLIC POTASSIUM_HASH_ASSERTS)
@@ -83,8 +83,7 @@ if (PROJECT_IS_TOP_LEVEL)
                 tests/secretbox.cpp
         )
         target_sources(libpotassium_tests PRIVATE FILE_SET CXX_MODULES FILES tests/nacl_vector.cpp)
-        target_include_directories(libpotassium_tests PRIVATE "${SODIUM_INCLUDE_DIR}")
-        target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2 "${SODIUM_LIBRARY}")
+        target_link_libraries(libpotassium_tests PRIVATE libpotassium Catch2::Catch2)
 
         add_library(hash_finalize_lvalue OBJECT EXCLUDE_FROM_ALL tests/hash_finalize_lvalue.cpp)
         target_link_libraries(hash_finalize_lvalue PRIVATE libpotassium)

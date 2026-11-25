@@ -29,6 +29,7 @@
         packages = [
           cmake45
           pkgs.ninja
+          pkgs.pkg-config
         ];
 
         buildInputs = [ pkgs.libsodium ];

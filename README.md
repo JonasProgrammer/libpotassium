@@ -1,4 +1,4 @@
-<img src="docs/img/libpotassium-banana-flame.svg" style="float:left; max-height: max(2em, 64px); margin-right: 1em" alt="libpotassium Banana Flame">
+<img src="docs/img/libpotassium-banana-flame.svg" width="64"  height="64" style="float:left; max-height: max(2em, 64px); margin-right: 1em; max-width: 64px;" alt="libpotassium Banana Flame">
 
 # libpotassium
 

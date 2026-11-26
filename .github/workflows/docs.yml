@@ -16,6 +16,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+      
+      # build normal site from master
+      - name: Build master site
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        uses: actions/jekyll-build-pages@v1
+        with:
+          destination: main-site/content
 
       - uses: cachix/install-nix-action@v32
 
@@ -45,17 +52,11 @@ jobs:
           destination_dir: docs/${{ github.ref_name }}
           keep_files: false
 
-      # build normal site from master
-      - name: Build master site
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        uses: actions/jekyll-build-pages@v1
-        with:
-          destination: main-site
+      # publish normal site from master
       - name: Publish master site
         uses: peaceiris/actions-gh-pages@v4
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: main-site
-          keep_files: true
+          publish_dir: main-site/content

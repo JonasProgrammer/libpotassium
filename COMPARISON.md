@@ -42,15 +42,15 @@ The [core design](docs/design/core.md) describes ownership and wiping, and the [
 
 ## Secret-key cryptography
 
-See the [SecretBox design](docs/design/secretbox.md) and [AEAD design](docs/design/aead.md) for algorithms and wire formats and the [authentication design](docs/design/hash.md#hmac-authentication) for HMAC.
+See the [SecretBox design](docs/design/secretbox.md), [AEAD design](docs/design/aead.md), [secretstream design](docs/design/secretstream.md) and [authentication design](docs/design/hash.md#hmac-authentication) for the supported interfaces and wire formats.
 
 | Upstream topic | Coverage | C++ interface or gap |
 | --- | --- | --- |
 | Authenticated encryption, combined mode | ✅ Supported | `secretbox::seal` and `open` use XSalsa20-Poly1305 by default and also support XChaCha20-Poly1305. |
 | Detached SecretBox | ✅ Supported | `secretbox::seal_detached`, `open_detached` and their caller-buffer forms support both SecretBox algorithms with separate typed MACs. |
 | Original NaCl SecretBox | 🚫 Omitted by design | The easy interface accepts ordinary plaintext and produces a MAC followed by encrypted bytes, eliminating the legacy caller-supplied zero prefixes. |
-| Encrypted streams and file encryption | ❌ Unwrapped | No secretstream header, push/pull state, message tags or rekeying. |
-| Encrypting related messages | 📖 Guidance | Applications provide framing, ordering, replay handling and nonce coordination when using independent boxes. |
+| Encrypted streams and file encryption | ✅ Supported | `secretstream::start_push` and `start_pull` manage guarded state, authenticated record tags, finalization and rekeying. |
+| Encrypting related messages | 📖 Guidance | Applications frame ordered secretstream records, or manage ordering, replay and nonces when using independent boxes. |
 | Authentication | ✅ Supported | `auth::authenticate`, `authenticate_into` and `verify` cover `crypto_auth`, including its default truncated HMAC-SHA-512 tag. |
 | AEAD, ChaCha family | ✅ Supported | `aead` wraps the original and IETF ChaCha20-Poly1305 variants and defaults to IETF XChaCha20-Poly1305, each in combined and detached mode with associated data. |
 | AEAD, AEGIS and AES | ❌ Unwrapped | AEGIS-256, AEGIS-128L and AES256-GCM, including AES precomputation. |

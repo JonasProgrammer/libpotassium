@@ -32,6 +32,7 @@ target_sources(potassium PUBLIC
         src/hash/hash.cpp
         src/internal/internal.cpp
         src/secretbox/secretbox.cpp
+        src/secretstream/secretstream.cpp
         FILE_SET generated_modules TYPE CXX_MODULES
         BASE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/generated"
         FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/base.cpp"
@@ -44,6 +45,7 @@ target_sources(potassium PUBLIC
         src/core/memory_impl.cpp
         src/hash/hash_impl.cpp
         src/secretbox/secretbox_impl.cpp
+        src/secretstream/secretstream_impl.cpp
 )
 target_link_libraries(potassium PUBLIC PkgConfig::libsodium)
 

@@ -14,6 +14,12 @@
 - Write Markdown with one sentence per line to keep diffs focused.
 - Follow the [AI usage and attribution policy](README.md#ai-usage).
 
+## Confidential state storage
+
+- Provide a dedicated storage type and allow callers to supply custom, preallocated state, including in-place storage.
+- Allow state allocations to be reused for a new operation without allocating again.
+- Wipe confidential state immediately when the operation closes, even when retaining its storage for reuse.
+
 ## Error handling
 
 - For fallible cryptographic operations, provide a throwing overload and a `noexcept` overload with a final `std::nothrow_t` parameter that returns `std::expected<T, errc>`.

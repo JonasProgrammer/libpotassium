@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 libpotassium team
+# SPDX-License-Identifier: BSL-1.0
+
 # include CTest if not already included
 if (NOT LIBPOTASSIUM_CTEST_INCLUDED)
     include(CTest)
@@ -19,6 +22,7 @@ add_executable(potassium_tests
         key_traits.cpp
         memory.cpp
         secretbox.cpp
+        secretstream.cpp
 )
 target_sources(potassium_tests PRIVATE FILE_SET CXX_MODULES FILES nacl_vector.cpp)
 target_link_libraries(potassium_tests PRIVATE potassium Catch2::Catch2)

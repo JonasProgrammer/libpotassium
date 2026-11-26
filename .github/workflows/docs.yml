@@ -1,3 +1,4 @@
+
 name: Documentation
 
 on:
@@ -9,21 +10,35 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: documentation-publish
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   docs:
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v7
-      
-      # build normal site from master
+
+      # Build the main website from the repository README.
       - name: Build master site
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/master'
         uses: actions/jekyll-build-pages@v1
         with:
-          destination: main-site/content
+          source: .
+          destination: _site
 
+      # Set up the Nix build environment.
       - uses: cachix/install-nix-action@v32
 
       - uses: nix-community/cache-nix-action@v7
@@ -31,32 +46,89 @@ jobs:
           primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}-
 
+      # Build Doxygen outside the repository source tree.
       - name: Build documentation
         run: |
           nix develop .#full --command bash -e -c '
-            cmake -S . -B build -G Ninja \
+            cmake -S . -B "$RUNNER_TEMP/build" -G Ninja \
               -DLIBPOTASSIUM_BUILD_DOCS=ON \
               -DBUILD_TESTING=OFF
 
-            cmake --build build \
+            cmake --build "$RUNNER_TEMP/build" \
               --target potassium_docs
           '
 
-      - name: Publish branch documentation
-        uses: peaceiris/actions-gh-pages@v4
-        if: ( github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') ) && github.event_name != 'pull_request'
+      # Retrieve the previously published website.
+      - name: Checkout published site
+        uses: actions/checkout@v7
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: build/docs/html
-          destination_dir: docs/${{ github.ref_name }}
-          keep_files: false
+          ref: gh-pages
+          path: _published
 
-      # publish normal site from master
-      - name: Publish master site
-        uses: peaceiris/actions-gh-pages@v4
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+      # Migrate previously published documentation to api/.
+      - name: Migrate legacy documentation
+        run: |
+          mkdir -p _published/api
+
+          for branch in master release; do
+            if [ -d "_published/docs/$branch" ]; then
+              mkdir -p "_published/api/$branch"
+
+              rsync -a --ignore-existing \
+                "_published/docs/$branch/" \
+                "_published/api/$branch/"
+
+              rm -rf "_published/docs/$branch"
+            fi
+          done
+
+      # Replace the main website, preserving all API versions.
+      - name: Synchronize master site
+        if: github.ref == 'refs/heads/master'
+        run: |
+          test -f _site/index.html
+
+          rsync -a --delete \
+            --exclude='/.git/' \
+            --exclude='/api/' \
+            _site/ _published/
+
+      # Replace only the current branch's API documentation.
+      - name: Synchronize branch documentation
+        run: |
+          source="$RUNNER_TEMP/build/docs/html"
+          destination="_published/api/$GITHUB_REF_NAME"
+
+          test -f "$source/index.html"
+
+          mkdir -p "$destination"
+
+          rsync -a --delete \
+            "$source/" "$destination/"
+
+      # Persist the complete website.
+      - name: Commit published site
+        working-directory: _published
+        run: |
+          touch .nojekyll
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Update documentation for $GITHUB_REF_NAME ($GITHUB_SHA)"
+            git push origin gh-pages
+          fi
+
+      # Deploy the complete website through GitHub Pages.
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: main-site/content
+          path: _published
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

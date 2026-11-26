@@ -9,6 +9,7 @@ libpotassium is an opinionated C++ wrapper for [libsodium](https://libsodium.org
 For a supported libsodium family named `crypto_x_*`, import `potassium.x` and use the `potassium::x` namespace.
 For example, `crypto_box_*` and `crypto_secretbox_*` map to `potassium.box` and `potassium.secretbox`, respectively.
 Import `potassium` for the complete public API.
+See the [libsodium coverage comparison](COMPARISON.md) for support by operation, gaps, and deliberate API differences.
 
 | Libsodium family                                                   | libpotassium mapping                                                                                                                                                |
 |--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|

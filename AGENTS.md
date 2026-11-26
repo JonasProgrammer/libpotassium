@@ -9,6 +9,7 @@
 - Use a C++26 feature only when it is explicitly enabled in this file.
 - Do not use any feature explicitly forbidden in this file.
 - Use ASCII characters only in Markdown, source code, and other project files unless instructed otherwise.
+- In `COMPARISON.md`, emoji may accompany text labels to indicate wrapping status.
 - Write Markdown with one sentence per line to keep diffs focused.
 - Follow the [AI usage and attribution policy](README.md#ai-usage).
 

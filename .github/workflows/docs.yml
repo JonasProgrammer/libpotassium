@@ -32,7 +32,7 @@ jobs:
               -DBUILD_TESTING=OFF
 
             cmake --build build \
-              --target libpotassium_docs
+              --target potassium_docs
           '
 
       - name: Publish branch documentation

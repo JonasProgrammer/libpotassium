@@ -50,7 +50,7 @@ Destruction, shrinking and reallocation must wipe secret bytes before their stor
 ## Message and operation conventions
 
 Inputs use `std::span<const std::byte>` and caller-owned destinations use `std::span<std::byte>`.
-Combined ciphertext is exactly `MAC || encrypted plaintext`, with length equal to the plaintext length plus `mac_size`.
+For SecretBox and public-key Box, combined ciphertext is exactly `MAC || encrypted plaintext`, with length equal to the plaintext length plus `mac_size`.
 Applications transport the nonce separately and define framing, versioning, replay detection and ordering.
 
 | Operation after the key arguments | Result |

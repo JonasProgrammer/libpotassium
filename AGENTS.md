@@ -8,6 +8,7 @@
 - Use `import std;` for the C++ standard library.
 - Use a C++26 feature only when it is explicitly enabled in this file.
 - Do not use any feature explicitly forbidden in this file.
+- Never add ephemeral information, temporary notes, or planning material to committed documentation.
 - Use ASCII characters only in Markdown, source code, and other project files unless instructed otherwise.
 - In `COMPARISON.md`, emoji may accompany text labels to indicate wrapping status.
 - Write Markdown with one sentence per line to keep diffs focused.

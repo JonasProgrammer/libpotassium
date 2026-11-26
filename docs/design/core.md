@@ -6,19 +6,20 @@
 `potassium.core` defines the types used by [SecretBox](secretbox.md) and [public-key authenticated encryption](pk-authenticated.md).
 Each construction supplies its own algorithm tags, trait specializations and operations.
 
-## Key and nonce types
+## Key, nonce and MAC types
 
 | Material | Owner | Read-only view | Extent in bytes |
 | --- | --- | --- | --- |
 | Confidential key | `secret_key<KeyTag>` or caller-selected storage | `key_ref<KeyTag>` | `key_traits<KeyTag>::size` |
 | Public key | `public_key<A>` | `public_key_ref<A>` | `algorithm_traits<A>::public_key_size` |
 | Nonce | `nonce_buffer<A>` | `nonce_ref<A>` | `algorithm_traits<A>::nonce_size` |
+| Detached MAC | `mac_buffer<A>` | `mac_buffer<A> const&` | `algorithm_traits<A>::mac_size` |
 
 A confidential key tag identifies its cryptographic purpose and needs only a `key_traits` specialization.
 An algorithm tag identifies a construction, and its `algorithm_traits` specialization supplies the dimensions and message limit applicable to that construction.
 Distinct key purposes and algorithms remain distinct types even when their byte lengths match.
 
-Each view takes an explicit `std::span<const std::byte, N>` and borrows the underlying bytes.
+Each key and nonce view takes an explicit `std::span<const std::byte, N>` and borrows the underlying bytes.
 A matching owner converts implicitly to its view on lvalues only.
 Both mutable and const rvalues must reject borrowing, including through named view accessors.
 The caller keeps the backing storage alive for every use of the view and controls the protection and wiping of externally owned secrets.
@@ -27,6 +28,8 @@ Public keys and nonces are ordinary copyable, movable values with fixed-size inl
 A public key carries the full algorithm identity, so reusing the same encoding across protocols requires explicit adaptation.
 Constructing a public-key view establishes its extent and declared type only.
 Peer identity and acceptance of the encoded key are separate questions.
+A detached MAC is a copyable, algorithm-typed value in ordinary memory.
+Check the received MAC length against its extent and copy its bytes into `mac_buffer<A>::storage` or the writable, fixed-extent span returned by `bytes()`.
 
 ## Confidential storage
 
@@ -62,13 +65,25 @@ Applications transport the nonce separately and define framing, versioning, repl
 | `seal_into(plaintext, out, nonce)` | Writes combined ciphertext |
 | `open_into(ciphertext, out, nonce)` | Writes authenticated plaintext |
 
+Detached operations return or accept the MAC separately.
+Their ciphertext is exactly as long as the plaintext, including zero bytes for an empty message.
+
+| Operation after the key arguments | Result |
+| --- | --- |
+| `seal_detached(plaintext, nonce)` | `detached_ciphertext<A>` with ciphertext and MAC |
+| `seal_detached(plaintext)` | `detached_seal_result<A>` with ciphertext, MAC and nonce |
+| `seal_detached_into(plaintext, out, nonce)` | Writes ciphertext and returns the MAC |
+| `seal_detached_into(plaintext, out)` | Writes ciphertext and returns `detached_mac_nonce<A>` with MAC and nonce |
+| `open_detached(ciphertext, mac, nonce)` | Authenticated plaintext in a `secure_buffer` |
+| `open_detached_into(ciphertext, mac, out, nonce)` | Writes authenticated plaintext |
+
 Sealing without an explicit nonce uses the secure RNG, also available through `generate_nonce<A>()`.
 To import a nonce, explicitly construct its owner from a fixed-extent byte span.
 An explicit nonce must be unique for each encryption under the same key across participants, processes and restarts.
 
 Encryption requires plaintext length at most `algorithm_traits<A>::messagebytes_max`.
 For the allocation-free message operations, output must be disjoint from every input and sized exactly for the result.
-Opening rejects ciphertext shorter than `mac_size` before subtracting the overhead to determine the output size.
+Combined opening rejects ciphertext shorter than `mac_size` before subtracting the overhead to determine the output size.
 Failed authentication must never expose unauthenticated plaintext.
 
 ## Failures and implementation boundaries

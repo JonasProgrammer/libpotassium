@@ -219,6 +219,55 @@ public:
     operator nonce_ref<A>() const&& = delete;
 };
 
+/// Copyable public authentication tag for a detached ciphertext.
+template <Algorithm A>
+struct mac_buffer
+{
+    /// MAC bytes in transmission order.
+    std::array<std::byte, algorithm_traits<A>::mac_size> storage{};
+
+    /// @return Writable bytes for importing a MAC from the wire.
+    constexpr std::span<std::byte, algorithm_traits<A>::mac_size> bytes() & noexcept { return storage; }
+
+    /// @return Read-only bytes of the MAC.
+    constexpr std::span<std::byte const, algorithm_traits<A>::mac_size> bytes() const& noexcept { return storage; }
+
+    /// Borrowing requires a live lvalue owner.
+    std::span<std::byte const, algorithm_traits<A>::mac_size> bytes() const&& = delete;
+};
+
+/// Detached ciphertext and its authentication tag.
+template <Algorithm A>
+struct detached_ciphertext
+{
+    /// Encrypted message bytes.
+    std::vector<std::byte> ciphertext;
+    /// Authentication tag for the ciphertext.
+    mac_buffer<A> mac;
+};
+
+/// Detached ciphertext with its authentication tag and generated nonce.
+template <Algorithm A>
+struct detached_seal_result
+{
+    /// Encrypted message bytes.
+    std::vector<std::byte> ciphertext;
+    /// Authentication tag for the ciphertext.
+    mac_buffer<A> mac;
+    /// Generated encryption nonce.
+    nonce_buffer<A> nonce;
+};
+
+/// Authentication tag and generated nonce for caller-owned ciphertext.
+template <Algorithm A>
+struct detached_mac_nonce
+{
+    /// Authentication tag for the ciphertext.
+    mac_buffer<A> mac;
+    /// Generated encryption nonce.
+    nonce_buffer<A> nonce;
+};
+
 /// Read-only borrowed public key. @pre The source storage outlives every use.
 template <class A>
     requires PublicKeyAlgorithmTraits<algorithm_traits<A>>

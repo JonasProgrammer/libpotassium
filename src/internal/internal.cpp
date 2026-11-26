@@ -91,6 +91,32 @@ std::expected<secure_buffer, errc> allocate_plaintext(std::size_t ciphertext_siz
 }
 
 template <class A, class Operation>
+std::expected<detached_ciphertext<A>, errc> allocate_detached_ciphertext(std::size_t plaintext_size, Operation operation) noexcept
+try
+{
+    if (plaintext_size > algorithm_traits<A>::messagebytes_max) return std::unexpected(errc::crypto_failed);
+    std::vector<std::byte> ciphertext(plaintext_size);
+    auto mac = operation(ciphertext);
+    if (!mac) return std::unexpected(mac.error());
+    return detached_ciphertext<A>{std::move(ciphertext), *mac};
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
+}
+catch (std::length_error const&)
+{
+    return std::unexpected(errc::allocation_failed);
+}
+
+template <class A, class Operation>
+std::expected<secure_buffer, errc> allocate_detached_plaintext(std::size_t ciphertext_size, Operation operation) noexcept
+{
+    if (ciphertext_size > algorithm_traits<A>::messagebytes_max) return std::unexpected(errc::crypto_failed);
+    return allocate_and_transform<secure_buffer>(ciphertext_size, operation);
+}
+
+template <class A, class Operation>
 std::expected<nonce_buffer<A>, errc> seal_into_with_nonce(Operation operation) noexcept
 {
     auto nonce = generate_nonce<A>();

@@ -47,7 +47,7 @@ See the [SecretBox design](docs/design/secretbox.md) for algorithms and wire for
 | Upstream topic | Coverage | C++ interface or gap |
 | --- | --- | --- |
 | Authenticated encryption, combined mode | ✅ Supported | `secretbox::seal` and `open` use XSalsa20-Poly1305 by default and also support XChaCha20-Poly1305. |
-| Detached SecretBox | ❌ Unwrapped | The public interface takes a single combined ciphertext. |
+| Detached SecretBox | ✅ Supported | `secretbox::seal_detached`, `open_detached` and their caller-buffer forms support both SecretBox algorithms with separate typed MACs. |
 | Original NaCl SecretBox | 🚫 Omitted by design | The easy interface accepts ordinary plaintext and produces a MAC followed by encrypted bytes, eliminating the legacy caller-supplied zero prefixes. |
 | Encrypted streams and file encryption | ❌ Unwrapped | No secretstream header, push/pull state, message tags or rekeying. |
 | Encrypting related messages | 📖 Guidance | Applications provide framing, ordering, replay handling and nonce coordination when using independent boxes. |

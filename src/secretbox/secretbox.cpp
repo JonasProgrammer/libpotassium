@@ -247,6 +247,81 @@ secure_buffer open(xchacha_key_ref key, xchacha_seal_result const& sealed);
 /// @return Authenticated plaintext in guarded storage, or errc::crypto_failed on authentication failure or errc::allocation_failed on allocation failure.
 std::expected<secure_buffer, errc> open(xchacha_key_ref key, xchacha_seal_result const& sealed, std::nothrow_t tag) noexcept;
 
+/// Encrypt a message, returning the ciphertext and separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<xchacha20poly1305>::messagebytes_max.
+/// @pre The nonce has never been used for encryption with this key.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_ciphertext<xchacha20poly1305> seal_detached(xchacha_key_ref key, std::span<std::byte const> plaintext, xchacha_nonce_ref nonce);
+
+/// @overload
+std::expected<detached_ciphertext<xchacha20poly1305>, errc> seal_detached(xchacha_key_ref key, std::span<std::byte const> plaintext, xchacha_nonce_ref nonce, std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning the ciphertext, separate MAC and generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<xchacha20poly1305>::messagebytes_max.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_seal_result<xchacha20poly1305> seal_detached(xchacha_key_ref key, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<detached_seal_result<xchacha20poly1305>, errc> seal_detached(xchacha_key_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept;
+
+/// Encrypt a message into caller storage, returning a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<xchacha20poly1305>::messagebytes_max.
+/// @pre The nonce has never been used for encryption with this key.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC to open the ciphertext")]] mac_buffer<xchacha20poly1305> seal_detached_into(xchacha_key_ref key,
+                                                                                                        std::span<std::byte const> plaintext,
+                                                                                                        std::span<std::byte> out,
+                                                                                                        xchacha_nonce_ref nonce);
+
+/// @overload
+[[nodiscard("Retain the MAC to open the ciphertext")]] std::expected<mac_buffer<xchacha20poly1305>, errc> seal_detached_into(xchacha_key_ref key,
+                                                                                                                             std::span<std::byte const> plaintext,
+                                                                                                                             std::span<std::byte> out,
+                                                                                                                             xchacha_nonce_ref nonce,
+                                                                                                                             std::nothrow_t) noexcept;
+
+/// Encrypt a message into caller storage, returning a separate MAC and generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<xchacha20poly1305>::messagebytes_max.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] detached_mac_nonce<xchacha20poly1305> seal_detached_into(xchacha_key_ref key,
+                                                                                                                          std::span<std::byte const> plaintext,
+                                                                                                                          std::span<std::byte> out);
+
+/// @overload
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] std::expected<detached_mac_nonce<xchacha20poly1305>, errc> seal_detached_into(xchacha_key_ref key,
+                                                                                                                                               std::span<std::byte const> plaintext,
+                                                                                                                                               std::span<std::byte> out,
+                                                                                                                                               std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and return the plaintext in guarded storage.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_detached(xchacha_key_ref key, std::span<std::byte const> ciphertext, mac_buffer<xchacha20poly1305> const& mac, xchacha_nonce_ref nonce);
+
+/// @overload
+std::expected<secure_buffer, errc> open_detached(xchacha_key_ref key,
+                                                 std::span<std::byte const> ciphertext,
+                                                 mac_buffer<xchacha20poly1305> const& mac,
+                                                 xchacha_nonce_ref nonce,
+                                                 std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and write the plaintext after verification.
+/// @pre Output is disjoint from all inputs and has the same length as ciphertext.
+/// @throws crypto_error If authentication fails.
+void open_detached_into(xchacha_key_ref key, std::span<std::byte const> ciphertext, mac_buffer<xchacha20poly1305> const& mac, std::span<std::byte> out, xchacha_nonce_ref nonce);
+
+/// @overload
+std::expected<void, errc> open_detached_into(xchacha_key_ref key,
+                                             std::span<std::byte const> ciphertext,
+                                             mac_buffer<xchacha20poly1305> const& mac,
+                                             std::span<std::byte> out,
+                                             xchacha_nonce_ref nonce,
+                                             std::nothrow_t) noexcept;
+
 /// @}
 
 /// @name XSalsa20-Poly1305
@@ -401,6 +476,77 @@ secure_buffer open(xsalsa_key_ref key, xsalsa_seal_result const& sealed);
 /// @param tag Pass std::nothrow to receive errors in the result.
 /// @return Authenticated plaintext in guarded storage, or errc::crypto_failed on authentication failure or errc::allocation_failed on allocation failure.
 std::expected<secure_buffer, errc> open(xsalsa_key_ref key, xsalsa_seal_result const& sealed, std::nothrow_t tag) noexcept;
+
+/// Encrypt a message, returning the ciphertext and separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<xsalsa20poly1305>::messagebytes_max.
+/// @pre The nonce has never been used for encryption with this key.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_ciphertext<xsalsa20poly1305> seal_detached(xsalsa_key_ref key, std::span<std::byte const> plaintext, xsalsa_nonce_ref nonce);
+
+/// @overload
+std::expected<detached_ciphertext<xsalsa20poly1305>, errc> seal_detached(xsalsa_key_ref key, std::span<std::byte const> plaintext, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning the ciphertext, separate MAC and generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<xsalsa20poly1305>::messagebytes_max.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_seal_result<xsalsa20poly1305> seal_detached(xsalsa_key_ref key, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<detached_seal_result<xsalsa20poly1305>, errc> seal_detached(xsalsa_key_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept;
+
+/// Encrypt a message into caller storage, returning a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<xsalsa20poly1305>::messagebytes_max.
+/// @pre The nonce has never been used for encryption with this key.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC to open the ciphertext")]] mac_buffer<xsalsa20poly1305> seal_detached_into(xsalsa_key_ref key,
+                                                                                                       std::span<std::byte const> plaintext,
+                                                                                                       std::span<std::byte> out,
+                                                                                                       xsalsa_nonce_ref nonce);
+
+/// @overload
+[[nodiscard("Retain the MAC to open the ciphertext")]] std::expected<mac_buffer<xsalsa20poly1305>, errc> seal_detached_into(xsalsa_key_ref key,
+                                                                                                                            std::span<std::byte const> plaintext,
+                                                                                                                            std::span<std::byte> out,
+                                                                                                                            xsalsa_nonce_ref nonce,
+                                                                                                                            std::nothrow_t) noexcept;
+
+/// Encrypt a message into caller storage, returning a separate MAC and generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<xsalsa20poly1305>::messagebytes_max.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] detached_mac_nonce<xsalsa20poly1305> seal_detached_into(xsalsa_key_ref key,
+                                                                                                                         std::span<std::byte const> plaintext,
+                                                                                                                         std::span<std::byte> out);
+
+/// @overload
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] std::expected<detached_mac_nonce<xsalsa20poly1305>, errc> seal_detached_into(xsalsa_key_ref key,
+                                                                                                                                              std::span<std::byte const> plaintext,
+                                                                                                                                              std::span<std::byte> out,
+                                                                                                                                              std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and return the plaintext in guarded storage.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_detached(xsalsa_key_ref key, std::span<std::byte const> ciphertext, mac_buffer<xsalsa20poly1305> const& mac, xsalsa_nonce_ref nonce);
+
+/// @overload
+std::expected<secure_buffer, errc> open_detached(xsalsa_key_ref key, std::span<std::byte const> ciphertext, mac_buffer<xsalsa20poly1305> const& mac, xsalsa_nonce_ref nonce, std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and write the plaintext after verification.
+/// @pre Output is disjoint from all inputs and has the same length as ciphertext.
+/// @throws crypto_error If authentication fails.
+void open_detached_into(xsalsa_key_ref key, std::span<std::byte const> ciphertext, mac_buffer<xsalsa20poly1305> const& mac, std::span<std::byte> out, xsalsa_nonce_ref nonce);
+
+/// @overload
+std::expected<void, errc> open_detached_into(xsalsa_key_ref key,
+                                             std::span<std::byte const> ciphertext,
+                                             mac_buffer<xsalsa20poly1305> const& mac,
+                                             std::span<std::byte> out,
+                                             xsalsa_nonce_ref nonce,
+                                             std::nothrow_t) noexcept;
 
 /// @}
 

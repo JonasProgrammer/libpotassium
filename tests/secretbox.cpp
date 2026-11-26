@@ -80,6 +80,33 @@ namespace
 {
 using test_vectors::hex_bytes;
 
+template <class Key, class Mac, class Nonce>
+concept OpensDetached = requires(Key& key, std::span<std::byte const> ciphertext, Mac const& mac, Nonce& nonce) {
+    { open_detached(key, ciphertext, mac, nonce) } -> std::same_as<secure_buffer>;
+};
+
+template <class Key, class Nonce>
+concept SealsDetached = requires(Key& key, std::span<std::byte const> message, Nonce& nonce) { seal_detached(key, message, nonce, std::nothrow); };
+
+template <class A, class Other>
+consteval bool check_detached_types()
+{
+    static_assert(std::copyable<mac_buffer<A>>);
+    static_assert(std::same_as<decltype(std::declval<mac_buffer<A>&>().bytes()), std::span<std::byte, algorithm_traits<A>::mac_size>>);
+    static_assert(std::same_as<decltype(std::declval<mac_buffer<A> const&>().bytes()), std::span<std::byte const, algorithm_traits<A>::mac_size>>);
+    static_assert(OpensDetached<secret_key<A>, mac_buffer<A>, nonce_buffer<A>>);
+    static_assert(OpensDetached<key_buffer_storage<A>, mac_buffer<A>, nonce_buffer<A>>);
+    static_assert(!OpensDetached<secret_key<Other>, mac_buffer<A>, nonce_buffer<A>>);
+    static_assert(!OpensDetached<secret_key<A>, mac_buffer<Other>, nonce_buffer<A>>);
+    static_assert(!OpensDetached<secret_key<A>, mac_buffer<A>, nonce_buffer<Other>>);
+    static_assert(SealsDetached<secret_key<A>, nonce_buffer<A>>);
+    static_assert(!SealsDetached<secret_key<A>, nonce_buffer<Other>>);
+    return true;
+}
+
+static_assert(check_detached_types<xsalsa20poly1305, xchacha20poly1305>());
+static_assert(check_detached_types<xchacha20poly1305, xsalsa20poly1305>());
+
 template <class A>
 void check_vector(key_ref<A> key, nonce_ref<A> nonce, std::span<std::byte const> plaintext, std::span<std::byte const> ciphertext)
 {
@@ -89,6 +116,10 @@ void check_vector(key_ref<A> key, nonce_ref<A> nonce, std::span<std::byte const>
 
     auto opened = open(key, ciphertext, nonce);
     CHECK(std::ranges::equal(opened.bytes(), plaintext));
+
+    auto [detached, mac] = seal_detached(key, plaintext, nonce);
+    CHECK(std::ranges::equal(mac.bytes(), ciphertext.first(algorithm_traits<A>::mac_size)));
+    CHECK(std::ranges::equal(detached, ciphertext.subspan(algorithm_traits<A>::mac_size)));
 
     static_assert(!std::default_initializable<nonce_buffer<A>>);
     auto wrong_nonce = nonce_buffer<A>{nonce.bytes()};
@@ -100,6 +131,102 @@ void check_vector(key_ref<A> key, nonce_ref<A> nonce, std::span<std::byte const>
     auto failed = open_into(key, corrupted, opened.bytes(), nonce, std::nothrow);
     REQUIRE_FALSE(failed.has_value());
     CHECK(failed.error() == errc::crypto_failed);
+}
+
+TEMPLATE_TEST_CASE("Detached SecretBox interoperates with libsodium", "[secretbox][interop]", xsalsa20poly1305, xchacha20poly1305)
+{
+    using A = TestType;
+    constexpr bool xsalsa = std::same_as<A, xsalsa20poly1305>;
+    auto raw_seal = xsalsa ? crypto_secretbox_detached : crypto_secretbox_xchacha20poly1305_detached;
+    auto raw_open = xsalsa ? crypto_secretbox_open_detached : crypto_secretbox_xchacha20poly1305_open_detached;
+
+    key_buffer_storage<A> key;
+    auto key_bytes = reinterpret_cast<unsigned char const*>(key.ref().bytes().data());
+    std::array<unsigned char, 257> input;
+    std::iota(input.begin(), input.end(), 0u);
+    std::array<unsigned char, input.size()> output{};
+    std::array<unsigned char, input.size()> raw_ciphertext{};
+    std::array<unsigned char, algorithm_traits<A>::mac_size> raw_mac{};
+
+    for (auto length : {0u, 1u, 31u, 32u, 33u, 63u, 64u, 65u, 257u})
+    {
+        CAPTURE(length);
+        auto message = std::span{input}.first(length);
+        auto destination = std::span{output}.first(length);
+        auto native_nonce = generate_nonce<A>();
+        auto native_nonce_bytes = reinterpret_cast<unsigned char const*>(native_nonce.ref().bytes().data());
+        REQUIRE(raw_seal(raw_ciphertext.data(), raw_mac.data(), message.data(), length, native_nonce_bytes, key_bytes) == 0);
+        mac_buffer<A> imported{};
+        std::ranges::copy(std::as_bytes(std::span{raw_mac}), imported.bytes().begin());
+        auto native_ciphertext = std::as_bytes(std::span{raw_ciphertext}.first(length));
+
+        auto opened = open_detached(key, native_ciphertext, imported, native_nonce, std::nothrow);
+        REQUIRE(opened.has_value());
+        CHECK(std::ranges::equal(opened->bytes(), std::as_bytes(message)));
+        open_detached_into(key, native_ciphertext, imported, std::as_writable_bytes(destination), native_nonce);
+        CHECK(std::ranges::equal(destination, message));
+
+        auto check_native_open = [&](std::span<std::byte const> ciphertext, mac_buffer<A> const& mac, nonce_buffer<A> const& nonce)
+        {
+            REQUIRE(ciphertext.size() == length);
+            unsigned char empty{};
+            auto bytes = ciphertext.empty() ? &empty : reinterpret_cast<unsigned char const*>(ciphertext.data());
+            auto mac_bytes = reinterpret_cast<unsigned char const*>(mac.bytes().data());
+            auto nonce_bytes = reinterpret_cast<unsigned char const*>(nonce.ref().bytes().data());
+            std::ranges::fill(destination, 0x55);
+            REQUIRE(raw_open(destination.data(), bytes, mac_bytes, ciphertext.size(), nonce_bytes, key_bytes) == 0);
+            CHECK(std::ranges::equal(destination, message));
+        };
+
+        auto explicit_nonce = generate_nonce<A>();
+        auto explicit_result = seal_detached(key, std::as_bytes(message), explicit_nonce, std::nothrow);
+        REQUIRE(explicit_result.has_value());
+        check_native_open(explicit_result->ciphertext, explicit_result->mac, explicit_nonce);
+
+        auto [ciphertext, mac, nonce] = seal_detached(key, std::as_bytes(message));
+        check_native_open(ciphertext, mac, nonce);
+
+        std::vector<std::byte> caller_ciphertext(length);
+        auto caller_nonce = generate_nonce<A>();
+        auto caller_mac = seal_detached_into(key, std::as_bytes(message), caller_ciphertext, caller_nonce);
+        check_native_open(caller_ciphertext, caller_mac, caller_nonce);
+
+        auto caller_result = seal_detached_into(key, std::as_bytes(message), caller_ciphertext, std::nothrow);
+        REQUIRE(caller_result.has_value());
+        check_native_open(caller_ciphertext, caller_result->mac, caller_result->nonce);
+    }
+}
+
+TEMPLATE_TEST_CASE("Detached SecretBox rejects unauthenticated ciphertext", "[secretbox]", xsalsa20poly1305, xchacha20poly1305)
+{
+    using A = TestType;
+    secret_key<A> key;
+    secret_key<A> wrong_key;
+    std::array message{std::byte{0x42}, std::byte{0}, std::byte{0xff}};
+    auto sealed = seal_detached(key, message);
+    auto wrong_nonce = sealed.nonce;
+    wrong_nonce.storage.front() ^= std::byte{1};
+    auto wrong_mac = sealed.mac;
+    wrong_mac.storage.front() ^= std::byte{1};
+    auto tampered = sealed.ciphertext;
+    tampered.back() ^= std::byte{1};
+
+    auto check_failure = [&](key_ref<A> candidate_key, std::span<std::byte const> ciphertext, mac_buffer<A> const& mac, nonce_buffer<A> const& nonce)
+    {
+        CHECK_THROWS_AS(open_detached(candidate_key, ciphertext, mac, nonce), crypto_error);
+        std::array<std::byte, message.size()> output;
+        std::ranges::fill(output, std::byte{0x55});
+        auto destination = std::span{output}.first(ciphertext.size());
+        CHECK(open_detached_into(candidate_key, ciphertext, mac, destination, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(std::ranges::all_of(output, [](auto byte) { return byte == std::byte{0x55}; }));
+    };
+
+    check_failure(wrong_key, sealed.ciphertext, sealed.mac, sealed.nonce);
+    check_failure(key, sealed.ciphertext, sealed.mac, wrong_nonce);
+    check_failure(key, sealed.ciphertext, wrong_mac, sealed.nonce);
+    check_failure(key, tampered, sealed.mac, sealed.nonce);
+    check_failure(key, std::span{sealed.ciphertext}.first(1), sealed.mac, sealed.nonce);
+    check_failure(key, {}, sealed.mac, sealed.nonce);
 }
 }  // namespace
 

@@ -3,7 +3,7 @@
 
 # Core types and authenticated-encryption contracts
 
-`potassium.core` defines the types used by [SecretBox](secretbox.md) and [public-key authenticated encryption](pk-authenticated.md).
+`potassium.core` defines the types used by [SecretBox](secretbox.md), [AEAD](aead.md) and [public-key authenticated encryption](pk-authenticated.md).
 Each construction supplies its own algorithm tags, trait specializations and operations.
 
 ## Key, nonce and MAC types
@@ -54,6 +54,7 @@ Destruction, shrinking and reallocation must wipe secret bytes before their stor
 
 Inputs use `std::span<const std::byte>` and caller-owned destinations use `std::span<std::byte>`.
 For SecretBox and public-key Box, combined ciphertext is exactly `MAC || encrypted plaintext`, with length equal to the plaintext length plus `mac_size`.
+For AEAD, combined ciphertext is `encrypted plaintext || MAC`, with the same length formula.
 Applications transport the nonce separately and define framing, versioning, replay detection and ordering.
 
 | Operation after the key arguments | Result |
@@ -77,7 +78,8 @@ Their ciphertext is exactly as long as the plaintext, including zero bytes for a
 | `open_detached(ciphertext, mac, nonce)` | Authenticated plaintext in a `secure_buffer` |
 | `open_detached_into(ciphertext, mac, out, nonce)` | Writes authenticated plaintext |
 
-Sealing without an explicit nonce uses the secure RNG, also available through `generate_nonce<A>()`.
+For constructions supporting randomly generated nonces, sealing without an explicit nonce uses the secure RNG, also available through `generate_nonce<A>()`.
+Algorithm traits may disable that capability with `static constexpr bool random_nonce_enabled = false`.
 To import a nonce, explicitly construct its owner from a fixed-extent byte span.
 An explicit nonce must be unique for each encryption under the same key across participants, processes and restarts.
 
@@ -95,7 +97,8 @@ Allocation failures in ordinary and guarded storage map to `errc::allocation_fai
 
 Core owns the shared RNG, wiping, guarded memory, byte-pointer adapters and error translation.
 The design keeps libsodium headers, dispatch and backend assertions in private implementation units, with exported interfaces limited to declarations, layouts, constants and short template definitions.
-Concrete algorithm overloads allow an owner to convert to a view during overload resolution, since template deduction through that conversion would fail.
+Concrete typed key parameters allow an owner to convert to a view during overload resolution.
+The AEAD templates select their algorithm by borrowing a view through a concrete typed overload.
 
 Shared contract tests cover explicit raw-span construction, lvalue-only borrowing, tag isolation, owner copy and move semantics, and wiping.
 Each construction exercises both nonce modes, exact output sizes, empty and binary messages, authentication failures and short ciphertext in both error interfaces, including allocation failure where injection is practical.

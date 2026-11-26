@@ -42,7 +42,7 @@ The [core design](docs/design/core.md) describes ownership and wiping, and the [
 
 ## Secret-key cryptography
 
-See the [SecretBox design](docs/design/secretbox.md) for algorithms and wire format and the [authentication design](docs/design/hash.md#hmac-authentication) for HMAC.
+See the [SecretBox design](docs/design/secretbox.md) and [AEAD design](docs/design/aead.md) for algorithms and wire formats and the [authentication design](docs/design/hash.md#hmac-authentication) for HMAC.
 
 | Upstream topic | Coverage | C++ interface or gap |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ See the [SecretBox design](docs/design/secretbox.md) for algorithms and wire for
 | Encrypted streams and file encryption | ❌ Unwrapped | No secretstream header, push/pull state, message tags or rekeying. |
 | Encrypting related messages | 📖 Guidance | Applications provide framing, ordering, replay handling and nonce coordination when using independent boxes. |
 | Authentication | ✅ Supported | `auth::authenticate`, `authenticate_into` and `verify` cover `crypto_auth`, including its default truncated HMAC-SHA-512 tag. |
-| AEAD, ChaCha family | ❌ Unwrapped | Original and IETF ChaCha20-Poly1305 and IETF XChaCha20-Poly1305 with associated data are separate constructions from SecretBox. |
+| AEAD, ChaCha family | ✅ Supported | `aead` wraps the original and IETF ChaCha20-Poly1305 variants and defaults to IETF XChaCha20-Poly1305, each in combined and detached mode with associated data. |
 | AEAD, AEGIS and AES | ❌ Unwrapped | AEGIS-256, AEGIS-128L and AES256-GCM, including AES precomputation. |
 | IP address encryption | ❌ Unwrapped | No address-encryption or decryption API. |
 

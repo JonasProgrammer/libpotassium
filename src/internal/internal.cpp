@@ -79,14 +79,16 @@ std::expected<void, errc> transform(Function function, std::span<std::byte const
 template <class A, class Operation>
 std::expected<std::vector<std::byte>, errc> allocate_ciphertext(std::size_t plaintext_size, Operation operation) noexcept
 {
-    return allocate_and_transform<std::vector<std::byte>>(plaintext_size + algorithm_traits<A>::mac_size, operation);
+    constexpr auto mac_size = algorithm_traits<A>::mac_size;
+    if (plaintext_size > algorithm_traits<A>::messagebytes_max || plaintext_size > std::numeric_limits<std::size_t>::max() - mac_size) return std::unexpected(errc::crypto_failed);
+    return allocate_and_transform<std::vector<std::byte>>(plaintext_size + mac_size, operation);
 }
 
 template <class A, class Operation>
 std::expected<secure_buffer, errc> allocate_plaintext(std::size_t ciphertext_size, Operation operation) noexcept
 {
     constexpr auto mac_size = algorithm_traits<A>::mac_size;
-    if (ciphertext_size < mac_size) return std::unexpected(errc::crypto_failed);
+    if (ciphertext_size < mac_size || ciphertext_size - mac_size > algorithm_traits<A>::messagebytes_max) return std::unexpected(errc::crypto_failed);
     return allocate_and_transform<secure_buffer>(ciphertext_size - mac_size, operation);
 }
 

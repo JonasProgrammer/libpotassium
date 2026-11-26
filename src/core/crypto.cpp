@@ -71,6 +71,10 @@ concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits>
 template <class A>
 concept Algorithm = SecretKeyAlgorithmTraits<algorithm_traits<A>> || PublicKeyAlgorithmTraits<algorithm_traits<A>>;
 
+/// Algorithm permitting randomly generated nonces unless its traits explicitly disable them.
+template <class A>
+concept RandomNonceAlgorithm = Algorithm<A> && (!requires { algorithm_traits<A>::random_nonce_enabled; } || algorithm_traits<A>::random_nonce_enabled);
+
 /// Define size in bytes and optionally a default generator type for a confidential key purpose.
 /// @tparam KeyTag Tag identifying the purpose of the key.
 template <class KeyTag>
@@ -541,7 +545,7 @@ secret_key<KeyTag> make_secret_key()
 
 /// @tparam A Algorithm whose nonce size determines the number of random bytes.
 /// @return A freshly generated nonce for A.
-template <Algorithm A>
+template <RandomNonceAlgorithm A>
 nonce_buffer<A> generate_nonce() noexcept
 {
     std::array<std::byte, algorithm_traits<A>::nonce_size> bytes;

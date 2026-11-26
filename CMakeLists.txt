@@ -22,6 +22,7 @@ target_sources(potassium PUBLIC
         # entry
         src/libpotassium.cpp
         # partitions
+        src/aead/aead.cpp
         src/auth/auth.cpp
         src/auth/hmac.cpp
         src/box/box.cpp
@@ -36,6 +37,7 @@ target_sources(potassium PUBLIC
         FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/base.cpp"
         PRIVATE
         # implementations
+        src/aead/aead_impl.cpp
         src/auth/auth_impl.cpp
         src/box/box_impl.cpp
         src/core/crypto_impl.cpp

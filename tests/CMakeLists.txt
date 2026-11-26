@@ -10,6 +10,7 @@ add_executable(potassium_tests
         # entrypoint
         main.cpp
         # case files
+        aead.cpp
         auth.cpp
         base.cpp
         box.cpp

@@ -37,7 +37,8 @@ add_custom_target(potassium_docs_header
 )
 
 get_target_property(module_interfaces potassium CXX_MODULE_SET)
+get_target_property(generated_module_interfaces potassium CXX_MODULE_SET_generated_modules)
 set(DOXYGEN_EXCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/src/internal")
 
-doxygen_add_docs(potassium_docs ${module_interfaces})
+doxygen_add_docs(potassium_docs ${module_interfaces} ${generated_module_interfaces})
 add_dependencies(potassium_docs potassium_docs_header)

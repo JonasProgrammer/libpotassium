@@ -21,8 +21,6 @@ target_sources(potassium PUBLIC
         FILES
         # entry
         src/libpotassium.cpp
-        # configured files
-        "${CMAKE_CURRENT_BINARY_DIR}/generated/base.cpp"
         # partitions
         src/auth/auth.cpp
         src/auth/hmac.cpp
@@ -33,6 +31,9 @@ target_sources(potassium PUBLIC
         src/hash/hash.cpp
         src/internal/internal.cpp
         src/secretbox/secretbox.cpp
+        FILE_SET generated_modules TYPE CXX_MODULES
+        BASE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/generated"
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/base.cpp"
         PRIVATE
         # implementations
         src/auth/auth_impl.cpp

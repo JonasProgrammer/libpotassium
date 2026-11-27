@@ -3,7 +3,7 @@
 
 # Public-key authenticated encryption
 
-The proposed `potassium.box` module provides sender-authenticated encryption between a local key holder and a peer.
+The `potassium.box` module provides sender-authenticated encryption between a local key holder and a peer and anonymous encryption to a recipient.
 Both direct and precomputed operations follow the [core key, nonce, buffer and error contracts](core.md).
 
 Import `potassium.box` to access the construction, its core key types, and `potassium::init()`.
@@ -29,7 +29,8 @@ Use `keypair<A>{potassium::for_overwrite}` when importing or deriving both halve
 The existing `generate_keypair<A>(std::nothrow)` factory reports allocation and backend failures through its result.
 Pass a mutable private-key owner directly to `generate_keypair_into` and a precomputed-key owner to `precompute_into`.
 Key generation writes directly into the final destinations, including caller-owned storage in the corresponding generation-into operation.
-Deterministic key generation is a possible extension and would treat its seed as confidential.
+For deterministic generation, supply a confidential `key_ref<seed_tag<A>>` to `generate_keypair<A>` or pass a seed alongside the public and private destinations to `generate_keypair_into`.
+The seed can recreate the private key and uses confidential storage.
 
 ## Direct and precomputed operations
 
@@ -42,7 +43,6 @@ auto opened = box::open(bob.secret_key, alice.public_key, sealed.ciphertext, sea
 ```
 
 Direct operations use the backend's `easy` and `open_easy` functions.
-The name `box::seal` denotes sender-authenticated encryption here, whereas libsodium reserves `crypto_box_seal` for anonymous sealed boxes.
 
 For repeated messages, `box::precompute(local.secret_key, peer.public_key)` uses `beforenm` to derive a confidential owner tagged with `precomputed_key_tag<A>`.
 Precomputed key owners require derivation or explicit initialization.
@@ -51,6 +51,20 @@ Private, precomputed and SecretBox keys cannot implicitly convert between roles.
 With matching keys, plaintext and nonce, direct and precomputed encryption produce identical ciphertext.
 Interoperability tests exercise both directions between these modes and with libsodium for both algorithms.
 Rejection of an externally supplied peer key, including a small-order input rejected during precomputation, is a recoverable `crypto_failed`.
+
+`seal_detached` and `open_detached` use identical key roles and carry the MAC separately from the ciphertext.
+Both direct and precomputed operations support explicit or generated nonces for sealing, as well as allocation-free `seal_detached_into` and `open_detached_into`.
+The ciphertext is the same length as the plaintext and the typed `mac_buffer<A>` carries the 16-byte MAC.
+
+## Anonymous sealed boxes
+
+`seal_anonymous` and `open_anonymous` use the native `seal` and `seal_open` functions of each Box variant.
+Sealing takes the recipient's public key and generates an ephemeral sender key and an implicit nonce.
+Opening takes the recipient's matching public and private keys.
+Anyone with the recipient public key can create a valid sealed box.
+
+A sealed box has 48 bytes of overhead, consisting of an ephemeral public key and the authentication tag.
+The `_into` forms operate on disjoint caller-owned output, and allocating open returns plaintext in guarded storage.
 
 ## Protocol responsibilities
 

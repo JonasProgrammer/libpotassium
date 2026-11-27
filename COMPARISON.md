@@ -58,19 +58,18 @@ See the [SecretBox design](docs/design/secretbox.md), [AEAD design](docs/design/
 
 ## Public-key cryptography
 
-The [public-key authenticated encryption design](docs/design/pk-authenticated.md) specifies key roles and precomputation.
-Both box modules follow the [core message contract](docs/design/core.md#message-and-operation-conventions), so callers can supply a nonce or receive a generated nonce alongside the ciphertext.
-The allocating open operations return guarded plaintext, and the caller-buffer operations require disjoint input and output.
+The [Box design](docs/design/pk-authenticated.md) covers authenticated and anonymous encryption, and the [signature design](docs/design/sign.md) and [KEM design](docs/design/kem.md) cover Ed25519 and X-Wing.
+Authenticated Box follows the [core message contract](docs/design/core.md#message-and-operation-conventions) for explicit and generated nonces.
 
 | Upstream topic | Coverage | C++ interface or gap |
 | --- | --- | --- |
 | Authenticated encryption | ✅ Supported | `box::seal` and `open` support Curve25519 with XSalsa20-Poly1305 or XChaCha20-Poly1305, directly or with a key from `box::precompute`. |
-| Key pairs | 🟡 Partial | Random key-pair generation is exposed, including generation into caller storage, while deterministic generation from a seed is unwrapped. |
-| Detached Box | ❌ Unwrapped | Only the combined MAC and ciphertext format is exposed. |
+| Key pairs | ✅ Supported | `box::generate_keypair` and `generate_keypair_into` cover random and seeded key generation for both Box algorithms. |
+| Detached Box | ✅ Supported | `box::seal_detached`, `open_detached` and their caller-buffer forms support both Box algorithms directly or with precomputed keys. |
 | Original NaCl Box | 🚫 Omitted by design | Direct and precomputed operations use the easy format, eliminating the zero-padding contract of the legacy Box calls. |
-| Signatures | ❌ Unwrapped | No Ed25519 key pairs, signed messages, detached signatures or multipart Ed25519ph. |
-| Sealed boxes | ❌ Unwrapped | Upstream `crypto_box_seal` uses an anonymous sender, while `box::seal` requires a sender private key or a precomputed shared key. |
-| Key encapsulation | ❌ Unwrapped | No X-Wing key generation, encapsulation or decapsulation. |
+| Signatures | ✅ Supported | `sign` provides random and seeded Ed25519 key pairs, key extraction, signed messages, detached signatures and multipart Ed25519ph. |
+| Sealed boxes | ✅ Supported | `box::seal_anonymous` and `open_anonymous` wrap the native anonymous formats for both Box algorithms. |
+| Key encapsulation | ✅ Supported | `kem` provides random and seeded X-Wing key pairs, encapsulation and decapsulation. |
 
 ## Hashing
 

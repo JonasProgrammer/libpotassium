@@ -3,7 +3,7 @@
 
 # Core types and authenticated-encryption contracts
 
-`potassium.core` defines the types used by [SecretBox](secretbox.md), [AEAD](aead.md) and [public-key authenticated encryption](pk-authenticated.md).
+`potassium.core` defines the types used by [SecretBox](secretbox.md), [AEAD](aead.md), [Box](pk-authenticated.md), [Ed25519](sign.md) and [X-Wing](kem.md).
 Each construction supplies its own algorithm tags, trait specializations and operations.
 
 ## Key, nonce and MAC types
@@ -17,6 +17,7 @@ Each construction supplies its own algorithm tags, trait specializations and ope
 
 A confidential key tag identifies its cryptographic purpose and needs only a `key_traits` specialization.
 An algorithm tag identifies a construction, and its `algorithm_traits` specialization supplies the dimensions and message limit applicable to that construction.
+The public-key owner and view need only the public-key dimension from those traits.
 Distinct key purposes and algorithms remain distinct types even when their byte lengths match.
 
 Each key and nonce view takes an explicit `std::span<const std::byte, N>` and borrows the underlying bytes.

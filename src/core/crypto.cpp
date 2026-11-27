@@ -14,6 +14,9 @@ concept AuthenticatedEncryptionTraits = requires
     typename std::integral_constant<std::size_t, Traits::mac_size>;
     typename std::integral_constant<std::size_t, Traits::messagebytes_max>;
 };
+
+template <class Traits>
+concept HasPublicKeySize = requires { typename std::integral_constant<std::size_t, Traits::public_key_size>; };
 }  // namespace potassium::detail
 
 export namespace potassium
@@ -59,9 +62,7 @@ concept SecretKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits>
 
 /// Traits providing compile-time byte sizes and the message limit for public-key authenticated encryption.
 template <class Traits>
-concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits> && requires
-{
-    typename std::integral_constant<std::size_t, Traits::public_key_size>;
+concept PublicKeyAlgorithmTraits = detail::AuthenticatedEncryptionTraits<Traits> && detail::HasPublicKeySize<Traits> && requires {
     typename std::integral_constant<std::size_t, Traits::secret_key_size>;
     typename std::integral_constant<std::size_t, Traits::seed_size>;
     typename std::integral_constant<std::size_t, Traits::precomputed_key_size>;
@@ -274,7 +275,7 @@ struct detached_mac_nonce
 
 /// Read-only borrowed public key. @pre The source storage outlives every use.
 template <class A>
-    requires PublicKeyAlgorithmTraits<algorithm_traits<A>>
+    requires detail::HasPublicKeySize<algorithm_traits<A>>
 class public_key_ref
 {
 public:
@@ -304,7 +305,7 @@ private:
 
 /// Copyable public key. Default initialization yields zero bytes.
 template <class A>
-    requires PublicKeyAlgorithmTraits<algorithm_traits<A>>
+    requires detail::HasPublicKeySize<algorithm_traits<A>>
 class public_key
 {
 public:

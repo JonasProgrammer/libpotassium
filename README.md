@@ -13,6 +13,9 @@ See the [libsodium coverage comparison](COMPARISON.md) for support by operation,
 
 | Libsodium family                                                   | libpotassium mapping                                                                                                                                                |
 |--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `crypto_box_*` | `potassium.box` supports random and seeded key pairs, direct and precomputed combined and detached encryption, and anonymous sealed boxes with both Box algorithms. |
+| `crypto_sign_*` | `potassium.sign` provides Ed25519 key operations, signed messages, detached signatures, and multipart Ed25519ph with reusable state. |
+| `crypto_kem_*` | `potassium.kem` provides X-Wing key generation, encapsulation and decapsulation, with guarded shared secrets. |
 | `crypto_hash_*` and `crypto_generichash_*`                         | `potassium.hash` provides SHA digests and both unkeyed and keyed BLAKE2b under `potassium::hash`.                                                                   |
 | `crypto_auth_*`                                                    | Use `potassium::auth` for HMAC tags, one-shot authentication, and verification, and `potassium::hash::keyed_hasher<A>` for streaming.                               |
 | `crypto_aead_chacha20poly1305_*` and `crypto_aead_xchacha20poly1305_ietf_*` | `potassium.aead` provides combined and detached ChaCha authenticated encryption with associated data. |

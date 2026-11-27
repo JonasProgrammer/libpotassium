@@ -27,6 +27,14 @@ inline unsigned char const* sodium_bytes(void const* data) noexcept
     return static_cast<unsigned char const*>(data);
 }
 
+/// Check the non-overlap precondition for a writable destination.
+inline bool disjoint_bytes(std::span<std::byte const> first, std::span<std::byte const> second) noexcept
+{
+    if (first.empty() || second.empty()) return true;
+    auto less = std::less<std::byte const*>{};
+    return !less(second.data(), first.data() + first.size()) || !less(first.data(), second.data() + second.size());
+}
+
 template <class T>
 T unwrap(std::expected<T, errc> result)
 {

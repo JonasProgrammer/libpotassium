@@ -1,27 +1,28 @@
 <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
 <!-- SPDX-License-Identifier: BSL-1.0 -->
 
-# ChaCha authenticated encryption with associated data
+# Authenticated encryption with associated data
 
 Import `potassium.aead` for independent messages that need both encryption and authentication of protocol data.
 The module follows the [core key, error and buffer contracts](core.md).
 
-| Tag in `potassium::aead` | libsodium function family | Nonce bytes | Nonce selection |
-| --- | --- | --- | --- |
-| `chacha20poly1305` | `crypto_aead_chacha20poly1305_*` | 8 | Caller supplied |
-| `chacha20poly1305_ietf` | `crypto_aead_chacha20poly1305_ietf_*` | 12 | Caller supplied |
-| `xchacha20poly1305_ietf` (`default_algorithm`) | `crypto_aead_xchacha20poly1305_ietf_*` | 24 | Caller supplied or generated |
+| Tag in `potassium::aead` | libsodium function family | Key bytes | Nonce bytes | MAC bytes | Nonce selection |
+| --- | --- | --- | --- | --- | --- |
+| `chacha20poly1305` | `crypto_aead_chacha20poly1305_*` | 32 | 8 | 16 | Caller supplied |
+| `chacha20poly1305_ietf` | `crypto_aead_chacha20poly1305_ietf_*` | 32 | 12 | 16 | Caller supplied |
+| `xchacha20poly1305_ietf` (`default_algorithm`) | `crypto_aead_xchacha20poly1305_ietf_*` | 32 | 24 | 16 | Caller supplied or generated |
+| `aegis128l` | `crypto_aead_aegis128l_*` | 16 | 16 | 32 | Caller supplied or generated |
+| `aegis256` | `crypto_aead_aegis256_*` | 32 | 32 | 32 | Caller supplied or generated |
+| `aes256gcm` | `crypto_aead_aes256gcm_*` | 32 | 12 | 16 | Caller supplied |
 
-All three constructions use 32-byte keys and 16-byte MACs.
 Each tag identifies a distinct `key_ref`, `nonce_ref` and `mac_buffer` specialization.
 XChaCha20-Poly1305-IETF has its own key, nonce and MAC types and wire format distinct from [XChaCha20-Poly1305 SecretBox](secretbox.md).
 The `algorithm_traits<A>::messagebytes_max` limit matches the corresponding libsodium backend and platform.
 The IETF ChaCha20 variant has a 32-bit block counter and a per-message limit of at most `64 * (2^32 - 1)` bytes.
 
-Pass an explicit unique nonce for every encryption with either short-nonce construction.
-Coordinate nonce uniqueness under each key across all senders and across restarts.
-These constructions expose neither generated-nonce sealing overloads nor `generate_nonce<A>()`.
-The XChaCha20 variant supports both explicit and generated nonces.
+Coordinate explicit nonce uniqueness under each key across all senders and across restarts.
+For AES256-GCM, use a counter to supply nonces and follow the per-key usage limits in the [libsodium AES256-GCM documentation](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aes-256-gcm).
+Limit random-nonce use with AEGIS-128L to `2^48` messages per key.
 See the [libsodium AEAD construction limits](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead#limitations).
 
 ## Operations and wire format
@@ -46,10 +47,54 @@ void example(std::span<std::byte const> message, std::span<std::byte const> asso
 
 Combined ciphertext consists of encrypted message bytes followed by the MAC, in [libsodium's native AEAD format](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead#supported-constructions).
 Detached mode stores the same encrypted bytes and MAC separately.
-Empty messages produce a 16-byte combined ciphertext or a zero-length detached ciphertext with a 16-byte MAC.
+Empty messages produce only a MAC, either in the combined ciphertext or alongside a zero-length detached ciphertext.
 The nonce travels separately in either format.
 
 `seal_into`, `open_into`, `seal_detached_into` and `open_detached_into` take exact-size caller buffers disjoint from all inputs.
+Caller buffers can be reused for successive messages by passing a span of the required length on each call.
+The source and destination must remain disjoint even when their backing allocations are reused.
+For encryption, plaintext length is bounded by `messagebytes_max` and the associated-data byte count must fit in 64 bits (61 bits for AES256-GCM and AEGIS).
+Opening rejects malformed ciphertext lengths and authentication failures through the error interface.
 The allocating open overloads return authenticated plaintext in guarded storage.
 Caller-buffer opens may clear the destination on authentication failure.
 Applications must provide their own framing, ordering and replay handling when using independent messages.
+
+## AES256-GCM precomputation
+
+After `potassium::init()`, use `aead::aes256gcm_available()` to check runtime hardware support.
+On an unsupported CPU, AES256-GCM message operations and precomputation return `errc::crypto_failed` or throw `crypto_error`.
+The allocating overloads check support before allocating output or guarded state.
+
+`aead::precompute(key)` expands an AES256-GCM key into a move-only `aes256gcm_precomputed` schedule in guarded memory.
+Pass the schedule as an lvalue in place of the AES256-GCM key to any combined or detached message operation.
+The schedule is read-only across those calls and the original key need not be retained.
+Wait for calls using the schedule to finish before moving, closing or destroying it.
+The same nonce and usage limits apply across direct and precomputed calls with the same key.
+
+`aead::precompute_into(key, std::move(storage))` expands the key directly into an existing `aes256gcm_state_storage` and transfers that storage to the schedule on success.
+Construct the handle with no arguments to allocate guarded state or lend it an `aes256gcm_state_type` from `aes256gcm_inplace_state::get()` or a custom owner.
+Borrowed state must remain alive at the same address and reserved exclusively for the handle and its successors.
+Precomputation with borrowed state and message operations with caller buffers require no allocation.
+On failure, `precompute_into` leaves storage with the caller and wipes any partially initialized state.
+
+Destruction and move assignment wipe the released schedule.
+`std::move(schedule).close_for_reuse()` wipes the schedule immediately and returns the same storage for a new key without allocating.
+Using a moved-from or closed schedule returns `errc::crypto_failed` or throws `crypto_error`.
+
+```cpp
+import potassium.aead;
+import std;
+
+void example(potassium::key_ref<potassium::aead::aes256gcm> key,
+             potassium::key_ref<potassium::aead::aes256gcm> next_key,
+             potassium::nonce_ref<potassium::aead::aes256gcm> nonce,
+             std::span<std::byte const> message,
+             std::span<std::byte> ciphertext)
+{
+    using namespace potassium;
+    aead::aes256gcm_inplace_state state;
+    auto schedule = aead::precompute_into(key, aead::aes256gcm_state_storage{state.get()});
+    aead::seal_into(schedule, message, {}, ciphertext, nonce);
+    schedule = aead::precompute_into(next_key, std::move(schedule).close_for_reuse());
+}
+```

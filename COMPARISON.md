@@ -4,7 +4,7 @@
 # libpotassium coverage of libsodium
 
 This comparison follows the [libsodium manual](https://libsodium.gitbook.io/doc) and its [table of contents](https://github.com/jedisct1/libsodium-doc/blob/master/SUMMARY.md).
-Coverage describes operations available through the [public potassium module](src/libpotassium.cpp) as of 2026-11-26.
+Coverage describes operations available through the [public potassium module](src/libpotassium.cpp).
 
 | Coverage | Meaning |
 | --- | --- |
@@ -53,7 +53,7 @@ See the [SecretBox design](docs/design/secretbox.md), [AEAD design](docs/design/
 | Encrypting related messages | 📖 Guidance | Applications frame ordered secretstream records, or manage ordering, replay and nonces when using independent boxes. |
 | Authentication | ✅ Supported | `auth::authenticate`, `authenticate_into` and `verify` cover `crypto_auth`, including its default truncated HMAC-SHA-512 tag. |
 | AEAD, ChaCha family | ✅ Supported | `aead` wraps the original and IETF ChaCha20-Poly1305 variants and defaults to IETF XChaCha20-Poly1305, each in combined and detached mode with associated data. |
-| AEAD, AEGIS and AES | ❌ Unwrapped | AEGIS-256, AEGIS-128L and AES256-GCM, including AES precomputation. |
+| AEAD, AEGIS and AES | ✅ Supported | `aead` provides combined and detached AEGIS-128L, AEGIS-256 and AES256-GCM, including runtime AES256-GCM availability and reusable precomputation. |
 | IP address encryption | ❌ Unwrapped | No address-encryption or decryption API. |
 
 ## Public-key cryptography

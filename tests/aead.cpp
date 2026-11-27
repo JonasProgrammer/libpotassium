@@ -13,6 +13,9 @@ import std;
 namespace
 {
 using namespace potassium;
+using aead::aegis128l;
+using aead::aegis256;
+using aead::aes256gcm;
 using aead::chacha20poly1305;
 using aead::chacha20poly1305_ietf;
 using aead::xchacha20poly1305_ietf;
@@ -59,6 +62,9 @@ static_assert(std::same_as<aead::default_algorithm, xchacha20poly1305_ietf>);
 static_assert(!GeneratesNonce<chacha20poly1305>);
 static_assert(!GeneratesNonce<chacha20poly1305_ietf>);
 static_assert(GeneratesNonce<xchacha20poly1305_ietf>);
+static_assert(GeneratesNonce<aegis128l>);
+static_assert(GeneratesNonce<aegis256>);
+static_assert(!GeneratesNonce<aes256gcm>);
 static_assert(GeneratesNonce<box::box_default>);
 static_assert(GeneratesNonce<box::curve25519xchacha20poly1305>);
 static_assert(GeneratesNonce<secretbox::secretbox_default>);
@@ -66,10 +72,23 @@ static_assert(GeneratesNonce<secretbox::xchacha20poly1305>);
 static_assert(check_generated_overloads<secret_key<chacha20poly1305>, false>());
 static_assert(check_generated_overloads<secret_key<chacha20poly1305_ietf>, false>());
 static_assert(check_generated_overloads<secret_key<xchacha20poly1305_ietf>, true>());
+static_assert(check_generated_overloads<secret_key<aegis128l>, true>());
+static_assert(check_generated_overloads<secret_key<aegis256>, true>());
+static_assert(check_generated_overloads<secret_key<aes256gcm>, false>());
+static_assert(check_generated_overloads<aead::aes256gcm_precomputed, false>());
 static_assert(check_algorithm_types<chacha20poly1305, chacha20poly1305_ietf>());
 static_assert(check_algorithm_types<chacha20poly1305_ietf, xchacha20poly1305_ietf>());
 static_assert(check_algorithm_types<xchacha20poly1305_ietf, chacha20poly1305>());
 static_assert(check_algorithm_types<xchacha20poly1305_ietf, secretbox::xchacha20poly1305>());
+static_assert(check_algorithm_types<aegis128l, aegis256>());
+static_assert(check_algorithm_types<aegis256, xchacha20poly1305_ietf>());
+static_assert(check_algorithm_types<aes256gcm, chacha20poly1305_ietf>());
+static_assert(OpensDetached<aead::aes256gcm_precomputed const&, mac_buffer<aes256gcm>, nonce_buffer<aes256gcm>>);
+static_assert(!OpensDetached<aead::aes256gcm_precomputed, mac_buffer<aes256gcm>, nonce_buffer<aes256gcm>>);
+static_assert(!OpensDetached<aead::aes256gcm_precomputed&, mac_buffer<chacha20poly1305_ietf>, nonce_buffer<aes256gcm>>);
+static_assert(!OpensDetached<aead::aes256gcm_precomputed&, mac_buffer<aes256gcm>, nonce_buffer<chacha20poly1305_ietf>>);
+static_assert(!std::copy_constructible<aead::aes256gcm_precomputed>);
+static_assert(!std::move_constructible<aead::aes256gcm_inplace_state>);
 
 template <class A>
 struct native;
@@ -101,15 +120,44 @@ struct native<xchacha20poly1305_ietf>
     static constexpr auto decrypt_detached = crypto_aead_xchacha20poly1305_ietf_decrypt_detached;
 };
 
+template <>
+struct native<aegis128l>
+{
+    static constexpr auto encrypt = crypto_aead_aegis128l_encrypt;
+    static constexpr auto decrypt = crypto_aead_aegis128l_decrypt;
+    static constexpr auto encrypt_detached = crypto_aead_aegis128l_encrypt_detached;
+    static constexpr auto decrypt_detached = crypto_aead_aegis128l_decrypt_detached;
+};
+
+template <>
+struct native<aegis256>
+{
+    static constexpr auto encrypt = crypto_aead_aegis256_encrypt;
+    static constexpr auto decrypt = crypto_aead_aegis256_decrypt;
+    static constexpr auto encrypt_detached = crypto_aead_aegis256_encrypt_detached;
+    static constexpr auto decrypt_detached = crypto_aead_aegis256_decrypt_detached;
+};
+
+template <>
+struct native<aes256gcm>
+{
+    static constexpr auto encrypt = crypto_aead_aes256gcm_encrypt;
+    static constexpr auto decrypt = crypto_aead_aes256gcm_decrypt;
+    static constexpr auto encrypt_detached = crypto_aead_aes256gcm_encrypt_detached;
+    static constexpr auto decrypt_detached = crypto_aead_aes256gcm_decrypt_detached;
+};
+
 auto native_bytes(bytes data)
 {
     return reinterpret_cast<unsigned char const*>(data.data());
 }
 }  // namespace
 
-TEMPLATE_TEST_CASE("ChaCha AEAD interoperates with libsodium", "[aead][interop]", chacha20poly1305, chacha20poly1305_ietf, xchacha20poly1305_ietf)
+TEMPLATE_TEST_CASE("AEAD interoperates with libsodium", "[aead][interop]", chacha20poly1305, chacha20poly1305_ietf, xchacha20poly1305_ietf, aegis128l, aegis256, aes256gcm)
 {
     using A = TestType;
+    if constexpr (std::same_as<A, aes256gcm>)
+        if (!aead::aes256gcm_available()) SKIP("AES256-GCM requires hardware support");
     constexpr auto mac_size = algorithm_traits<A>::mac_size;
     key_buffer_storage<A> key;
     auto key_bytes = native_bytes(key.ref().bytes());
@@ -235,9 +283,11 @@ TEMPLATE_TEST_CASE("ChaCha AEAD interoperates with libsodium", "[aead][interop]"
     }
 }
 
-TEMPLATE_TEST_CASE("ChaCha AEAD rejects unauthenticated inputs", "[aead]", chacha20poly1305, chacha20poly1305_ietf, xchacha20poly1305_ietf)
+TEMPLATE_TEST_CASE("AEAD rejects unauthenticated inputs", "[aead]", chacha20poly1305, chacha20poly1305_ietf, xchacha20poly1305_ietf, aegis128l, aegis256, aes256gcm)
 {
     using A = TestType;
+    if constexpr (std::same_as<A, aes256gcm>)
+        if (!aead::aes256gcm_available()) SKIP("AES256-GCM requires hardware support");
     constexpr auto mac_size = algorithm_traits<A>::mac_size;
     secret_key<A> key;
     secret_key<A> wrong_key;
@@ -253,9 +303,9 @@ TEMPLATE_TEST_CASE("ChaCha AEAD rejects unauthenticated inputs", "[aead]", chach
     auto combined = aead::seal(key, message, ad, combined_nonce);
     auto detached = aead::seal_detached(key, message, ad, detached_nonce);
     std::array<std::byte, message.size()> output;
-    auto no_plaintext = [](std::byte value)
+    auto no_plaintext = [&](std::byte value)
     {
-        return value == std::byte{} || value == std::byte{0x55};
+        return !std::ranges::contains(message, value);
     };
 
     auto check_combined_failure = [&](key_ref<A> key, bytes ciphertext, bytes ad, nonce_buffer<A> const& nonce)
@@ -292,4 +342,146 @@ TEMPLATE_TEST_CASE("ChaCha AEAD rejects unauthenticated inputs", "[aead]", chach
     check_detached_failure(key, detached.ciphertext, ad, tampered_mac, detached_nonce);
     detached.ciphertext.front() ^= std::byte{1};
     check_detached_failure(key, detached.ciphertext, ad, detached.mac, detached_nonce);
+}
+
+TEST_CASE("AES256-GCM reports runtime support and rejects unsupported operations", "[aead][aes256gcm]")
+{
+    REQUIRE(aead::aes256gcm_available() == (crypto_aead_aes256gcm_is_available() != 0));
+    if (!aead::aes256gcm_available())
+    {
+        key_buffer_storage<aes256gcm> key;
+        std::array<std::byte, algorithm_traits<aes256gcm>::nonce_size> nonce_bits{};
+        nonce_buffer<aes256gcm> nonce{nonce_bits};
+        std::array<std::byte, algorithm_traits<aes256gcm>::mac_size> ciphertext{};
+        mac_buffer<aes256gcm> mac{};
+        aead::aes256gcm_inplace_state inplace;
+        aead::aes256gcm_state_storage storage{inplace.get()};
+
+        CHECK(aead::seal_into(key, {}, {}, ciphertext, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::open_into(key, ciphertext, {}, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::seal_detached_into(key, {}, {}, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::open_detached_into(key, {}, {}, mac, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::seal(key, {}, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::open(key, ciphertext, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::seal_detached(key, {}, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::open_detached(key, {}, {}, mac, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(aead::precompute_into(key, std::move(storage), std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK(storage);
+        CHECK(aead::precompute(key, std::nothrow) == std::unexpected(errc::crypto_failed));
+        CHECK_THROWS_AS(aead::precompute(key), crypto_error);
+    }
+}
+
+TEST_CASE("AES256-GCM precomputed operations match the direct wire format", "[aead][aes256gcm][interop]")
+{
+    if (!aead::aes256gcm_available()) SKIP("AES256-GCM requires hardware support");
+    key_buffer_storage<aes256gcm> key;
+    auto schedule = aead::precompute(key, std::nothrow);
+    REQUIRE(schedule);
+    auto const& precomputed = *schedule;
+    std::array message{std::byte{0x42}, std::byte{0}, std::byte{0xff}};
+    std::array ad{std::byte{0x30}, std::byte{0}, std::byte{0x09}};
+    std::array<std::byte, algorithm_traits<aes256gcm>::nonce_size> nonce_bits{};
+    unsigned char nonce_counter{};
+    for (auto plaintext : {bytes{}, bytes{message}})
+    {
+        for (auto associated : {bytes{}, bytes{ad}})
+        {
+            CAPTURE(plaintext.size(), associated.size());
+            nonce_bits.back() = std::byte{++nonce_counter};
+            nonce_buffer<aes256gcm> nonce{nonce_bits};
+
+            // Compare direct and precomputed encryption with the same fixture inputs.
+            auto combined = aead::seal(key, plaintext, associated, nonce);
+            CHECK(aead::seal(precomputed, plaintext, associated, nonce) == combined);
+            auto combined_out = combined;
+            std::ranges::fill(combined_out, std::byte{});
+            REQUIRE(aead::seal_into(precomputed, plaintext, associated, combined_out, nonce, std::nothrow));
+            CHECK(combined_out == combined);
+
+            auto detached = aead::seal_detached(precomputed, plaintext, associated, nonce, std::nothrow);
+            REQUIRE(detached);
+            CHECK(std::ranges::equal(detached->ciphertext, std::span{combined}.first(plaintext.size())));
+            CHECK(std::ranges::equal(detached->mac.bytes(), std::span{combined}.last(algorithm_traits<aes256gcm>::mac_size)));
+            std::array<std::byte, message.size()> buffer{};
+            auto out = plaintext.empty() ? writable_bytes{} : writable_bytes{buffer}.first(plaintext.size());
+            auto tag = aead::seal_detached_into(precomputed, plaintext, associated, out, nonce);
+            CHECK(std::ranges::equal(tag.bytes(), detached->mac.bytes()));
+            CHECK(std::ranges::equal(out, detached->ciphertext));
+
+            auto clear = aead::open(precomputed, combined, associated, nonce);
+            CHECK(std::ranges::equal(clear.bytes(), plaintext));
+            aead::open_into(precomputed, combined, associated, out, nonce);
+            CHECK(std::ranges::equal(out, plaintext));
+            auto detached_clear = aead::open_detached(precomputed, detached->ciphertext, associated, detached->mac, nonce);
+            CHECK(std::ranges::equal(detached_clear.bytes(), plaintext));
+            REQUIRE(aead::open_detached_into(precomputed, detached->ciphertext, associated, detached->mac, out, nonce, std::nothrow));
+            CHECK(std::ranges::equal(out, plaintext));
+
+            combined.back() ^= std::byte{1};
+            CHECK(aead::open(precomputed, combined, associated, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+            detached->mac.bytes().front() ^= std::byte{1};
+            CHECK_THROWS_AS(aead::open_detached_into(precomputed, detached->ciphertext, associated, detached->mac, out, nonce), crypto_error);
+        }
+    }
+}
+
+TEST_CASE("AES256-GCM precomputed state is wiped and reused", "[aead][aes256gcm]")
+{
+    if (!aead::aes256gcm_available()) SKIP("AES256-GCM requires hardware support");
+    key_buffer_storage<aes256gcm> key;
+    key_buffer_storage<aes256gcm> new_key;
+    std::array<std::byte, algorithm_traits<aes256gcm>::nonce_size> nonce_bits{};
+    nonce_buffer<aes256gcm> nonce{nonce_bits};
+    std::array<std::byte, algorithm_traits<aes256gcm>::mac_size> ciphertext{}, new_ciphertext{};
+
+    aead::aes256gcm_inplace_state inplace;
+    aead::aes256gcm_state_type custom{};
+    auto inline_bytes = std::as_writable_bytes(std::span{&inplace.get(), 1});
+    auto custom_bytes = std::as_writable_bytes(std::span{&custom, 1});
+    auto is_wiped = [](bytes state)
+    {
+        return std::ranges::all_of(state, [](std::byte value) { return value == std::byte{}; });
+    };
+    std::ranges::fill(custom_bytes, std::byte{0xaa});
+    aead::aes256gcm_state_storage borrowed{custom};
+    CHECK(is_wiped(custom_bytes));
+
+    {
+        auto first = aead::precompute_into(key, aead::aes256gcm_state_storage{inplace.get()});
+        CHECK_FALSE(is_wiped(inline_bytes));
+        REQUIRE(aead::seal_into(first, {}, {}, ciphertext, nonce, std::nothrow));
+        auto transferred = std::move(first);
+        CHECK_FALSE(first);
+        CHECK(transferred);
+        CHECK_FALSE(std::move(first).close_for_reuse());
+        CHECK(aead::open_into(first, ciphertext, {}, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+
+        auto idle = std::move(transferred).close_for_reuse();
+        CHECK(is_wiped(inline_bytes));
+        CHECK_FALSE(transferred);
+        CHECK(idle);
+        auto second = aead::precompute_into(new_key, std::move(idle));
+        CHECK_FALSE(idle);
+        CHECK(aead::precompute_into(key, std::move(idle), std::nothrow) == std::unexpected(errc::crypto_failed));
+        REQUIRE(aead::seal_into(second, {}, {}, new_ciphertext, nonce, std::nothrow));
+        CHECK(new_ciphertext != ciphertext);
+        CHECK(aead::open_into(second, ciphertext, {}, {}, nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+        REQUIRE(aead::open_into(second, new_ciphertext, {}, {}, nonce, std::nothrow));
+        CHECK_FALSE(is_wiped(inline_bytes));
+
+        auto custom_schedule = aead::precompute_into(new_key, std::move(borrowed));
+        CHECK_FALSE(is_wiped(custom_bytes));
+        second = std::move(custom_schedule);
+        CHECK(is_wiped(inline_bytes));
+        CHECK_FALSE(custom_schedule);
+        REQUIRE(aead::open_into(second, new_ciphertext, {}, {}, nonce, std::nothrow));
+    }
+    CHECK(is_wiped(custom_bytes));
+    auto guarded = aead::precompute(new_key);
+    auto idle = std::move(guarded).close_for_reuse();
+    CHECK_FALSE(guarded);
+    CHECK(idle);
+    auto reused = aead::precompute_into(key, std::move(idle));
+    aead::open_into(reused, ciphertext, {}, {}, nonce);
 }

@@ -80,7 +80,8 @@ template <class A, class Operation>
 std::expected<std::vector<std::byte>, errc> allocate_ciphertext(std::size_t plaintext_size, Operation operation) noexcept
 {
     constexpr auto mac_size = algorithm_traits<A>::mac_size;
-    if (plaintext_size > algorithm_traits<A>::messagebytes_max || plaintext_size > std::numeric_limits<std::size_t>::max() - mac_size) return std::unexpected(errc::crypto_failed);
+    static_assert(algorithm_traits<A>::messagebytes_max <= std::numeric_limits<std::size_t>::max() - mac_size);
+    assert(plaintext_size <= algorithm_traits<A>::messagebytes_max);
     return allocate_and_transform<std::vector<std::byte>>(plaintext_size + mac_size, operation);
 }
 
@@ -96,7 +97,7 @@ template <class A, class Operation>
 std::expected<detached_ciphertext<A>, errc> allocate_detached_ciphertext(std::size_t plaintext_size, Operation operation) noexcept
 try
 {
-    if (plaintext_size > algorithm_traits<A>::messagebytes_max) return std::unexpected(errc::crypto_failed);
+    assert(plaintext_size <= algorithm_traits<A>::messagebytes_max);
     std::vector<std::byte> ciphertext(plaintext_size);
     auto mac = operation(ciphertext);
     if (!mac) return std::unexpected(mac.error());

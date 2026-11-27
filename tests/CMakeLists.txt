@@ -6,7 +6,9 @@ if (NOT LIBPOTASSIUM_CTEST_INCLUDED)
     include(CTest)
 endif ()
 
-add_test(NAME potassium.example COMMAND potassium_example)
+foreach (topic IN LISTS LIBPOTASSIUM_EXAMPLE_TOPICS)
+    add_test(NAME potassium.example.${topic} COMMAND potassium_example_${topic})
+endforeach ()
 
 find_package(Catch2 3 REQUIRED)
 add_executable(potassium_tests

@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebSite","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","name":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6fbafb4fbcb014b6a625123eb3203f4964cebf3f">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -121,8 +121,64 @@ cmake <span class="nt">--build</span> <span class="nt">--preset</span> debug
 ctest <span class="nt">--preset</span> debug
 </code></pre></div></div>
 
-<p>Run the example directly with <code class="language-plaintext highlighter-rouge">./build/debug/libpotassium_example</code>.
-Use <code class="language-plaintext highlighter-rouge">release</code> in the same commands for an optimized build in <code class="language-plaintext highlighter-rouge">build/release</code>.</p>
+<p>Use <code class="language-plaintext highlighter-rouge">release</code> in the same commands for an optimized build in <code class="language-plaintext highlighter-rouge">build/release</code>.</p>
+
+<h2 id="examples">Examples</h2>
+
+<p>Each example builds as <code class="language-plaintext highlighter-rouge">potassium_example_&lt;topic&gt;</code> and runs as part of CTest when tests are enabled.
+For example, run <code class="language-plaintext highlighter-rouge">./build/debug/potassium_example_init</code> after building.
+The caller-owned variants show how to avoid dynamic allocation for keys, cryptographic state, and outputs where the API supports it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>Usage variants</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="/libpotassium/examples/init.cpp">Init</a></td>
+      <td>Library initialization and version information</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/core.cpp">Core</a></td>
+      <td>Nonthrowing initialization, guarded and inline keys, random bytes, wiping, guarded allocators and PMR, and locking caller memory</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/aead.cpp">AEAD</a></td>
+      <td>Combined and detached ciphertext, associated data, generated and explicit nonces, caller buffers, and reusable AES256-GCM precomputation</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/auth.cpp">Auth</a></td>
+      <td>One-shot HMAC tags, verification, authentication failure, and inline streaming HMAC</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/box.cpp">Box</a></td>
+      <td>Random and seeded key pairs, direct and precomputed encryption, anonymous sealed boxes, and caller-owned keys and outputs</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/hash.cpp">Hash</a></td>
+      <td>One-shot and incremental digests, keyed BLAKE2b, active reset with key replacement, and state reuse after finalization</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/kem.cpp">KEM</a></td>
+      <td>X-Wing encapsulation and decapsulation with guarded results or reusable caller buffers</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/secretbox.cpp">SecretBox</a></td>
+      <td>Combined and detached ciphertext, generated and explicit nonces, caller buffers, and authentication failure</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/secretstream.cpp">Secretstream</a></td>
+      <td>Record streams, rekeying, final record verification, and reuse of guarded state, caller-owned state, and record buffers</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/sign.cpp">Sign</a></td>
+      <td>Signed messages, detached signatures, key extraction, and Ed25519ph with reusable guarded or inline state</td>
+    </tr>
+  </tbody>
+</table>
 
 <h2 id="api-documentation">API documentation</h2>
 

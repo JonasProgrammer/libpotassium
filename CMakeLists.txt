@@ -62,8 +62,11 @@ if (LIBPOTASSIUM_BUILD_DOCS)
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/DoxygenSetup.cmake")
 endif ()
 
-add_executable(potassium_example examples/main.cpp)
-target_link_libraries(potassium_example PRIVATE potassium)
+set(LIBPOTASSIUM_EXAMPLE_TOPICS init core aead auth box hash kem secretbox secretstream sign)
+foreach (topic IN LISTS LIBPOTASSIUM_EXAMPLE_TOPICS)
+    add_executable(potassium_example_${topic} examples/${topic}.cpp)
+    target_link_libraries(potassium_example_${topic} PRIVATE potassium)
+endforeach ()
 
 option(LIBPOTASSIUM_BUILD_TESTS "Enable tests" OFF)
 if (PROJECT_IS_TOP_LEVEL)

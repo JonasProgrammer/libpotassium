@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['deallocate_0',['deallocate',['../structpotassium_1_1raw__allocator.html#aae35f360c0a86a93059733d71b63bda9',1,'potassium::raw_allocator::deallocate()'],['../structpotassium_1_1allocator.html#afe3e3d0807f7b69aaef5cea0c883db11',1,'potassium::allocator::deallocate()']]]
+  ['deallocate_0',['deallocate',['../structpotassium_1_1raw__allocator.html#aae35f360c0a86a93059733d71b63bda9',1,'potassium::raw_allocator::deallocate()'],['../structpotassium_1_1allocator.html#afe3e3d0807f7b69aaef5cea0c883db11',1,'potassium::allocator::deallocate()']]],
+  ['decapsulate_1',['decapsulate',['../namespacepotassium_1_1kem.html#a4fd4a190471d443f9683e684d606cd9b',1,'potassium::kem::decapsulate(decapsulation_key_ref key, std::span&lt; std::byte const &gt; ciphertext, std::nothrow_t) noexcept'],['../namespacepotassium_1_1kem.html#a750742162c718621f22e500663999733',1,'potassium::kem::decapsulate(decapsulation_key_ref key, std::span&lt; std::byte const &gt; ciphertext)']]],
+  ['decapsulate_5finto_2',['decapsulate_into',['../namespacepotassium_1_1kem.html#a0da7a6709b38aaa1d761fbbcf8c8d1f1',1,'potassium::kem::decapsulate_into(decapsulation_key_ref key, std::span&lt; std::byte const &gt; ciphertext, key_out&lt; shared_secret_tag &gt; shared_secret, std::nothrow_t) noexcept'],['../namespacepotassium_1_1kem.html#a5a768a963228359c3b269c54447e531c',1,'potassium::kem::decapsulate_into(decapsulation_key_ref key, std::span&lt; std::byte const &gt; ciphertext, key_out&lt; shared_secret_tag &gt; shared_secret)']]]
 ];

@@ -35,6 +35,10 @@ using box_default = curve25519xsalsa20poly1305;
 template <class A>
 struct private_key_tag;
 
+/// Confidential seed used for deterministic key-pair generation.
+template <class A>
+struct seed_tag;
+
 /// Confidential pairwise key derived by precompute.
 template <class A>
 struct precomputed_key_tag;
@@ -117,6 +121,8 @@ struct algorithm_traits<box::curve25519xsalsa20poly1305>
     static constexpr std::size_t nonce_size = crypto_box_NONCEBYTES;
     /// Authentication tag length in bytes.
     static constexpr std::size_t mac_size = crypto_box_MACBYTES;
+    /// Extra bytes in an anonymous sealed box.
+    static constexpr std::size_t sealed_overhead = crypto_box_SEALBYTES;
     /// Maximum plaintext length in bytes.
     static constexpr std::size_t messagebytes_max = crypto_box_MESSAGEBYTES_MAX;
 };
@@ -137,6 +143,8 @@ struct algorithm_traits<box::curve25519xchacha20poly1305>
     static constexpr std::size_t nonce_size = crypto_box_curve25519xchacha20poly1305_NONCEBYTES;
     /// Authentication tag length in bytes.
     static constexpr std::size_t mac_size = crypto_box_curve25519xchacha20poly1305_MACBYTES;
+    /// Extra bytes in an anonymous sealed box.
+    static constexpr std::size_t sealed_overhead = crypto_box_curve25519xchacha20poly1305_SEALBYTES;
     /// Maximum plaintext length in bytes.
     static constexpr std::size_t messagebytes_max = crypto_box_curve25519xchacha20poly1305_MESSAGEBYTES_MAX;
 };
@@ -150,6 +158,16 @@ struct key_traits<box::private_key_tag<A>>
 
     /// Confidential key length in bytes.
     static constexpr std::size_t size = algorithm_traits<A>::secret_key_size;
+};
+
+/// Confidential key-pair seed.
+template <class A>
+struct key_traits<box::seed_tag<A>>
+{
+    /// Generator for a fresh seed.
+    using generator = random_key_generator;
+    /// Seed length in bytes.
+    static constexpr std::size_t size = algorithm_traits<A>::seed_size;
 };
 
 /// Storage extent for a shared key.
@@ -1018,5 +1036,530 @@ keypair<A> generate_keypair()
 }
 
 /// @}
+
+}  // namespace potassium::box
+
+export namespace potassium::box
+{
+/// @name curve25519xsalsa20poly1305 seeded key pairs and anonymous sealed boxes
+/// @{
+
+/// Derive a matching key pair from a confidential seed directly into its destinations.
+/// @pre The destinations are disjoint from each other and from the seed.
+/// @throws crypto_error If key generation fails.
+void generate_keypair_into(public_key<curve25519xsalsa20poly1305>& pub, key_out<private_key_tag<curve25519xsalsa20poly1305>> secret, key_ref<seed_tag<curve25519xsalsa20poly1305>> seed);
+
+/// @overload
+std::expected<void, errc> generate_keypair_into(public_key<curve25519xsalsa20poly1305>& pub,
+                                                key_out<private_key_tag<curve25519xsalsa20poly1305>> secret,
+                                                key_ref<seed_tag<curve25519xsalsa20poly1305>> seed,
+                                                std::nothrow_t) noexcept;
+
+/// Encrypt for a recipient using an ephemeral sender key and an implicit nonce.
+/// @pre Plaintext fits in the algorithm's message limit with room for sealed_overhead bytes.
+/// @throws crypto_error If the recipient public key is rejected.
+/// @throws std::bad_alloc If allocation fails.
+std::vector<std::byte> seal_anonymous(public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<std::vector<std::byte>, errc> seal_anonymous(public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> plaintext, std::nothrow_t) noexcept;
+
+/// Encrypt for a recipient using an ephemeral sender key and an implicit nonce.
+/// @pre Plaintext fits in the algorithm's message limit with room for sealed_overhead bytes.
+/// @pre Output is disjoint from all inputs and holds plaintext.size() plus sealed_overhead bytes.
+/// @throws crypto_error If the recipient public key is rejected.
+void seal_anonymous_into(public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> plaintext, std::span<std::byte> out);
+
+/// @overload
+std::expected<void, errc> seal_anonymous_into(public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept;
+
+/// Open an anonymous sealed box into guarded storage using the recipient's matching key pair.
+/// @pre The recipient public and private keys belong to the same pair.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_anonymous(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> ciphertext);
+
+/// @overload
+std::expected<secure_buffer, errc> open_anonymous(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> ciphertext, std::nothrow_t) noexcept;
+
+/// Open an anonymous sealed box using the recipient's matching key pair.
+/// @pre The recipient public and private keys belong to the same pair.
+/// @pre Output is disjoint from all inputs and, for a complete sealed box, holds ciphertext.size() minus sealed_overhead bytes.
+/// @throws crypto_error If authentication fails.
+void open_anonymous_into(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> recipient, std::span<std::byte const> ciphertext, std::span<std::byte> out);
+
+/// @overload
+std::expected<void, errc> open_anonymous_into(xsalsa_private_ref key,
+                                              public_key_ref<curve25519xsalsa20poly1305> recipient,
+                                              std::span<std::byte const> ciphertext,
+                                              std::span<std::byte> out,
+                                              std::nothrow_t) noexcept;
+
+/// @}
+
+/// @name curve25519xsalsa20poly1305 detached direct operations
+/// @{
+
+/// Encrypt into caller storage, returning a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC to open the ciphertext")]] mac_buffer<curve25519xsalsa20poly1305> seal_detached_into(xsalsa_private_ref key,
+                                                                                                                 public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                                                 std::span<std::byte const> plaintext,
+                                                                                                                 std::span<std::byte> out,
+                                                                                                                 nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+[[nodiscard("Retain the MAC to open the ciphertext")]] std::expected<mac_buffer<curve25519xsalsa20poly1305>, errc> seal_detached_into(xsalsa_private_ref key,
+                                                                                                                                      public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                                                                      std::span<std::byte const> plaintext,
+                                                                                                                                      std::span<std::byte> out,
+                                                                                                                                      nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                                                                                                                      std::nothrow_t) noexcept;
+
+/// Encrypt into caller storage, returning the MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] detached_mac_nonce<curve25519xsalsa20poly1305> seal_detached_into(xsalsa_private_ref key,
+                                                                                                                                   public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                                                                   std::span<std::byte const> plaintext,
+                                                                                                                                   std::span<std::byte> out);
+
+/// @overload
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] std::expected<detached_mac_nonce<curve25519xsalsa20poly1305>, errc> seal_detached_into(xsalsa_private_ref key,
+                                                                                                                                                        public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                                                                                        std::span<std::byte const> plaintext,
+                                                                                                                                                        std::span<std::byte> out,
+                                                                                                                                                        std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext and a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_ciphertext<curve25519xsalsa20poly1305> seal_detached(xsalsa_private_ref key,
+                                                              public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                              std::span<std::byte const> plaintext,
+                                                              nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+std::expected<detached_ciphertext<curve25519xsalsa20poly1305>, errc> seal_detached(xsalsa_private_ref key,
+                                                                                   public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                   std::span<std::byte const> plaintext,
+                                                                                   nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                                                                   std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext, its MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_seal_result<curve25519xsalsa20poly1305> seal_detached(xsalsa_private_ref key, public_key_ref<curve25519xsalsa20poly1305> peer, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<detached_seal_result<curve25519xsalsa20poly1305>, errc> seal_detached(xsalsa_private_ref key,
+                                                                                    public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                                                    std::span<std::byte const> plaintext,
+                                                                                    std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and return the plaintext in guarded storage.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_detached(xsalsa_private_ref key,
+                            public_key_ref<curve25519xsalsa20poly1305> peer,
+                            std::span<std::byte const> ciphertext,
+                            mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                            nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+std::expected<secure_buffer, errc> open_detached(xsalsa_private_ref key,
+                                                 public_key_ref<curve25519xsalsa20poly1305> peer,
+                                                 std::span<std::byte const> ciphertext,
+                                                 mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                                                 nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                                 std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and write the plaintext after verification.
+/// @pre Output is disjoint from all inputs and has the same length as ciphertext.
+/// @throws crypto_error If authentication fails.
+void open_detached_into(xsalsa_private_ref key,
+                        public_key_ref<curve25519xsalsa20poly1305> peer,
+                        std::span<std::byte const> ciphertext,
+                        mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                        std::span<std::byte> out,
+                        nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+std::expected<void, errc> open_detached_into(xsalsa_private_ref key,
+                                             public_key_ref<curve25519xsalsa20poly1305> peer,
+                                             std::span<std::byte const> ciphertext,
+                                             mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                                             std::span<std::byte> out,
+                                             nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                             std::nothrow_t) noexcept;
+
+/// @}
+
+/// @name curve25519xsalsa20poly1305 detached precomputed operations
+/// @{
+
+/// Encrypt into caller storage, returning a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC to open the ciphertext")]] mac_buffer<curve25519xsalsa20poly1305> seal_detached_into(xsalsa_precomputed_ref key,
+                                                                                                                 std::span<std::byte const> plaintext,
+                                                                                                                 std::span<std::byte> out,
+                                                                                                                 nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+[[nodiscard("Retain the MAC to open the ciphertext")]] std::expected<mac_buffer<curve25519xsalsa20poly1305>, errc> seal_detached_into(xsalsa_precomputed_ref key,
+                                                                                                                                      std::span<std::byte const> plaintext,
+                                                                                                                                      std::span<std::byte> out,
+                                                                                                                                      nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                                                                                                                      std::nothrow_t) noexcept;
+
+/// Encrypt into caller storage, returning the MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] detached_mac_nonce<curve25519xsalsa20poly1305> seal_detached_into(xsalsa_precomputed_ref key,
+                                                                                                                                   std::span<std::byte const> plaintext,
+                                                                                                                                   std::span<std::byte> out);
+
+/// @overload
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] std::expected<detached_mac_nonce<curve25519xsalsa20poly1305>, errc> seal_detached_into(xsalsa_precomputed_ref key,
+                                                                                                                                                        std::span<std::byte const> plaintext,
+                                                                                                                                                        std::span<std::byte> out,
+                                                                                                                                                        std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext and a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_ciphertext<curve25519xsalsa20poly1305> seal_detached(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+std::expected<detached_ciphertext<curve25519xsalsa20poly1305>, errc> seal_detached(xsalsa_precomputed_ref key,
+                                                                                   std::span<std::byte const> plaintext,
+                                                                                   nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                                                                   std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext, its MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xsalsa20poly1305>::messagebytes_max.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_seal_result<curve25519xsalsa20poly1305> seal_detached(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<detached_seal_result<curve25519xsalsa20poly1305>, errc> seal_detached(xsalsa_precomputed_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and return the plaintext in guarded storage.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_detached(xsalsa_precomputed_ref key, std::span<std::byte const> ciphertext, mac_buffer<curve25519xsalsa20poly1305> const& mac, nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+std::expected<secure_buffer, errc> open_detached(xsalsa_precomputed_ref key,
+                                                 std::span<std::byte const> ciphertext,
+                                                 mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                                                 nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                                 std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and write the plaintext after verification.
+/// @pre Output is disjoint from all inputs and has the same length as ciphertext.
+/// @throws crypto_error If authentication fails.
+void open_detached_into(xsalsa_precomputed_ref key,
+                        std::span<std::byte const> ciphertext,
+                        mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                        std::span<std::byte> out,
+                        nonce_ref<curve25519xsalsa20poly1305> nonce);
+
+/// @overload
+std::expected<void, errc> open_detached_into(xsalsa_precomputed_ref key,
+                                             std::span<std::byte const> ciphertext,
+                                             mac_buffer<curve25519xsalsa20poly1305> const& mac,
+                                             std::span<std::byte> out,
+                                             nonce_ref<curve25519xsalsa20poly1305> nonce,
+                                             std::nothrow_t) noexcept;
+
+/// @}
+
+/// @name curve25519xchacha20poly1305 seeded key pairs and anonymous sealed boxes
+/// @{
+
+/// Derive a matching key pair from a confidential seed directly into its destinations.
+/// @pre The destinations are disjoint from each other and from the seed.
+/// @throws crypto_error If key generation fails.
+void generate_keypair_into(public_key<curve25519xchacha20poly1305>& pub, key_out<private_key_tag<curve25519xchacha20poly1305>> secret, key_ref<seed_tag<curve25519xchacha20poly1305>> seed);
+
+/// @overload
+std::expected<void, errc> generate_keypair_into(public_key<curve25519xchacha20poly1305>& pub,
+                                                key_out<private_key_tag<curve25519xchacha20poly1305>> secret,
+                                                key_ref<seed_tag<curve25519xchacha20poly1305>> seed,
+                                                std::nothrow_t) noexcept;
+
+/// Encrypt for a recipient using an ephemeral sender key and an implicit nonce.
+/// @pre Plaintext fits in the algorithm's message limit with room for sealed_overhead bytes.
+/// @throws crypto_error If the recipient public key is rejected.
+/// @throws std::bad_alloc If allocation fails.
+std::vector<std::byte> seal_anonymous(public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<std::vector<std::byte>, errc> seal_anonymous(public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> plaintext, std::nothrow_t) noexcept;
+
+/// Encrypt for a recipient using an ephemeral sender key and an implicit nonce.
+/// @pre Plaintext fits in the algorithm's message limit with room for sealed_overhead bytes.
+/// @pre Output is disjoint from all inputs and holds plaintext.size() plus sealed_overhead bytes.
+/// @throws crypto_error If the recipient public key is rejected.
+void seal_anonymous_into(public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> plaintext, std::span<std::byte> out);
+
+/// @overload
+std::expected<void, errc> seal_anonymous_into(public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept;
+
+/// Open an anonymous sealed box into guarded storage using the recipient's matching key pair.
+/// @pre The recipient public and private keys belong to the same pair.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_anonymous(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> ciphertext);
+
+/// @overload
+std::expected<secure_buffer, errc> open_anonymous(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> ciphertext, std::nothrow_t) noexcept;
+
+/// Open an anonymous sealed box using the recipient's matching key pair.
+/// @pre The recipient public and private keys belong to the same pair.
+/// @pre Output is disjoint from all inputs and, for a complete sealed box, holds ciphertext.size() minus sealed_overhead bytes.
+/// @throws crypto_error If authentication fails.
+void open_anonymous_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> recipient, std::span<std::byte const> ciphertext, std::span<std::byte> out);
+
+/// @overload
+std::expected<void, errc> open_anonymous_into(xchacha_private_ref key,
+                                              public_key_ref<curve25519xchacha20poly1305> recipient,
+                                              std::span<std::byte const> ciphertext,
+                                              std::span<std::byte> out,
+                                              std::nothrow_t) noexcept;
+
+/// @}
+
+/// @name curve25519xchacha20poly1305 detached direct operations
+/// @{
+
+/// Encrypt into caller storage, returning a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC to open the ciphertext")]] mac_buffer<curve25519xchacha20poly1305> seal_detached_into(xchacha_private_ref key,
+                                                                                                                  public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                                                  std::span<std::byte const> plaintext,
+                                                                                                                  std::span<std::byte> out,
+                                                                                                                  nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+[[nodiscard("Retain the MAC to open the ciphertext")]] std::expected<mac_buffer<curve25519xchacha20poly1305>, errc> seal_detached_into(xchacha_private_ref key,
+                                                                                                                                       public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                                                                       std::span<std::byte const> plaintext,
+                                                                                                                                       std::span<std::byte> out,
+                                                                                                                                       nonce_ref<curve25519xchacha20poly1305> nonce,
+                                                                                                                                       std::nothrow_t) noexcept;
+
+/// Encrypt into caller storage, returning the MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] detached_mac_nonce<curve25519xchacha20poly1305> seal_detached_into(xchacha_private_ref key,
+                                                                                                                                    public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                                                                    std::span<std::byte const> plaintext,
+                                                                                                                                    std::span<std::byte> out);
+
+/// @overload
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] std::expected<detached_mac_nonce<curve25519xchacha20poly1305>, errc>
+seal_detached_into(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext, std::span<std::byte> out, std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext and a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_ciphertext<curve25519xchacha20poly1305> seal_detached(xchacha_private_ref key,
+                                                               public_key_ref<curve25519xchacha20poly1305> peer,
+                                                               std::span<std::byte const> plaintext,
+                                                               nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+std::expected<detached_ciphertext<curve25519xchacha20poly1305>, errc> seal_detached(xchacha_private_ref key,
+                                                                                    public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                    std::span<std::byte const> plaintext,
+                                                                                    nonce_ref<curve25519xchacha20poly1305> nonce,
+                                                                                    std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext, its MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_seal_result<curve25519xchacha20poly1305> seal_detached(xchacha_private_ref key, public_key_ref<curve25519xchacha20poly1305> peer, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<detached_seal_result<curve25519xchacha20poly1305>, errc> seal_detached(xchacha_private_ref key,
+                                                                                     public_key_ref<curve25519xchacha20poly1305> peer,
+                                                                                     std::span<std::byte const> plaintext,
+                                                                                     std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and return the plaintext in guarded storage.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_detached(xchacha_private_ref key,
+                            public_key_ref<curve25519xchacha20poly1305> peer,
+                            std::span<std::byte const> ciphertext,
+                            mac_buffer<curve25519xchacha20poly1305> const& mac,
+                            nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+std::expected<secure_buffer, errc> open_detached(xchacha_private_ref key,
+                                                 public_key_ref<curve25519xchacha20poly1305> peer,
+                                                 std::span<std::byte const> ciphertext,
+                                                 mac_buffer<curve25519xchacha20poly1305> const& mac,
+                                                 nonce_ref<curve25519xchacha20poly1305> nonce,
+                                                 std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and write the plaintext after verification.
+/// @pre Output is disjoint from all inputs and has the same length as ciphertext.
+/// @throws crypto_error If authentication fails.
+void open_detached_into(xchacha_private_ref key,
+                        public_key_ref<curve25519xchacha20poly1305> peer,
+                        std::span<std::byte const> ciphertext,
+                        mac_buffer<curve25519xchacha20poly1305> const& mac,
+                        std::span<std::byte> out,
+                        nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+std::expected<void, errc> open_detached_into(xchacha_private_ref key,
+                                             public_key_ref<curve25519xchacha20poly1305> peer,
+                                             std::span<std::byte const> ciphertext,
+                                             mac_buffer<curve25519xchacha20poly1305> const& mac,
+                                             std::span<std::byte> out,
+                                             nonce_ref<curve25519xchacha20poly1305> nonce,
+                                             std::nothrow_t) noexcept;
+
+/// @}
+
+/// @name curve25519xchacha20poly1305 detached precomputed operations
+/// @{
+
+/// Encrypt into caller storage, returning a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC to open the ciphertext")]] mac_buffer<curve25519xchacha20poly1305> seal_detached_into(xchacha_precomputed_ref key,
+                                                                                                                  std::span<std::byte const> plaintext,
+                                                                                                                  std::span<std::byte> out,
+                                                                                                                  nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+[[nodiscard("Retain the MAC to open the ciphertext")]] std::expected<mac_buffer<curve25519xchacha20poly1305>, errc> seal_detached_into(xchacha_precomputed_ref key,
+                                                                                                                                       std::span<std::byte const> plaintext,
+                                                                                                                                       std::span<std::byte> out,
+                                                                                                                                       nonce_ref<curve25519xchacha20poly1305> nonce,
+                                                                                                                                       std::nothrow_t) noexcept;
+
+/// Encrypt into caller storage, returning the MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @pre Output is disjoint from all inputs and has the same length as plaintext.
+/// @throws crypto_error If encryption fails.
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] detached_mac_nonce<curve25519xchacha20poly1305> seal_detached_into(xchacha_precomputed_ref key,
+                                                                                                                                    std::span<std::byte const> plaintext,
+                                                                                                                                    std::span<std::byte> out);
+
+/// @overload
+[[nodiscard("Retain the MAC and nonce to open the ciphertext")]] std::expected<detached_mac_nonce<curve25519xchacha20poly1305>, errc> seal_detached_into(xchacha_precomputed_ref key,
+                                                                                                                                                         std::span<std::byte const> plaintext,
+                                                                                                                                                         std::span<std::byte> out,
+                                                                                                                                                         std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext and a separate MAC.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @pre Neither participant has used the nonce for encryption with this key pair.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_ciphertext<curve25519xchacha20poly1305> seal_detached(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+std::expected<detached_ciphertext<curve25519xchacha20poly1305>, errc> seal_detached(xchacha_precomputed_ref key,
+                                                                                    std::span<std::byte const> plaintext,
+                                                                                    nonce_ref<curve25519xchacha20poly1305> nonce,
+                                                                                    std::nothrow_t) noexcept;
+
+/// Encrypt a message, returning ciphertext, its MAC and a generated nonce.
+/// @pre Plaintext length is at most algorithm_traits<curve25519xchacha20poly1305>::messagebytes_max.
+/// @throws crypto_error If encryption fails.
+/// @throws std::bad_alloc If allocation fails.
+detached_seal_result<curve25519xchacha20poly1305> seal_detached(xchacha_precomputed_ref key, std::span<std::byte const> plaintext);
+
+/// @overload
+std::expected<detached_seal_result<curve25519xchacha20poly1305>, errc> seal_detached(xchacha_precomputed_ref key, std::span<std::byte const> plaintext, std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and return the plaintext in guarded storage.
+/// @throws crypto_error If authentication fails.
+/// @throws std::bad_alloc If allocation fails.
+secure_buffer open_detached(xchacha_precomputed_ref key, std::span<std::byte const> ciphertext, mac_buffer<curve25519xchacha20poly1305> const& mac, nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+std::expected<secure_buffer, errc> open_detached(xchacha_precomputed_ref key,
+                                                 std::span<std::byte const> ciphertext,
+                                                 mac_buffer<curve25519xchacha20poly1305> const& mac,
+                                                 nonce_ref<curve25519xchacha20poly1305> nonce,
+                                                 std::nothrow_t) noexcept;
+
+/// Authenticate detached ciphertext and write the plaintext after verification.
+/// @pre Output is disjoint from all inputs and has the same length as ciphertext.
+/// @throws crypto_error If authentication fails.
+void open_detached_into(xchacha_precomputed_ref key,
+                        std::span<std::byte const> ciphertext,
+                        mac_buffer<curve25519xchacha20poly1305> const& mac,
+                        std::span<std::byte> out,
+                        nonce_ref<curve25519xchacha20poly1305> nonce);
+
+/// @overload
+std::expected<void, errc> open_detached_into(xchacha_precomputed_ref key,
+                                             std::span<std::byte const> ciphertext,
+                                             mac_buffer<curve25519xchacha20poly1305> const& mac,
+                                             std::span<std::byte> out,
+                                             nonce_ref<curve25519xchacha20poly1305> nonce,
+                                             std::nothrow_t) noexcept;
+
+/// @}
+
+/// Derive a guarded key pair from a confidential seed.
+/// @tparam A Box algorithm, defaulting to box_default.
+/// @return A key pair, errc::crypto_failed, or errc::allocation_failed.
+template <class A = box_default>
+std::expected<keypair<A>, errc> generate_keypair(key_ref<seed_tag<A>> seed, std::nothrow_t) noexcept
+try
+{
+    keypair<A> pair{for_overwrite};
+    auto status = generate_keypair_into(pair.public_key, pair.secret_key, seed, std::nothrow);
+    if (!status) return std::unexpected(status.error());
+    return pair;
+}
+catch (std::bad_alloc const&)
+{
+    return std::unexpected(errc::allocation_failed);
+}
+
+/// @overload
+/// @throws crypto_error If key generation fails.
+/// @throws std::bad_alloc If allocation fails.
+template <class A = box_default>
+keypair<A> generate_keypair(key_ref<seed_tag<A>> seed)
+{
+    auto result = generate_keypair(seed, std::nothrow);
+    if (!result) throw_error(result.error());
+    return std::move(*result);
+}
 
 }  // namespace potassium::box

@@ -126,15 +126,14 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('conceptpotassi
 <a href="#details">More...</a></p>
 <h2 id="header-conceptdef" class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Traits&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptpotassium_1_1PublicKeyAlgorithmTraits.html">PublicKeyAlgorithmTraits</a> = <a class="code hl_concept" href="conceptpotassium_1_1detail_1_1AuthenticatedEncryptionTraits.html">detail::AuthenticatedEncryptionTraits&lt;Traits&gt;</a> &amp;&amp; <span class="keyword">requires</span></div>
-<div class="line">{</div>
-<div class="line">    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Traits::public_key_size&gt;;</div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptpotassium_1_1PublicKeyAlgorithmTraits.html">PublicKeyAlgorithmTraits</a> = <a class="code hl_concept" href="conceptpotassium_1_1detail_1_1AuthenticatedEncryptionTraits.html">detail::AuthenticatedEncryptionTraits&lt;Traits&gt;</a> &amp;&amp; <a class="code hl_concept" href="conceptpotassium_1_1detail_1_1HasPublicKeySize.html">detail::HasPublicKeySize&lt;Traits&gt;</a> &amp;&amp; <span class="keyword">requires</span> {</div>
 <div class="line">    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Traits::secret_key_size&gt;;</div>
 <div class="line">    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Traits::seed_size&gt;;</div>
 <div class="line">    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Traits::precomputed_key_size&gt;;</div>
 <div class="line">}</div>
-<div class="ttc" id="aconceptpotassium_1_1PublicKeyAlgorithmTraits_html"><div class="ttname"><a href="conceptpotassium_1_1PublicKeyAlgorithmTraits.html">potassium::PublicKeyAlgorithmTraits</a></div><div class="ttdoc">Traits providing compile-time byte sizes and the message limit for public-key authenticated encryptio...</div><div class="ttdef"><b>Definition</b> crypto.cpp:62</div></div>
+<div class="ttc" id="aconceptpotassium_1_1PublicKeyAlgorithmTraits_html"><div class="ttname"><a href="conceptpotassium_1_1PublicKeyAlgorithmTraits.html">potassium::PublicKeyAlgorithmTraits</a></div><div class="ttdoc">Traits providing compile-time byte sizes and the message limit for public-key authenticated encryptio...</div><div class="ttdef"><b>Definition</b> crypto.cpp:65</div></div>
 <div class="ttc" id="aconceptpotassium_1_1detail_1_1AuthenticatedEncryptionTraits_html"><div class="ttname"><a href="conceptpotassium_1_1detail_1_1AuthenticatedEncryptionTraits.html">potassium::detail::AuthenticatedEncryptionTraits</a></div><div class="ttdef"><b>Definition</b> crypto.cpp:11</div></div>
+<div class="ttc" id="aconceptpotassium_1_1detail_1_1HasPublicKeySize_html"><div class="ttname"><a href="conceptpotassium_1_1detail_1_1HasPublicKeySize.html">potassium::detail::HasPublicKeySize</a></div><div class="ttdef"><b>Definition</b> crypto.cpp:19</div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Traits providing compile-time byte sizes and the message limit for public-key authenticated encryption. </p>
 </div></div><!-- contents -->

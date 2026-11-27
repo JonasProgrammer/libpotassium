@@ -122,11 +122,17 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('namespacepotas
 </div><!--header-->
 <div class="contents">
 
-<p>ChaCha20-Poly1305 authenticated encryption with associated data.  
+<p>ChaCha20-Poly1305, AEGIS and AES-GCM authenticated encryption.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-nested-classes" class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:aes256gcm_5Finplace_5Fstate" id="r_aes256gcm_5Finplace_5Fstate"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__inplace__state.html">aes256gcm_inplace_state</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immobile, inline storage for an AES256-GCM key schedule.  <a href="classpotassium_1_1aead_1_1aes256gcm__inplace__state.html#details">More...</a><br /></td></tr>
+<tr class="memitem:aes256gcm_5Fstate_5Fstorage" id="r_aes256gcm_5Fstate_5Fstorage"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__state__storage.html">aes256gcm_state_storage</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-only handle to idle storage for AES256-GCM precomputation.  <a href="classpotassium_1_1aead_1_1aes256gcm__state__storage.html#details">More...</a><br /></td></tr>
+<tr class="memitem:aes256gcm_5Fprecomputed" id="r_aes256gcm_5Fprecomputed"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-only AES256-GCM key schedule usable with the message operations.  <a href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html#details">More...</a><br /></td></tr>
 <tr class="memitem:seal_5Fresult" id="r_seal_5Fresult"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1aead_1_1seal__result.html">seal_result</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combined ciphertext and its generated nonce.  <a href="structpotassium_1_1aead_1_1seal__result.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
@@ -135,11 +141,24 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a454cfbd683015cc728d93b1c2e480c0b" id="r_a454cfbd683015cc728d93b1c2e480c0b"><td class="memItemLeft"><a id="a454cfbd683015cc728d93b1c2e480c0b" name="a454cfbd683015cc728d93b1c2e480c0b"></a>
 using&#160;</td><td class="memItemRight"><b>default_algorithm</b> = <a class="el" href="structpotassium_1_1aead_1_1xchacha20poly1305__ietf.html">xchacha20poly1305_ietf</a></td></tr>
 <tr class="memdesc:a454cfbd683015cc728d93b1c2e480c0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default AEAD construction, supporting generated nonces. <br /></td></tr>
+<tr class="memitem:a1f425c79d9bcd86e26456f937c26a5c5" id="r_a1f425c79d9bcd86e26456f937c26a5c5"><td class="memItemLeft"><a id="a1f425c79d9bcd86e26456f937c26a5c5" name="a1f425c79d9bcd86e26456f937c26a5c5"></a>
+using&#160;</td><td class="memItemRight"><b>aes256gcm_state_type</b> = crypto_aead_aes256gcm_state</td></tr>
+<tr class="memdesc:a1f425c79d9bcd86e26456f937c26a5c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aligned backend state for caller-provided AES256-GCM precomputation storage. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr id="func-members-0" class="groupHeader"><td colspan="2"><div class="groupHeader">Message operations</div></td></tr>
-<tr><td colspan="2" class="ititle"><div class="groupText"><p>Each operation authenticates the supplied associated data verbatim. Pass an empty span when there is no associated data. All encryption overloads require a message length of at most the algorithm's messagebytes_max. </p>
+<tr class="memitem:a62b913508478f56b5a7b4dbb78d0fccc" id="r_a62b913508478f56b5a7b4dbb78d0fccc"><td class="memItemLeft"><a id="a62b913508478f56b5a7b4dbb78d0fccc" name="a62b913508478f56b5a7b4dbb78d0fccc"></a>
+bool&#160;</td><td class="memItemRight"><b>aes256gcm_available</b> () noexcept</td></tr>
+<tr class="memdesc:a62b913508478f56b5a7b4dbb78d0fccc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the current CPU supports the libsodium AES256-GCM implementation. <br /></td></tr>
+<tr id="func-members-0" class="groupHeader"><td colspan="2"><div class="groupHeader">AES256-GCM precomputation</div></td></tr>
+<tr class="memitem:a1eeda9c69d11601ed6e0f254c7106755" id="r_a1eeda9c69d11601ed6e0f254c7106755"><td class="memItemLeft">std::expected&lt; <a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a>, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069">errc</a> &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a1eeda9c69d11601ed6e0f254c7106755">precompute_into</a> (<a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt; key, <a class="el" href="classpotassium_1_1aead_1_1aes256gcm__state__storage.html">aes256gcm_state_storage</a> &amp;&amp;storage, std::nothrow_t)</td></tr>
+<tr class="memitem:a06e4d603061d4763c362876e47636730" id="r_a06e4d603061d4763c362876e47636730"><td class="memItemLeft"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a>&#160;</td><td class="memItemRight"><a class="el" href="#a06e4d603061d4763c362876e47636730">precompute_into</a> (<a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt; key, <a class="el" href="classpotassium_1_1aead_1_1aes256gcm__state__storage.html">aes256gcm_state_storage</a> &amp;&amp;storage)</td></tr>
+<tr class="memitem:a70be852a36e7c3afe57ea5ef1541afb2" id="r_a70be852a36e7c3afe57ea5ef1541afb2"><td class="memItemLeft">std::expected&lt; <a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a>, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069">errc</a> &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a70be852a36e7c3afe57ea5ef1541afb2">precompute</a> (<a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt; key, std::nothrow_t) noexcept</td></tr>
+<tr class="memitem:ae2fd3f87e78c92e75d594c556457213f" id="r_ae2fd3f87e78c92e75d594c556457213f"><td class="memItemLeft"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a>&#160;</td><td class="memItemRight"><a class="el" href="#ae2fd3f87e78c92e75d594c556457213f">precompute</a> (<a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt; key)</td></tr>
+<tr id="func-members-1" class="groupHeader"><td colspan="2"><div class="groupHeader">Message operations</div></td></tr>
+<tr><td colspan="2" class="ititle"><div class="groupText"><p>Each operation authenticates the supplied associated data verbatim. Pass an empty span when there is no associated data. </p><dl class="section pre"><dt>Precondition</dt><dd>For encryption, plaintext length is at most algorithm_traits&lt;A&gt;::messagebytes_max. </dd>
+<dd>
+For encryption, associated data fits a 64-bit byte count, or a 64-bit bit count for AES256-GCM and AEGIS. AES256-GCM returns <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069a946393c497563fb913ea112bee06a0c3" title="Encryption or authentication failed.">errc::crypto_failed</a> when unsupported or given a closed precomputed key. </dd></dl>
 </div></td></tr>
 <tr class="memitem:af7c824d276cde25aab7555499e0f54f7" id="r_af7c824d276cde25aab7555499e0f54f7"><td class="memTemplParams" colspan="2">template&lt;detail::key K&gt; </td></tr>
 <tr class="memitem:af7c824d276cde25aab7555499e0f54f7 template"><td class="memItemLeft">std::expected&lt; void, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069">errc</a> &gt;&#160;</td><td class="memItemRight"><a class="el" href="#af7c824d276cde25aab7555499e0f54f7">seal_into</a> (K &amp;&amp;key, std::span&lt; std::byte const &gt; plaintext, std::span&lt; std::byte const &gt; ad, std::span&lt; std::byte &gt; out, detail::nonce_for&lt; K &gt; nonce, std::nothrow_t) noexcept</td></tr>
@@ -195,7 +214,7 @@ Functions</h2></td></tr>
 <tr class="memitem:a1fa7ad3d8ece7e840e18a5b7dd049d0a template"><td class="memItemLeft"><a class="el" href="classpotassium_1_1secure__buffer.html">secure_buffer</a>&#160;</td><td class="memItemRight"><a class="el" href="#a1fa7ad3d8ece7e840e18a5b7dd049d0a">open_detached</a> (K &amp;&amp;key, std::span&lt; std::byte const &gt; ciphertext, std::span&lt; std::byte const &gt; ad, <a class="el" href="structpotassium_1_1mac__buffer.html">mac_buffer</a>&lt; detail::algorithm_for&lt; K &gt; &gt; const &amp;mac, detail::nonce_for&lt; K &gt; nonce)</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>ChaCha20-Poly1305 authenticated encryption with associated data. </p>
+<div class="textblock"><p>ChaCha20-Poly1305, AEGIS and AES-GCM authenticated encryption. </p>
 </div><a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
 <a id="a9f784ce5715059d696a3c80adcb7b2ac" name="a9f784ce5715059d696a3c80adcb7b2ac"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9f784ce5715059d696a3c80adcb7b2ac">&#9670;&#160;</a></span>open() <span class="overload">[1/4]</span></h2>
@@ -701,6 +720,140 @@ template&lt;detail::key K&gt; </div>
 <p>Authenticate combined ciphertext and decrypt into caller storage. </p><dl class="section pre"><dt>Precondition</dt><dd>Output is disjoint from all inputs and, for ciphertext of at least mac_size bytes, holds ciphertext.size() minus mac_size bytes. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Authentication failure may clear the output. </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The result or <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069a946393c497563fb913ea112bee06a0c3" title="Encryption or authentication failed.">errc::crypto_failed</a> on authentication failure. </dd></dl>
+
+</div>
+</div>
+<a id="ae2fd3f87e78c92e75d594c556457213f" name="ae2fd3f87e78c92e75d594c556457213f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2fd3f87e78c92e75d594c556457213f">&#9670;&#160;</a></span>precompute() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a> potassium::aead::precompute </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt;</td>          <td class="paramname"><span class="paramname"><em>key</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts. </p><dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">crypto_error</td><td>If precomputation fails. </td></tr>
+    <tr><td class="paramname">std::bad_alloc</td><td>If allocation fails. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a70be852a36e7c3afe57ea5ef1541afb2" name="a70be852a36e7c3afe57ea5ef1541afb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70be852a36e7c3afe57ea5ef1541afb2">&#9670;&#160;</a></span>precompute() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::expected&lt; <a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a>, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069">errc</a> &gt; potassium::aead::precompute </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt;</td>          <td class="paramname"><span class="paramname"><em>key</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::nothrow_t</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Expand a key in newly allocated guarded state. </p><dl class="section return"><dt>Returns</dt><dd>The precomputed key, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069a946393c497563fb913ea112bee06a0c3" title="Encryption or authentication failed.">errc::crypto_failed</a> on precomputation failure or <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069ab4c08943c8c4b605e233af8e495d8b42" title="The requested output storage could not be allocated.">errc::allocation_failed</a> on allocation failure. </dd></dl>
+
+</div>
+</div>
+<a id="a06e4d603061d4763c362876e47636730" name="a06e4d603061d4763c362876e47636730"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06e4d603061d4763c362876e47636730">&#9670;&#160;</a></span>precompute_into() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a> potassium::aead::precompute_into </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt;</td>          <td class="paramname"><span class="paramname"><em>key</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__state__storage.html">aes256gcm_state_storage</a> &amp;&amp;</td>          <td class="paramname"><span class="paramname"><em>storage</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts. </p><dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">crypto_error</td><td>If precomputation fails. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a1eeda9c69d11601ed6e0f254c7106755" name="a1eeda9c69d11601ed6e0f254c7106755"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1eeda9c69d11601ed6e0f254c7106755">&#9670;&#160;</a></span>precompute_into() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::expected&lt; <a class="el" href="classpotassium_1_1aead_1_1aes256gcm__precomputed.html">aes256gcm_precomputed</a>, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069">errc</a> &gt; potassium::aead::precompute_into </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpotassium_1_1key__ref.html">key_ref</a>&lt; <a class="el" href="structpotassium_1_1aead_1_1aes256gcm.html">aes256gcm</a> &gt;</td>          <td class="paramname"><span class="paramname"><em>key</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpotassium_1_1aead_1_1aes256gcm__state__storage.html">aes256gcm_state_storage</a> &amp;&amp;</td>          <td class="paramname"><span class="paramname"><em>storage</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::nothrow_t</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Expand a key directly in existing state storage. </p><dl class="section pre"><dt>Precondition</dt><dd>Key bytes are disjoint from the state storage. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The precomputed key or <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069a946393c497563fb913ea112bee06a0c3" title="Encryption or authentication failed.">errc::crypto_failed</a> if storage is empty, AES256-GCM is unavailable or precomputation fails. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>On failure the caller retains its storage, with no key material in it. </dd></dl>
 
 </div>
 </div>

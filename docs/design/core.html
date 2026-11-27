@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/core.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -46,7 +46,7 @@
 
 <h1 id="core-types-and-authenticated-encryption-contracts">Core types and authenticated-encryption contracts</h1>
 
-<p><code class="language-plaintext highlighter-rouge">potassium.core</code> defines the types used by <a href="/libpotassium/docs/design/secretbox.html">SecretBox</a>, <a href="/libpotassium/docs/design/aead.html">AEAD</a> and <a href="/libpotassium/docs/design/pk-authenticated.html">public-key authenticated encryption</a>.
+<p><code class="language-plaintext highlighter-rouge">potassium.core</code> defines the types used by <a href="/libpotassium/docs/design/secretbox.html">SecretBox</a>, <a href="/libpotassium/docs/design/aead.html">AEAD</a>, <a href="/libpotassium/docs/design/pk-authenticated.html">Box</a>, <a href="/libpotassium/docs/design/sign.html">Ed25519</a> and <a href="/libpotassium/docs/design/kem.html">X-Wing</a>.
 Each construction supplies its own algorithm tags, trait specializations and operations.</p>
 
 <h2 id="key-nonce-and-mac-types">Key, nonce and MAC types</h2>
@@ -90,6 +90,7 @@ Each construction supplies its own algorithm tags, trait specializations and ope
 
 <p>A confidential key tag identifies its cryptographic purpose and needs only a <code class="language-plaintext highlighter-rouge">key_traits</code> specialization.
 An algorithm tag identifies a construction, and its <code class="language-plaintext highlighter-rouge">algorithm_traits</code> specialization supplies the dimensions and message limit applicable to that construction.
+The public-key owner and view need only the public-key dimension from those traits.
 Distinct key purposes and algorithms remain distinct types even when their byte lengths match.</p>
 
 <p>Each key and nonce view takes an explicit <code class="language-plaintext highlighter-rouge">std::span&lt;const std::byte, N&gt;</code> and borrows the underlying bytes.

@@ -6,6 +6,8 @@ var searchData=
   ['potassium_2ebox_3',['potassium.box',['../module__potassium_8box.html',1,'']]],
   ['potassium_2ecore_4',['potassium.core',['../module__potassium_8core.html',1,'']]],
   ['potassium_2ehash_5',['potassium.hash',['../module__potassium_8hash.html',1,'']]],
-  ['potassium_2esecretbox_6',['potassium.secretbox',['../module__potassium_8secretbox.html',1,'']]],
-  ['potassium_2esecretstream_7',['potassium.secretstream',['../module__potassium_8secretstream.html',1,'']]]
+  ['potassium_2ekem_6',['potassium.kem',['../module__potassium_8kem.html',1,'']]],
+  ['potassium_2esecretbox_7',['potassium.secretbox',['../module__potassium_8secretbox.html',1,'']]],
+  ['potassium_2esecretstream_8',['potassium.secretstream',['../module__potassium_8secretstream.html',1,'']]],
+  ['potassium_2esign_9',['potassium.sign',['../module__potassium_8sign.html',1,'']]]
 ];

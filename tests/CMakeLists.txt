@@ -19,10 +19,12 @@ add_executable(potassium_tests
         box.cpp
         hash.cpp
         hash_interop.cpp
+        kem.cpp
         key_traits.cpp
         memory.cpp
         secretbox.cpp
         secretstream.cpp
+        sign.cpp
 )
 target_sources(potassium_tests PRIVATE FILE_SET CXX_MODULES FILES nacl_vector.cpp)
 target_link_libraries(potassium_tests PRIVATE potassium Catch2::Catch2)

@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebSite","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","name":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -63,6 +63,18 @@ See the <a href="/libpotassium/COMPARISON.html">libsodium coverage comparison</a
   </thead>
   <tbody>
     <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_box_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.box</code> supports random and seeded key pairs, direct and precomputed combined and detached encryption, and anonymous sealed boxes with both Box algorithms.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_sign_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.sign</code> provides Ed25519 key operations, signed messages, detached signatures, and multipart Ed25519ph with reusable state.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_kem_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.kem</code> provides X-Wing key generation, encapsulation and decapsulation, with guarded shared secrets.</td>
+    </tr>
+    <tr>
       <td><code class="language-plaintext highlighter-rouge">crypto_hash_*</code> and <code class="language-plaintext highlighter-rouge">crypto_generichash_*</code></td>
       <td><code class="language-plaintext highlighter-rouge">potassium.hash</code> provides SHA digests and both unkeyed and keyed BLAKE2b under <code class="language-plaintext highlighter-rouge">potassium::hash</code>.</td>
     </tr>
@@ -73,6 +85,10 @@ See the <a href="/libpotassium/COMPARISON.html">libsodium coverage comparison</a
     <tr>
       <td><code class="language-plaintext highlighter-rouge">crypto_aead_chacha20poly1305_*</code> and <code class="language-plaintext highlighter-rouge">crypto_aead_xchacha20poly1305_ietf_*</code></td>
       <td><code class="language-plaintext highlighter-rouge">potassium.aead</code> provides combined and detached ChaCha authenticated encryption with associated data.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_aead_aegis128l_*</code>, <code class="language-plaintext highlighter-rouge">crypto_aead_aegis256_*</code> and <code class="language-plaintext highlighter-rouge">crypto_aead_aes256gcm_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.aead</code> also provides combined and detached AEGIS and AES256-GCM, with reusable AES256-GCM key precomputation.</td>
     </tr>
     <tr>
       <td><code class="language-plaintext highlighter-rouge">crypto_secretstream_xchacha20poly1305_*</code></td>

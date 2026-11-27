@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['wipe_0',['wipe',['../namespacepotassium.html#a14082badc715bd43bddf6e544859688a',1,'potassium']]],
-  ['writable_5fbytes_1',['writable_bytes',['../classpotassium_1_1key__buffer__storage.html#afb796b2a7c8582be39ba3e2f61b19316',1,'potassium::key_buffer_storage::writable_bytes()'],['../classpotassium_1_1secret__key.html#ac1075d7e174d72f20eb997895bd59229',1,'potassium::secret_key::writable_bytes()']]]
+  ['verify_0',['verify',['../namespacepotassium_1_1auth.html#a68a63ce6653f6320a6d33717a91a2483',1,'potassium::auth::verify(detail::key_type&lt; A &gt; key, std::span&lt; std::byte const &gt; message, detail::tag_span&lt; A, std::byte const &gt; tag, std::nothrow_t) noexcept'],['../namespacepotassium_1_1auth.html#a51bb470828e9c0187910879b4ac7bdf3',1,'potassium::auth::verify(detail::key_type&lt; A &gt; key, std::span&lt; std::byte const &gt; message, detail::tag_span&lt; A, std::byte const &gt; tag)']]],
+  ['verify_5fdetached_1',['verify_detached',['../namespacepotassium_1_1sign.html#abac2cd9583b754e46f63e2af924a667b',1,'potassium::sign::verify_detached(verification_key_ref key, std::span&lt; std::byte const &gt; message, signature const &amp;sig, std::nothrow_t) noexcept'],['../namespacepotassium_1_1sign.html#a105097b191087fe05f79fcdd6abfd62e',1,'potassium::sign::verify_detached(verification_key_ref key, std::span&lt; std::byte const &gt; message, signature const &amp;sig)']]]
 ];

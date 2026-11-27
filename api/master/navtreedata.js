@@ -30,8 +30,8 @@ var NAVTREE =
     [ "Modules", "modules.html", [
       [ "Modules List", "modules.html", "modules_dup" ],
       [ "Module Members", "modulemembers.html", [
-        [ "All", "modulemembers.html", null ],
-        [ "Functions", "modulemembers_func.html", null ],
+        [ "All", "modulemembers.html", "modulemembers_dup" ],
+        [ "Functions", "modulemembers_func.html", "modulemembers_func" ],
         [ "Variables", "modulemembers_vars.html", null ],
         [ "Typedefs", "modulemembers_type.html", null ],
         [ "Enumerations", "modulemembers_enum.html", null ]
@@ -41,7 +41,7 @@ var NAVTREE =
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
         [ "All", "namespacemembers.html", "namespacemembers_dup" ],
-        [ "Functions", "namespacemembers_func.html", null ],
+        [ "Functions", "namespacemembers_func.html", "namespacemembers_func" ],
         [ "Variables", "namespacemembers_vars.html", null ],
         [ "Typedefs", "namespacemembers_type.html", null ],
         [ "Enumerations", "namespacemembers_enum.html", null ]
@@ -66,10 +66,12 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"classpotassium_1_1nonce__buffer.html#ab9e22ab27c8f56580ecf7f80fe933dc7",
-"conceptpotassium_1_1SecretKeyAlgorithmTraits.html",
-"namespacepotassium_1_1box.html#a798fe0465c38eb6092816a398053cd0d",
-"structpotassium_1_1box_1_1seal__result.html#a7201207c5ad315e9494d64252761ae2b"
+"classpotassium_1_1memory__resource.html",
+"classpotassium_1_1secretstream_1_1state__storage.html#a4e3e46bc1441274ae68fead010ac01cc",
+"module__potassium_8secretstream.html#a08ae4c0da1bccf0dda80b0c4fafe4554a401e4828efba74490d6887c8a2ac2b43",
+"namespacepotassium_1_1box.html#a884da2a733e1c121cb9fdca834333e21",
+"structpotassium_1_1algorithm__traits_3_01aead_1_1aegis128l_01_4.html",
+"structpotassium_1_1kem_1_1keypair.html#a4fe49d4113e2d33337938f8b02a1bf5b"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/pk-authenticated.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -46,7 +46,7 @@
 
 <h1 id="public-key-authenticated-encryption">Public-key authenticated encryption</h1>
 
-<p>The proposed <code class="language-plaintext highlighter-rouge">potassium.box</code> module provides sender-authenticated encryption between a local key holder and a peer.
+<p>The <code class="language-plaintext highlighter-rouge">potassium.box</code> module provides sender-authenticated encryption between a local key holder and a peer and anonymous encryption to a recipient.
 Both direct and precomputed operations follow the <a href="/libpotassium/docs/design/core.html">core key, nonce, buffer and error contracts</a>.</p>
 
 <p>Import <code class="language-plaintext highlighter-rouge">potassium.box</code> to access the construction, its core key types, and <code class="language-plaintext highlighter-rouge">potassium::init()</code>.</p>
@@ -86,7 +86,8 @@ Use <code class="language-plaintext highlighter-rouge">keypair&lt;A&gt;{potassiu
 The existing <code class="language-plaintext highlighter-rouge">generate_keypair&lt;A&gt;(std::nothrow)</code> factory reports allocation and backend failures through its result.
 Pass a mutable private-key owner directly to <code class="language-plaintext highlighter-rouge">generate_keypair_into</code> and a precomputed-key owner to <code class="language-plaintext highlighter-rouge">precompute_into</code>.
 Key generation writes directly into the final destinations, including caller-owned storage in the corresponding generation-into operation.
-Deterministic key generation is a possible extension and would treat its seed as confidential.</p>
+For deterministic generation, supply a confidential <code class="language-plaintext highlighter-rouge">key_ref&lt;seed_tag&lt;A&gt;&gt;</code> to <code class="language-plaintext highlighter-rouge">generate_keypair&lt;A&gt;</code> or pass a seed alongside the public and private destinations to <code class="language-plaintext highlighter-rouge">generate_keypair_into</code>.
+The seed can recreate the private key and uses confidential storage.</p>
 
 <h2 id="direct-and-precomputed-operations">Direct and precomputed operations</h2>
 
@@ -97,8 +98,7 @@ Their roles reverse when the recipient opens the message.</p>
 <span class="k">auto</span> <span class="n">opened</span> <span class="o">=</span> <span class="n">box</span><span class="o">::</span><span class="n">open</span><span class="p">(</span><span class="n">bob</span><span class="p">.</span><span class="n">secret_key</span><span class="p">,</span> <span class="n">alice</span><span class="p">.</span><span class="n">public_key</span><span class="p">,</span> <span class="n">sealed</span><span class="p">.</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">sealed</span><span class="p">.</span><span class="n">nonce</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>Direct operations use the backend’s <code class="language-plaintext highlighter-rouge">easy</code> and <code class="language-plaintext highlighter-rouge">open_easy</code> functions.
-The name <code class="language-plaintext highlighter-rouge">box::seal</code> denotes sender-authenticated encryption here, whereas libsodium reserves <code class="language-plaintext highlighter-rouge">crypto_box_seal</code> for anonymous sealed boxes.</p>
+<p>Direct operations use the backend’s <code class="language-plaintext highlighter-rouge">easy</code> and <code class="language-plaintext highlighter-rouge">open_easy</code> functions.</p>
 
 <p>For repeated messages, <code class="language-plaintext highlighter-rouge">box::precompute(local.secret_key, peer.public_key)</code> uses <code class="language-plaintext highlighter-rouge">beforenm</code> to derive a confidential owner tagged with <code class="language-plaintext highlighter-rouge">precomputed_key_tag&lt;A&gt;</code>.
 Precomputed key owners require derivation or explicit initialization.
@@ -107,6 +107,20 @@ Private, precomputed and SecretBox keys cannot implicitly convert between roles.
 With matching keys, plaintext and nonce, direct and precomputed encryption produce identical ciphertext.
 Interoperability tests exercise both directions between these modes and with libsodium for both algorithms.
 Rejection of an externally supplied peer key, including a small-order input rejected during precomputation, is a recoverable <code class="language-plaintext highlighter-rouge">crypto_failed</code>.</p>
+
+<p><code class="language-plaintext highlighter-rouge">seal_detached</code> and <code class="language-plaintext highlighter-rouge">open_detached</code> use identical key roles and carry the MAC separately from the ciphertext.
+Both direct and precomputed operations support explicit or generated nonces for sealing, as well as allocation-free <code class="language-plaintext highlighter-rouge">seal_detached_into</code> and <code class="language-plaintext highlighter-rouge">open_detached_into</code>.
+The ciphertext is the same length as the plaintext and the typed <code class="language-plaintext highlighter-rouge">mac_buffer&lt;A&gt;</code> carries the 16-byte MAC.</p>
+
+<h2 id="anonymous-sealed-boxes">Anonymous sealed boxes</h2>
+
+<p><code class="language-plaintext highlighter-rouge">seal_anonymous</code> and <code class="language-plaintext highlighter-rouge">open_anonymous</code> use the native <code class="language-plaintext highlighter-rouge">seal</code> and <code class="language-plaintext highlighter-rouge">seal_open</code> functions of each Box variant.
+Sealing takes the recipient’s public key and generates an ephemeral sender key and an implicit nonce.
+Opening takes the recipient’s matching public and private keys.
+Anyone with the recipient public key can create a valid sealed box.</p>
+
+<p>A sealed box has 48 bytes of overhead, consisting of an ephemeral public key and the authentication tag.
+The <code class="language-plaintext highlighter-rouge">_into</code> forms operate on disjoint caller-owned output, and allocating open returns plaintext in guarded storage.</p>
 
 <h2 id="protocol-responsibilities">Protocol responsibilities</h2>
 

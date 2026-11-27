@@ -18,11 +18,12 @@ var searchData=
   ['hash_5ftraits_5ftype_15',['hash_traits_type',['../conceptpotassium_1_1hash_1_1hash__traits__type.html',1,'potassium::hash']]],
   ['hasher_16',['Hasher',['../conceptpotassium_1_1hash_1_1Hasher.html',1,'potassium::hash']]],
   ['hasher_17',['hasher',['../classpotassium_1_1hash_1_1hasher.html',1,'potassium::hash::hasher&lt; A, Storage &gt;'],['../classpotassium_1_1hash_1_1hasher.html#a58ba1edea2df5d3fab423a9481120542',1,'potassium::hash::hasher::hasher()']]],
-  ['header_18',['header',['../classpotassium_1_1secretstream_1_1sender.html#aaf7935f49031fbecfd40c98395978620',1,'potassium::secretstream::sender']]],
-  ['header_5fsize_19',['header_size',['../namespacepotassium_1_1secretstream.html#a564f0bef2f5636b89f828e5683dfefd2',1,'potassium::secretstream']]],
-  ['hmac_5falgorithm_20',['hmac_algorithm',['../conceptpotassium_1_1auth_1_1hmac__algorithm.html',1,'potassium::auth']]],
-  ['hmac_5fkey_5ftag_21',['hmac_key_tag',['../structpotassium_1_1auth_1_1hmac__key__tag.html',1,'potassium::auth']]],
-  ['hmac_5fsha256_22',['hmac_sha256',['../structpotassium_1_1auth_1_1hmac__sha256.html',1,'']]],
-  ['hmac_5fsha512_23',['hmac_sha512',['../structpotassium_1_1auth_1_1hmac__sha512.html',1,'']]],
-  ['hmac_5fsha512256_24',['hmac_sha512256',['../structpotassium_1_1auth_1_1hmac__sha512256.html',1,'']]]
+  ['haspublickeysize_18',['HasPublicKeySize',['../conceptpotassium_1_1detail_1_1HasPublicKeySize.html',1,'potassium::detail']]],
+  ['header_19',['header',['../classpotassium_1_1secretstream_1_1sender.html#aaf7935f49031fbecfd40c98395978620',1,'potassium::secretstream::sender']]],
+  ['header_5fsize_20',['header_size',['../namespacepotassium_1_1secretstream.html#a564f0bef2f5636b89f828e5683dfefd2',1,'potassium::secretstream']]],
+  ['hmac_5falgorithm_21',['hmac_algorithm',['../conceptpotassium_1_1auth_1_1hmac__algorithm.html',1,'potassium::auth']]],
+  ['hmac_5fkey_5ftag_22',['hmac_key_tag',['../structpotassium_1_1auth_1_1hmac__key__tag.html',1,'potassium::auth']]],
+  ['hmac_5fsha256_23',['hmac_sha256',['../structpotassium_1_1auth_1_1hmac__sha256.html',1,'']]],
+  ['hmac_5fsha512_24',['hmac_sha512',['../structpotassium_1_1auth_1_1hmac__sha512.html',1,'']]],
+  ['hmac_5fsha512256_25',['hmac_sha512256',['../structpotassium_1_1auth_1_1hmac__sha512256.html',1,'']]]
 ];

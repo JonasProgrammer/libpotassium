@@ -217,3 +217,161 @@ TEMPLATE_TEST_CASE("Box matches fixed vectors with the NaCl keypairs", "[box][ve
     CHECK(std::ranges::equal(direct.bytes(), message));
     CHECK(std::ranges::equal(precomputed.bytes(), message));
 }
+
+namespace
+{
+auto writable_bytes(auto& range)
+{
+    return reinterpret_cast<unsigned char*>(range.data());
+}
+
+auto readable_bytes(auto const& range)
+{
+    return reinterpret_cast<unsigned char const*>(range.data());
+}
+}  // namespace
+
+TEMPLATE_TEST_CASE("Box seeded key pairs match native generation", "[box][keys][interop]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+{
+    using A = TestType;
+    constexpr auto raw_generate = std::same_as<A, curve25519xsalsa20poly1305> ? crypto_box_seed_keypair : crypto_box_curve25519xchacha20poly1305_seed_keypair;
+    key_buffer_storage<seed_tag<A>> seed{zero};
+    seed.writable_bytes().front() = std::byte{0xa5};
+    public_key<A> expected_public;
+    key_buffer_storage<private_key_tag<A>> expected_secret{for_overwrite};
+    auto expected_secret_bytes = expected_secret.writable_bytes();
+    REQUIRE(raw_generate(writable_bytes(expected_public.storage), writable_bytes(expected_secret_bytes), readable_bytes(seed.ref().bytes())) == 0);
+
+    auto pair = generate_keypair(seed.ref(), std::nothrow);
+    REQUIRE(pair);
+    CHECK(pair->public_key.storage == expected_public.storage);
+    CHECK(std::ranges::equal(pair->secret_key.ref().bytes(), expected_secret.ref().bytes()));
+
+    public_key<A> pub;
+    key_buffer_storage<private_key_tag<A>> secret{for_overwrite};
+    generate_keypair_into(pub, secret, seed);
+    CHECK(pub.storage == expected_public.storage);
+    CHECK(std::ranges::equal(secret.ref().bytes(), expected_secret.ref().bytes()));
+}
+
+TEMPLATE_TEST_CASE("Detached Box interoperates directly and after precomputation", "[box][interop]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+{
+    using A = TestType;
+    constexpr bool xsalsa = std::same_as<A, curve25519xsalsa20poly1305>;
+    constexpr auto raw_seal = xsalsa ? crypto_box_detached : crypto_box_curve25519xchacha20poly1305_detached;
+    constexpr auto raw_open = xsalsa ? crypto_box_open_detached : crypto_box_curve25519xchacha20poly1305_open_detached;
+    constexpr auto raw_seal_shared = xsalsa ? crypto_box_detached_afternm : crypto_box_curve25519xchacha20poly1305_detached_afternm;
+    constexpr auto raw_open_shared = xsalsa ? crypto_box_open_detached_afternm : crypto_box_curve25519xchacha20poly1305_open_detached_afternm;
+
+    keypair<A> sender;
+    keypair<A> recipient;
+    auto sending_key = precompute(sender.secret_key, recipient.public_key);
+    auto receiving_key = precompute(recipient.secret_key, sender.public_key);
+    std::vector<std::byte> message;
+    SECTION("empty") {}
+    SECTION("binary")
+    {
+        message = {std::byte{0xff}, std::byte{0x80}, std::byte{}, std::byte{1}};
+    }
+
+    auto sealed = seal_detached(sender.secret_key, recipient.public_key, message);
+    CHECK(sealed.ciphertext.size() == message.size());
+    auto from_direct = open_detached(recipient.secret_key, sender.public_key, sealed.ciphertext, sealed.mac, sealed.nonce);
+    CHECK(std::ranges::equal(from_direct.bytes(), message));
+    auto from_shared = open_detached(receiving_key, sealed.ciphertext, sealed.mac, sealed.nonce);
+    CHECK(std::ranges::equal(from_shared.bytes(), message));
+
+    std::vector<std::byte> clear(message.size());
+    auto* const nonce = readable_bytes(sealed.nonce.storage);
+    unsigned char empty{};
+    auto const* message_bytes = message.empty() ? &empty : readable_bytes(message);
+    auto const* sealed_bytes = message.empty() ? &empty : readable_bytes(sealed.ciphertext);
+    auto* clear_bytes = message.empty() ? &empty : writable_bytes(clear);
+    REQUIRE(raw_open(clear_bytes,
+                     sealed_bytes,
+                     readable_bytes(sealed.mac.storage),
+                     message.size(),
+                     nonce,
+                     readable_bytes(sender.public_key.storage),
+                     readable_bytes(recipient.secret_key.ref().bytes())) == 0);
+    CHECK(clear == message);
+    REQUIRE(raw_open_shared(clear_bytes, sealed_bytes, readable_bytes(sealed.mac.storage), message.size(), nonce, readable_bytes(receiving_key.ref().bytes())) == 0);
+    CHECK(clear == message);
+
+    auto shared_seal = seal_detached(sending_key, message, sealed.nonce);
+    CHECK(shared_seal.ciphertext == sealed.ciphertext);
+    CHECK(shared_seal.mac.storage == sealed.mac.storage);
+    std::vector<std::byte> native_ciphertext(message.size());
+    auto* native_out = message.empty() ? &empty : writable_bytes(native_ciphertext);
+    mac_buffer<A> native_mac;
+    REQUIRE(raw_seal(native_out,
+                     writable_bytes(native_mac.storage),
+                     message_bytes,
+                     message.size(),
+                     nonce,
+                     readable_bytes(recipient.public_key.storage),
+                     readable_bytes(sender.secret_key.ref().bytes())) == 0);
+    CHECK(native_ciphertext == sealed.ciphertext);
+    CHECK(native_mac.storage == sealed.mac.storage);
+    open_detached_into(receiving_key, native_ciphertext, native_mac, clear, sealed.nonce);
+    CHECK(clear == message);
+    REQUIRE(raw_seal_shared(native_out, writable_bytes(native_mac.storage), message_bytes, message.size(), nonce, readable_bytes(sending_key.ref().bytes())) == 0);
+    open_detached_into(recipient.secret_key, sender.public_key, native_ciphertext, native_mac, clear, sealed.nonce);
+    CHECK(clear == message);
+
+    auto into = seal_detached_into(sender.secret_key, recipient.public_key, message, native_ciphertext);
+    auto verified = open_detached(receiving_key, native_ciphertext, into.mac, into.nonce);
+    CHECK(std::ranges::equal(verified.bytes(), message));
+    auto shared_into = seal_detached_into(sending_key, message, native_ciphertext);
+    verified = open_detached(recipient.secret_key, sender.public_key, native_ciphertext, shared_into.mac, shared_into.nonce);
+    CHECK(std::ranges::equal(verified.bytes(), message));
+
+    auto combined = seal(sender.secret_key, recipient.public_key, message, sealed.nonce);
+    CHECK(std::ranges::equal(std::span{combined}.first(algorithm_traits<A>::mac_size), sealed.mac.storage));
+    CHECK(std::ranges::equal(std::span{combined}.subspan(algorithm_traits<A>::mac_size), sealed.ciphertext));
+
+    sealed.mac.storage.front() ^= std::byte{1};
+    CHECK(open_detached_into(recipient.secret_key, sender.public_key, sealed.ciphertext, sealed.mac, clear, sealed.nonce, std::nothrow) == std::unexpected(errc::crypto_failed));
+    CHECK_THROWS_AS(open_detached(receiving_key, sealed.ciphertext, sealed.mac, sealed.nonce), crypto_error);
+    public_key<A> invalid;
+    CHECK(seal_detached(sender.secret_key, invalid, message, std::nothrow) == std::unexpected(errc::crypto_failed));
+}
+
+TEMPLATE_TEST_CASE("Anonymous sealed boxes interoperate with native seal functions", "[box][interop]", curve25519xsalsa20poly1305, curve25519xchacha20poly1305)
+{
+    using A = TestType;
+    constexpr bool xsalsa = std::same_as<A, curve25519xsalsa20poly1305>;
+    constexpr auto raw_seal = xsalsa ? crypto_box_seal : crypto_box_curve25519xchacha20poly1305_seal;
+    constexpr auto raw_open = xsalsa ? crypto_box_seal_open : crypto_box_curve25519xchacha20poly1305_seal_open;
+    constexpr auto overhead = algorithm_traits<A>::sealed_overhead;
+    keypair<A> recipient;
+    std::vector<std::byte> message;
+    SECTION("empty") {}
+    SECTION("binary")
+    {
+        message = {std::byte{0x80}, std::byte{}, std::byte{0xff}};
+    }
+
+    auto sealed = seal_anonymous(recipient.public_key, message);
+    REQUIRE(sealed.size() == message.size() + overhead);
+    std::vector<std::byte> clear(message.size());
+    unsigned char empty{};
+    auto* clear_bytes = message.empty() ? &empty : writable_bytes(clear);
+    auto const* message_bytes = message.empty() ? &empty : readable_bytes(message);
+    REQUIRE(raw_open(clear_bytes, readable_bytes(sealed), sealed.size(), readable_bytes(recipient.public_key.storage), readable_bytes(recipient.secret_key.ref().bytes())) == 0);
+    CHECK(clear == message);
+    REQUIRE(raw_seal(writable_bytes(sealed), message_bytes, message.size(), readable_bytes(recipient.public_key.storage)) == 0);
+    auto opened = open_anonymous(recipient.secret_key, recipient.public_key, sealed);
+    CHECK(std::ranges::equal(opened.bytes(), message));
+    seal_anonymous_into(recipient.public_key, message, sealed);
+    open_anonymous_into(recipient.secret_key, recipient.public_key, sealed, clear);
+    CHECK(clear == message);
+
+    keypair<A> other;
+    CHECK(open_anonymous(other.secret_key, other.public_key, sealed, std::nothrow) == std::unexpected(errc::crypto_failed));
+    sealed.back() ^= std::byte{1};
+    CHECK_THROWS_AS(open_anonymous(recipient.secret_key, recipient.public_key, sealed), crypto_error);
+    CHECK(open_anonymous_into(recipient.secret_key, recipient.public_key, std::span{sealed}.first(overhead - 1), clear, std::nothrow) == std::unexpected(errc::crypto_failed));
+    public_key<A> invalid;
+    CHECK(seal_anonymous(invalid, message, std::nothrow) == std::unexpected(errc::crypto_failed));
+}

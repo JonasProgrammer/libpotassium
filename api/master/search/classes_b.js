@@ -1,8 +1,10 @@
 var searchData=
 [
-  ['precomputed_5fkey_5ftag_0',['precomputed_key_tag',['../structpotassium_1_1box_1_1precomputed__key__tag.html',1,'potassium::box']]],
-  ['private_5fkey_5ftag_1',['private_key_tag',['../structpotassium_1_1box_1_1private__key__tag.html',1,'potassium::box']]],
-  ['public_5fkey_2',['public_key',['../classpotassium_1_1public__key.html',1,'potassium']]],
-  ['public_5fkey_5fref_3',['public_key_ref',['../classpotassium_1_1public__key__ref.html',1,'potassium']]],
-  ['pull_5fresult_4',['pull_result',['../structpotassium_1_1secretstream_1_1pull__result.html',1,'potassium::secretstream']]]
+  ['nonce_5fbuffer_0',['nonce_buffer',['../classpotassium_1_1nonce__buffer.html',1,'potassium']]],
+  ['nonce_5fbuffer_3c_20default_5falgorithm_20_3e_1',['nonce_buffer&lt; default_algorithm &gt;',['../classpotassium_1_1nonce__buffer.html',1,'potassium']]],
+  ['nonce_5fbuffer_3c_20xchacha20poly1305_20_3e_2',['nonce_buffer&lt; xchacha20poly1305 &gt;',['../classpotassium_1_1nonce__buffer.html',1,'potassium']]],
+  ['nonce_5fbuffer_3c_20xsalsa20poly1305_20_3e_3',['nonce_buffer&lt; xsalsa20poly1305 &gt;',['../classpotassium_1_1nonce__buffer.html',1,'potassium']]],
+  ['nonce_5fref_4',['nonce_ref',['../classpotassium_1_1nonce__ref.html',1,'potassium']]],
+  ['nonce_5fref_3c_20xchacha20poly1305_20_3e_5',['nonce_ref&lt; xchacha20poly1305 &gt;',['../classpotassium_1_1nonce__ref.html',1,'potassium']]],
+  ['nonce_5fref_3c_20xsalsa20poly1305_20_3e_6',['nonce_ref&lt; xsalsa20poly1305 &gt;',['../classpotassium_1_1nonce__ref.html',1,'potassium']]]
 ];

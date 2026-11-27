@@ -1,7 +1,12 @@
 var namespacepotassium_1_1aead =
 [
+    [ "aes256gcm_inplace_state", "classpotassium_1_1aead_1_1aes256gcm__inplace__state.html", "classpotassium_1_1aead_1_1aes256gcm__inplace__state" ],
+    [ "aes256gcm_state_storage", "classpotassium_1_1aead_1_1aes256gcm__state__storage.html", "classpotassium_1_1aead_1_1aes256gcm__state__storage" ],
+    [ "aes256gcm_precomputed", "classpotassium_1_1aead_1_1aes256gcm__precomputed.html", "classpotassium_1_1aead_1_1aes256gcm__precomputed" ],
     [ "seal_result", "structpotassium_1_1aead_1_1seal__result.html", "structpotassium_1_1aead_1_1seal__result" ],
+    [ "aes256gcm_state_type", "namespacepotassium_1_1aead.html#a1f425c79d9bcd86e26456f937c26a5c5", null ],
     [ "default_algorithm", "namespacepotassium_1_1aead.html#a454cfbd683015cc728d93b1c2e480c0b", null ],
+    [ "aes256gcm_available", "namespacepotassium_1_1aead.html#a62b913508478f56b5a7b4dbb78d0fccc", null ],
     [ "open", "namespacepotassium_1_1aead.html#a9f784ce5715059d696a3c80adcb7b2ac", null ],
     [ "open", "namespacepotassium_1_1aead.html#a2de87129af22e678e5fa06835ee63eeb", null ],
     [ "open", "namespacepotassium_1_1aead.html#af16cf91ffea0a76bd91aa83084625c96", null ],
@@ -12,6 +17,10 @@ var namespacepotassium_1_1aead =
     [ "open_detached_into", "namespacepotassium_1_1aead.html#aae572cb8d2d4fde5a0ce5d0fe3ca5525", null ],
     [ "open_into", "namespacepotassium_1_1aead.html#ae4add52a38964fb0b12ba0f7d663d162", null ],
     [ "open_into", "namespacepotassium_1_1aead.html#a61f8adb12600acc551fcb95573e883ff", null ],
+    [ "precompute", "namespacepotassium_1_1aead.html#ae2fd3f87e78c92e75d594c556457213f", null ],
+    [ "precompute", "namespacepotassium_1_1aead.html#a70be852a36e7c3afe57ea5ef1541afb2", null ],
+    [ "precompute_into", "namespacepotassium_1_1aead.html#a06e4d603061d4763c362876e47636730", null ],
+    [ "precompute_into", "namespacepotassium_1_1aead.html#a1eeda9c69d11601ed6e0f254c7106755", null ],
     [ "seal", "namespacepotassium_1_1aead.html#afdbcdc2b910a7c6e9f839f2807f1e062", null ],
     [ "seal", "namespacepotassium_1_1aead.html#a8070bce14b383c03686b8bcd0c496e9d", null ],
     [ "seal", "namespacepotassium_1_1aead.html#ac09f2e233fd8cba345d5b2f457f4c527", null ],

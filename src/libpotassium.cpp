@@ -14,7 +14,9 @@ export import potassium.core;
 export import potassium.aead;
 export import potassium.auth;
 export import potassium.box;
+export import potassium.kem;
 export import potassium.secretbox;
 export import potassium.secretstream;
+export import potassium.sign;
 
 export import potassium.hash;

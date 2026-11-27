@@ -6,6 +6,7 @@ var concepts =
       ] ],
       [ "detail", null, [
         [ "AuthenticatedEncryptionTraits", "conceptpotassium_1_1detail_1_1AuthenticatedEncryptionTraits.html", null ],
+        [ "HasPublicKeySize", "conceptpotassium_1_1detail_1_1HasPublicKeySize.html", null ],
         [ "HasDefaultKeyGenerator", "conceptpotassium_1_1detail_1_1HasDefaultKeyGenerator.html", null ]
       ] ],
       [ "hash", "namespacepotassium_1_1hash.html", [

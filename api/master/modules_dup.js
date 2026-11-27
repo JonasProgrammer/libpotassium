@@ -6,6 +6,8 @@ var modules_dup =
     [ "potassium.box", "module__potassium_8box.html", "module__potassium_8box" ],
     [ "potassium.core", "module__potassium_8core.html", "module__potassium_8core" ],
     [ "potassium.hash", "module__potassium_8hash.html", "module__potassium_8hash" ],
+    [ "potassium.kem", "module__potassium_8kem.html", "module__potassium_8kem" ],
     [ "potassium.secretbox", "module__potassium_8secretbox.html", "module__potassium_8secretbox" ],
-    [ "potassium.secretstream", "module__potassium_8secretstream.html", "module__potassium_8secretstream" ]
+    [ "potassium.secretstream", "module__potassium_8secretstream.html", "module__potassium_8secretstream" ],
+    [ "potassium.sign", "module__potassium_8sign.html", "module__potassium_8sign" ]
 ];

@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/COMPARISON.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -47,7 +47,7 @@
 <h1 id="libpotassium-coverage-of-libsodium">libpotassium coverage of libsodium</h1>
 
 <p>This comparison follows the <a href="https://libsodium.gitbook.io/doc">libsodium manual</a> and its <a href="https://github.com/jedisct1/libsodium-doc/blob/master/SUMMARY.md">table of contents</a>.
-Coverage describes operations available through the <a href="/libpotassium/src/libpotassium.cpp">public potassium module</a> as of 2026-11-26.</p>
+Coverage describes operations available through the <a href="/libpotassium/src/libpotassium.cpp">public potassium module</a>.</p>
 
 <table>
   <thead>
@@ -218,8 +218,8 @@ For the C++ build requirements and module imports, see the <a href="/libpotassiu
     </tr>
     <tr>
       <td>AEAD, AEGIS and AES</td>
-      <td>❌ Unwrapped</td>
-      <td>AEGIS-256, AEGIS-128L and AES256-GCM, including AES precomputation.</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">aead</code> provides combined and detached AEGIS-128L, AEGIS-256 and AES256-GCM, including runtime AES256-GCM availability and reusable precomputation.</td>
     </tr>
     <tr>
       <td>IP address encryption</td>
@@ -231,9 +231,8 @@ For the C++ build requirements and module imports, see the <a href="/libpotassiu
 
 <h2 id="public-key-cryptography">Public-key cryptography</h2>
 
-<p>The <a href="/libpotassium/docs/design/pk-authenticated.html">public-key authenticated encryption design</a> specifies key roles and precomputation.
-Both box modules follow the <a href="/libpotassium/docs/design/core.html#message-and-operation-conventions">core message contract</a>, so callers can supply a nonce or receive a generated nonce alongside the ciphertext.
-The allocating open operations return guarded plaintext, and the caller-buffer operations require disjoint input and output.</p>
+<p>The <a href="/libpotassium/docs/design/pk-authenticated.html">Box design</a> covers authenticated and anonymous encryption, and the <a href="/libpotassium/docs/design/sign.html">signature design</a> and <a href="/libpotassium/docs/design/kem.html">KEM design</a> cover Ed25519 and X-Wing.
+Authenticated Box follows the <a href="/libpotassium/docs/design/core.html#message-and-operation-conventions">core message contract</a> for explicit and generated nonces.</p>
 
 <table>
   <thead>
@@ -251,13 +250,13 @@ The allocating open operations return guarded plaintext, and the caller-buffer o
     </tr>
     <tr>
       <td>Key pairs</td>
-      <td>🟡 Partial</td>
-      <td>Random key-pair generation is exposed, including generation into caller storage, while deterministic generation from a seed is unwrapped.</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">box::generate_keypair</code> and <code class="language-plaintext highlighter-rouge">generate_keypair_into</code> cover random and seeded key generation for both Box algorithms.</td>
     </tr>
     <tr>
       <td>Detached Box</td>
-      <td>❌ Unwrapped</td>
-      <td>Only the combined MAC and ciphertext format is exposed.</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">box::seal_detached</code>, <code class="language-plaintext highlighter-rouge">open_detached</code> and their caller-buffer forms support both Box algorithms directly or with precomputed keys.</td>
     </tr>
     <tr>
       <td>Original NaCl Box</td>
@@ -266,18 +265,18 @@ The allocating open operations return guarded plaintext, and the caller-buffer o
     </tr>
     <tr>
       <td>Signatures</td>
-      <td>❌ Unwrapped</td>
-      <td>No Ed25519 key pairs, signed messages, detached signatures or multipart Ed25519ph.</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">sign</code> provides random and seeded Ed25519 key pairs, key extraction, signed messages, detached signatures and multipart Ed25519ph.</td>
     </tr>
     <tr>
       <td>Sealed boxes</td>
-      <td>❌ Unwrapped</td>
-      <td>Upstream <code class="language-plaintext highlighter-rouge">crypto_box_seal</code> uses an anonymous sender, while <code class="language-plaintext highlighter-rouge">box::seal</code> requires a sender private key or a precomputed shared key.</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">box::seal_anonymous</code> and <code class="language-plaintext highlighter-rouge">open_anonymous</code> wrap the native anonymous formats for both Box algorithms.</td>
     </tr>
     <tr>
       <td>Key encapsulation</td>
-      <td>❌ Unwrapped</td>
-      <td>No X-Wing key generation, encapsulation or decapsulation.</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">kem</code> provides random and seeded X-Wing key pairs, encapsulation and decapsulation.</td>
     </tr>
   </tbody>
 </table>

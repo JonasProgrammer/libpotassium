@@ -2,6 +2,9 @@ var annotated_dup =
 [
     [ "potassium", "namespacepotassium.html", [
       [ "aead", "namespacepotassium_1_1aead.html", [
+        [ "aes256gcm_inplace_state", "classpotassium_1_1aead_1_1aes256gcm__inplace__state.html", "classpotassium_1_1aead_1_1aes256gcm__inplace__state" ],
+        [ "aes256gcm_state_storage", "classpotassium_1_1aead_1_1aes256gcm__state__storage.html", "classpotassium_1_1aead_1_1aes256gcm__state__storage" ],
+        [ "aes256gcm_precomputed", "classpotassium_1_1aead_1_1aes256gcm__precomputed.html", "classpotassium_1_1aead_1_1aes256gcm__precomputed" ],
         [ "seal_result", "structpotassium_1_1aead_1_1seal__result.html", "structpotassium_1_1aead_1_1seal__result" ]
       ] ],
       [ "auth", "namespacepotassium_1_1auth.html", [
@@ -10,6 +13,7 @@ var annotated_dup =
       ] ],
       [ "box", "namespacepotassium_1_1box.html", [
         [ "private_key_tag", "structpotassium_1_1box_1_1private__key__tag.html", null ],
+        [ "seed_tag", "structpotassium_1_1box_1_1seed__tag.html", null ],
         [ "precomputed_key_tag", "structpotassium_1_1box_1_1precomputed__key__tag.html", null ],
         [ "seal_result", "structpotassium_1_1box_1_1seal__result.html", "structpotassium_1_1box_1_1seal__result" ],
         [ "keypair", "structpotassium_1_1box_1_1keypair.html", "structpotassium_1_1box_1_1keypair" ]
@@ -36,6 +40,11 @@ var annotated_dup =
         [ "hasher", "classpotassium_1_1hash_1_1hasher.html", "classpotassium_1_1hash_1_1hasher" ],
         [ "keyed_hasher", "classpotassium_1_1hash_1_1keyed__hasher.html", "classpotassium_1_1hash_1_1keyed__hasher" ]
       ] ],
+      [ "kem", "namespacepotassium_1_1kem.html", [
+        [ "keypair", "structpotassium_1_1kem_1_1keypair.html", "structpotassium_1_1kem_1_1keypair" ],
+        [ "ciphertext_buffer", "structpotassium_1_1kem_1_1ciphertext__buffer.html", "structpotassium_1_1kem_1_1ciphertext__buffer" ],
+        [ "encapsulation", "structpotassium_1_1kem_1_1encapsulation.html", "structpotassium_1_1kem_1_1encapsulation" ]
+      ] ],
       [ "secretbox", "namespacepotassium_1_1secretbox.html", [
         [ "seal_result", "structpotassium_1_1secretbox_1_1seal__result.html", "structpotassium_1_1secretbox_1_1seal__result" ]
       ] ],
@@ -47,14 +56,27 @@ var annotated_dup =
         [ "sender", "classpotassium_1_1secretstream_1_1sender.html", "classpotassium_1_1secretstream_1_1sender" ],
         [ "receiver", "classpotassium_1_1secretstream_1_1receiver.html", "classpotassium_1_1secretstream_1_1receiver" ]
       ] ],
+      [ "sign", "namespacepotassium_1_1sign.html", [
+        [ "signature_buffer", "structpotassium_1_1sign_1_1signature__buffer.html", "structpotassium_1_1sign_1_1signature__buffer" ],
+        [ "keypair", "structpotassium_1_1sign_1_1keypair.html", "structpotassium_1_1sign_1_1keypair" ],
+        [ "inplace_state", "classpotassium_1_1sign_1_1inplace__state.html", "classpotassium_1_1sign_1_1inplace__state" ],
+        [ "state_storage", "classpotassium_1_1sign_1_1state__storage.html", "classpotassium_1_1sign_1_1state__storage" ],
+        [ "prehash", "classpotassium_1_1sign_1_1prehash.html", "classpotassium_1_1sign_1_1prehash" ]
+      ] ],
       [ "algorithm_traits", "structpotassium_1_1algorithm__traits.html", null ],
+      [ "algorithm_traits&lt; aead::aegis128l &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1aegis128l_01_4.html", null ],
+      [ "algorithm_traits&lt; aead::aegis256 &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1aegis256_01_4.html", null ],
+      [ "algorithm_traits&lt; aead::aes256gcm &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1aes256gcm_01_4.html", null ],
       [ "algorithm_traits&lt; aead::chacha20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1chacha20poly1305_01_4.html", null ],
       [ "algorithm_traits&lt; aead::chacha20poly1305_ietf &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1chacha20poly1305__ietf_01_4.html", null ],
       [ "algorithm_traits&lt; aead::xchacha20poly1305_ietf &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1xchacha20poly1305__ietf_01_4.html", null ],
       [ "algorithm_traits&lt; box::curve25519xchacha20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01box_1_1curve25519xchacha20poly1305_01_4.html", null ],
       [ "algorithm_traits&lt; box::curve25519xsalsa20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01box_1_1curve25519xsalsa20poly1305_01_4.html", null ],
+      [ "algorithm_traits&lt; kem::xwing &gt;", "structpotassium_1_1algorithm__traits_3_01kem_1_1xwing_01_4.html", null ],
       [ "algorithm_traits&lt; secretbox::xchacha20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01secretbox_1_1xchacha20poly1305_01_4.html", null ],
       [ "algorithm_traits&lt; secretbox::xsalsa20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01secretbox_1_1xsalsa20poly1305_01_4.html", null ],
+      [ "algorithm_traits&lt; sign::ed25519 &gt;", "structpotassium_1_1algorithm__traits_3_01sign_1_1ed25519_01_4.html", null ],
+      [ "algorithm_traits&lt; sign::ed25519ph &gt;", "structpotassium_1_1algorithm__traits_3_01sign_1_1ed25519ph_01_4.html", null ],
       [ "allocator", "structpotassium_1_1allocator.html", "structpotassium_1_1allocator" ],
       [ "crypto_error", "classpotassium_1_1crypto__error.html", "classpotassium_1_1crypto__error" ],
       [ "detached_ciphertext", "structpotassium_1_1detached__ciphertext.html", "structpotassium_1_1detached__ciphertext" ],
@@ -65,6 +87,9 @@ var annotated_dup =
       [ "key_out", "classpotassium_1_1key__out.html", "classpotassium_1_1key__out" ],
       [ "key_ref", "classpotassium_1_1key__ref.html", "classpotassium_1_1key__ref" ],
       [ "key_traits", "structpotassium_1_1key__traits.html", null ],
+      [ "key_traits&lt; aead::aegis128l &gt;", "structpotassium_1_1key__traits_3_01aead_1_1aegis128l_01_4.html", null ],
+      [ "key_traits&lt; aead::aegis256 &gt;", "structpotassium_1_1key__traits_3_01aead_1_1aegis256_01_4.html", null ],
+      [ "key_traits&lt; aead::aes256gcm &gt;", "structpotassium_1_1key__traits_3_01aead_1_1aes256gcm_01_4.html", null ],
       [ "key_traits&lt; aead::chacha20poly1305 &gt;", "structpotassium_1_1key__traits_3_01aead_1_1chacha20poly1305_01_4.html", null ],
       [ "key_traits&lt; aead::chacha20poly1305_ietf &gt;", "structpotassium_1_1key__traits_3_01aead_1_1chacha20poly1305__ietf_01_4.html", null ],
       [ "key_traits&lt; aead::xchacha20poly1305_ietf &gt;", "structpotassium_1_1key__traits_3_01aead_1_1xchacha20poly1305__ietf_01_4.html", null ],
@@ -72,10 +97,16 @@ var annotated_dup =
       [ "key_traits&lt; box::keypair&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1keypair_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1keypair_3_01A_01_4_01_4" ],
       [ "key_traits&lt; box::precomputed_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1precomputed__key__tag_3_01A_01_4_01_4.html", null ],
       [ "key_traits&lt; box::private_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4" ],
+      [ "key_traits&lt; box::seed_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4" ],
       [ "key_traits&lt; hash::blake2b_key_tag&lt; K &gt; &gt;", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4.html", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4" ],
+      [ "key_traits&lt; kem::decapsulation_key_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1decapsulation__key__tag_01_4.html", null ],
+      [ "key_traits&lt; kem::seed_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1seed__tag_01_4.html", "structpotassium_1_1key__traits_3_01kem_1_1seed__tag_01_4" ],
+      [ "key_traits&lt; kem::shared_secret_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1shared__secret__tag_01_4.html", null ],
       [ "key_traits&lt; secretbox::xchacha20poly1305 &gt;", "structpotassium_1_1key__traits_3_01secretbox_1_1xchacha20poly1305_01_4.html", "structpotassium_1_1key__traits_3_01secretbox_1_1xchacha20poly1305_01_4" ],
       [ "key_traits&lt; secretbox::xsalsa20poly1305 &gt;", "structpotassium_1_1key__traits_3_01secretbox_1_1xsalsa20poly1305_01_4.html", "structpotassium_1_1key__traits_3_01secretbox_1_1xsalsa20poly1305_01_4" ],
       [ "key_traits&lt; secretstream::key_tag &gt;", "structpotassium_1_1key__traits_3_01secretstream_1_1key__tag_01_4.html", "structpotassium_1_1key__traits_3_01secretstream_1_1key__tag_01_4" ],
+      [ "key_traits&lt; sign::seed_tag &gt;", "structpotassium_1_1key__traits_3_01sign_1_1seed__tag_01_4.html", "structpotassium_1_1key__traits_3_01sign_1_1seed__tag_01_4" ],
+      [ "key_traits&lt; sign::signing_key_tag &gt;", "structpotassium_1_1key__traits_3_01sign_1_1signing__key__tag_01_4.html", null ],
       [ "mac_buffer", "structpotassium_1_1mac__buffer.html", "structpotassium_1_1mac__buffer" ],
       [ "memory_resource", "classpotassium_1_1memory__resource.html", null ],
       [ "mlock_guard", "classpotassium_1_1mlock__guard.html", "classpotassium_1_1mlock__guard" ],
@@ -89,6 +120,9 @@ var annotated_dup =
       [ "secure_buffer", "classpotassium_1_1secure__buffer.html", "classpotassium_1_1secure__buffer" ],
       [ "zero_t", "structpotassium_1_1zero__t.html", "structpotassium_1_1zero__t" ]
     ] ],
+    [ "aegis128l", "structpotassium_1_1aead_1_1aegis128l.html", null ],
+    [ "aegis256", "structpotassium_1_1aead_1_1aegis256.html", null ],
+    [ "aes256gcm", "structpotassium_1_1aead_1_1aes256gcm.html", null ],
     [ "chacha20poly1305", "structpotassium_1_1aead_1_1chacha20poly1305.html", null ],
     [ "chacha20poly1305_ietf", "structpotassium_1_1aead_1_1chacha20poly1305__ietf.html", null ],
     [ "curve25519xchacha20poly1305", "structpotassium_1_1box_1_1curve25519xchacha20poly1305.html", null ],

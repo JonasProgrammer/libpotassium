@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/aead.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -44,7 +44,7 @@
       <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
 <!-- SPDX-License-Identifier: BSL-1.0 -->
 
-<h1 id="chacha-authenticated-encryption-with-associated-data">ChaCha authenticated encryption with associated data</h1>
+<h1 id="authenticated-encryption-with-associated-data">Authenticated encryption with associated data</h1>
 
 <p>Import <code class="language-plaintext highlighter-rouge">potassium.aead</code> for independent messages that need both encryption and authentication of protocol data.
 The module follows the <a href="/libpotassium/docs/design/core.html">core key, error and buffer contracts</a>.</p>
@@ -54,7 +54,9 @@ The module follows the <a href="/libpotassium/docs/design/core.html">core key, e
     <tr>
       <th>Tag in <code class="language-plaintext highlighter-rouge">potassium::aead</code></th>
       <th>libsodium function family</th>
+      <th>Key bytes</th>
       <th>Nonce bytes</th>
+      <th>MAC bytes</th>
       <th>Nonce selection</th>
     </tr>
   </thead>
@@ -62,34 +64,62 @@ The module follows the <a href="/libpotassium/docs/design/core.html">core key, e
     <tr>
       <td><code class="language-plaintext highlighter-rouge">chacha20poly1305</code></td>
       <td><code class="language-plaintext highlighter-rouge">crypto_aead_chacha20poly1305_*</code></td>
+      <td>32</td>
       <td>8</td>
+      <td>16</td>
       <td>Caller supplied</td>
     </tr>
     <tr>
       <td><code class="language-plaintext highlighter-rouge">chacha20poly1305_ietf</code></td>
       <td><code class="language-plaintext highlighter-rouge">crypto_aead_chacha20poly1305_ietf_*</code></td>
+      <td>32</td>
       <td>12</td>
+      <td>16</td>
       <td>Caller supplied</td>
     </tr>
     <tr>
       <td><code class="language-plaintext highlighter-rouge">xchacha20poly1305_ietf</code> (<code class="language-plaintext highlighter-rouge">default_algorithm</code>)</td>
       <td><code class="language-plaintext highlighter-rouge">crypto_aead_xchacha20poly1305_ietf_*</code></td>
+      <td>32</td>
       <td>24</td>
+      <td>16</td>
       <td>Caller supplied or generated</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aegis128l</code></td>
+      <td><code class="language-plaintext highlighter-rouge">crypto_aead_aegis128l_*</code></td>
+      <td>16</td>
+      <td>16</td>
+      <td>32</td>
+      <td>Caller supplied or generated</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aegis256</code></td>
+      <td><code class="language-plaintext highlighter-rouge">crypto_aead_aegis256_*</code></td>
+      <td>32</td>
+      <td>32</td>
+      <td>32</td>
+      <td>Caller supplied or generated</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aes256gcm</code></td>
+      <td><code class="language-plaintext highlighter-rouge">crypto_aead_aes256gcm_*</code></td>
+      <td>32</td>
+      <td>12</td>
+      <td>16</td>
+      <td>Caller supplied</td>
     </tr>
   </tbody>
 </table>
 
-<p>All three constructions use 32-byte keys and 16-byte MACs.
-Each tag identifies a distinct <code class="language-plaintext highlighter-rouge">key_ref</code>, <code class="language-plaintext highlighter-rouge">nonce_ref</code> and <code class="language-plaintext highlighter-rouge">mac_buffer</code> specialization.
+<p>Each tag identifies a distinct <code class="language-plaintext highlighter-rouge">key_ref</code>, <code class="language-plaintext highlighter-rouge">nonce_ref</code> and <code class="language-plaintext highlighter-rouge">mac_buffer</code> specialization.
 XChaCha20-Poly1305-IETF has its own key, nonce and MAC types and wire format distinct from <a href="/libpotassium/docs/design/secretbox.html">XChaCha20-Poly1305 SecretBox</a>.
 The <code class="language-plaintext highlighter-rouge">algorithm_traits&lt;A&gt;::messagebytes_max</code> limit matches the corresponding libsodium backend and platform.
 The IETF ChaCha20 variant has a 32-bit block counter and a per-message limit of at most <code class="language-plaintext highlighter-rouge">64 * (2^32 - 1)</code> bytes.</p>
 
-<p>Pass an explicit unique nonce for every encryption with either short-nonce construction.
-Coordinate nonce uniqueness under each key across all senders and across restarts.
-These constructions expose neither generated-nonce sealing overloads nor <code class="language-plaintext highlighter-rouge">generate_nonce&lt;A&gt;()</code>.
-The XChaCha20 variant supports both explicit and generated nonces.
+<p>Coordinate explicit nonce uniqueness under each key across all senders and across restarts.
+For AES256-GCM, use a counter to supply nonces and follow the per-key usage limits in the <a href="https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aes-256-gcm">libsodium AES256-GCM documentation</a>.
+Limit random-nonce use with AEGIS-128L to <code class="language-plaintext highlighter-rouge">2^48</code> messages per key.
 See the <a href="https://libsodium.gitbook.io/doc/secret-key_cryptography/aead#limitations">libsodium AEAD construction limits</a>.</p>
 
 <h2 id="operations-and-wire-format">Operations and wire format</h2>
@@ -113,13 +143,56 @@ The ciphertext carries no copy of the associated data.</p>
 
 <p>Combined ciphertext consists of encrypted message bytes followed by the MAC, in <a href="https://libsodium.gitbook.io/doc/secret-key_cryptography/aead#supported-constructions">libsodium’s native AEAD format</a>.
 Detached mode stores the same encrypted bytes and MAC separately.
-Empty messages produce a 16-byte combined ciphertext or a zero-length detached ciphertext with a 16-byte MAC.
+Empty messages produce only a MAC, either in the combined ciphertext or alongside a zero-length detached ciphertext.
 The nonce travels separately in either format.</p>
 
 <p><code class="language-plaintext highlighter-rouge">seal_into</code>, <code class="language-plaintext highlighter-rouge">open_into</code>, <code class="language-plaintext highlighter-rouge">seal_detached_into</code> and <code class="language-plaintext highlighter-rouge">open_detached_into</code> take exact-size caller buffers disjoint from all inputs.
+Caller buffers can be reused for successive messages by passing a span of the required length on each call.
+The source and destination must remain disjoint even when their backing allocations are reused.
+For encryption, plaintext length is bounded by <code class="language-plaintext highlighter-rouge">messagebytes_max</code> and the associated-data byte count must fit in 64 bits (61 bits for AES256-GCM and AEGIS).
+Opening rejects malformed ciphertext lengths and authentication failures through the error interface.
 The allocating open overloads return authenticated plaintext in guarded storage.
 Caller-buffer opens may clear the destination on authentication failure.
 Applications must provide their own framing, ordering and replay handling when using independent messages.</p>
+
+<h2 id="aes256-gcm-precomputation">AES256-GCM precomputation</h2>
+
+<p>After <code class="language-plaintext highlighter-rouge">potassium::init()</code>, use <code class="language-plaintext highlighter-rouge">aead::aes256gcm_available()</code> to check runtime hardware support.
+On an unsupported CPU, AES256-GCM message operations and precomputation return <code class="language-plaintext highlighter-rouge">errc::crypto_failed</code> or throw <code class="language-plaintext highlighter-rouge">crypto_error</code>.
+The allocating overloads check support before allocating output or guarded state.</p>
+
+<p><code class="language-plaintext highlighter-rouge">aead::precompute(key)</code> expands an AES256-GCM key into a move-only <code class="language-plaintext highlighter-rouge">aes256gcm_precomputed</code> schedule in guarded memory.
+Pass the schedule as an lvalue in place of the AES256-GCM key to any combined or detached message operation.
+The schedule is read-only across those calls and the original key need not be retained.
+Wait for calls using the schedule to finish before moving, closing or destroying it.
+The same nonce and usage limits apply across direct and precomputed calls with the same key.</p>
+
+<p><code class="language-plaintext highlighter-rouge">aead::precompute_into(key, std::move(storage))</code> expands the key directly into an existing <code class="language-plaintext highlighter-rouge">aes256gcm_state_storage</code> and transfers that storage to the schedule on success.
+Construct the handle with no arguments to allocate guarded state or lend it an <code class="language-plaintext highlighter-rouge">aes256gcm_state_type</code> from <code class="language-plaintext highlighter-rouge">aes256gcm_inplace_state::get()</code> or a custom owner.
+Borrowed state must remain alive at the same address and reserved exclusively for the handle and its successors.
+Precomputation with borrowed state and message operations with caller buffers require no allocation.
+On failure, <code class="language-plaintext highlighter-rouge">precompute_into</code> leaves storage with the caller and wipes any partially initialized state.</p>
+
+<p>Destruction and move assignment wipe the released schedule.
+<code class="language-plaintext highlighter-rouge">std::move(schedule).close_for_reuse()</code> wipes the schedule immediately and returns the same storage for a new key without allocating.
+Using a moved-from or closed schedule returns <code class="language-plaintext highlighter-rouge">errc::crypto_failed</code> or throws <code class="language-plaintext highlighter-rouge">crypto_error</code>.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">import</span> <span class="n">potassium</span><span class="p">.</span><span class="n">aead</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">example</span><span class="p">(</span><span class="n">potassium</span><span class="o">::</span><span class="n">key_ref</span><span class="o">&lt;</span><span class="n">potassium</span><span class="o">::</span><span class="n">aead</span><span class="o">::</span><span class="n">aes256gcm</span><span class="o">&gt;</span> <span class="n">key</span><span class="p">,</span>
+             <span class="n">potassium</span><span class="o">::</span><span class="n">key_ref</span><span class="o">&lt;</span><span class="n">potassium</span><span class="o">::</span><span class="n">aead</span><span class="o">::</span><span class="n">aes256gcm</span><span class="o">&gt;</span> <span class="n">next_key</span><span class="p">,</span>
+             <span class="n">potassium</span><span class="o">::</span><span class="n">nonce_ref</span><span class="o">&lt;</span><span class="n">potassium</span><span class="o">::</span><span class="n">aead</span><span class="o">::</span><span class="n">aes256gcm</span><span class="o">&gt;</span> <span class="n">nonce</span><span class="p">,</span>
+             <span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">byte</span> <span class="k">const</span><span class="o">&gt;</span> <span class="n">message</span><span class="p">,</span>
+             <span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">byte</span><span class="o">&gt;</span> <span class="n">ciphertext</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">using</span> <span class="k">namespace</span> <span class="n">potassium</span><span class="p">;</span>
+    <span class="n">aead</span><span class="o">::</span><span class="n">aes256gcm_inplace_state</span> <span class="n">state</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="n">schedule</span> <span class="o">=</span> <span class="n">aead</span><span class="o">::</span><span class="n">precompute_into</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">aead</span><span class="o">::</span><span class="n">aes256gcm_state_storage</span><span class="p">{</span><span class="n">state</span><span class="p">.</span><span class="n">get</span><span class="p">()});</span>
+    <span class="n">aead</span><span class="o">::</span><span class="n">seal_into</span><span class="p">(</span><span class="n">schedule</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="p">{},</span> <span class="n">ciphertext</span><span class="p">,</span> <span class="n">nonce</span><span class="p">);</span>
+    <span class="n">schedule</span> <span class="o">=</span> <span class="n">aead</span><span class="o">::</span><span class="n">precompute_into</span><span class="p">(</span><span class="n">next_key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">schedule</span><span class="p">).</span><span class="n">close_for_reuse</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div></div>
 
 
       

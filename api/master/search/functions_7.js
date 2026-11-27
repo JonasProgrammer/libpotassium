@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['init_0',['init',['../namespacepotassium.html#ada2c29a21330399318f9932fe630aa11',1,'potassium::init(std::nothrow_t const &amp;) noexcept'],['../namespacepotassium.html#a9b3a46297efeede33aa5434664f90a82',1,'potassium::init()']]],
-  ['initialize_1',['initialize',['../classpotassium_1_1hash_1_1detail_1_1stream__state.html#a0e7f2580dc2a4f2cb74f76e29706df79',1,'potassium::hash::detail::stream_state']]],
-  ['inplace_5fhash_5fstate_2',['inplace_hash_state',['../classpotassium_1_1hash_1_1inplace__hash__state.html#a1ea9c0fb78eacefebc249df4076b2df7',1,'potassium::hash::inplace_hash_state::inplace_hash_state()=default'],['../classpotassium_1_1hash_1_1inplace__hash__state.html#af5e087c10fe78849c0731c13bd805179',1,'potassium::hash::inplace_hash_state::inplace_hash_state(inplace_hash_state const &amp;)=delete']]],
-  ['inplace_5fstate_3',['inplace_state',['../classpotassium_1_1secretstream_1_1inplace__state.html#a8e09467be5d383ea3cff3cf8b0696382',1,'potassium::secretstream::inplace_state']]]
+  ['has_5fvalue_0',['has_value',['../classpotassium_1_1hash_1_1inplace__hash__state.html#a949a4d871f1213458ac7e7fc9cc71a90',1,'potassium::hash::inplace_hash_state::has_value()'],['../classpotassium_1_1hash_1_1guarded__hash__state.html#ab47e93161d050ee81de812b17a04ee30',1,'potassium::hash::guarded_hash_state::has_value()']]],
+  ['hash_1',['hash',['../namespacepotassium_1_1hash.html#afc6c0c7a263b140c40e96632c9619add',1,'potassium::hash::hash(std::span&lt; std::byte const &gt; message) noexcept'],['../namespacepotassium_1_1hash.html#ac776799383a559bf9b110371f5e964df',1,'potassium::hash::hash(K &amp;&amp;key, std::span&lt; std::byte const &gt; message) noexcept']]],
+  ['hash_5finto_2',['hash_into',['../namespacepotassium_1_1hash.html#a2e1ceaffe06eac4d5537be729d144018',1,'potassium::hash::hash_into(std::span&lt; std::byte const &gt; message, std::span&lt; std::byte, hash_traits&lt; A &gt;::digest_size &gt; output) noexcept'],['../namespacepotassium_1_1hash.html#a6ee9bc7f614552c3465b04c34c7c7052',1,'potassium::hash::hash_into(K &amp;&amp;key, std::span&lt; std::byte const &gt; message, std::span&lt; std::byte, hash_traits&lt; A &gt;::digest_size &gt; output) noexcept']]],
+  ['hasher_3',['hasher',['../classpotassium_1_1hash_1_1hasher.html#a58ba1edea2df5d3fab423a9481120542',1,'potassium::hash::hasher']]],
+  ['header_4',['header',['../classpotassium_1_1secretstream_1_1sender.html#aaf7935f49031fbecfd40c98395978620',1,'potassium::secretstream::sender']]]
 ];

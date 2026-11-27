@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>libpotassium | WIP. Opinoinated libsodium wrapper in C++.</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/docs/design/sign.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/docs/design/sign.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/sign.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=db6488f14025160f3bcf011a16094f86dcde45e2">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
+<!-- SPDX-License-Identifier: BSL-1.0 -->
+
+<h1 id="ed25519-signatures">Ed25519 signatures</h1>
+
+<p>Import <code class="language-plaintext highlighter-rouge">potassium.sign</code> to use <code class="language-plaintext highlighter-rouge">potassium::sign</code>, the core public-key and confidential-key owners, and <code class="language-plaintext highlighter-rouge">potassium::init()</code>.</p>
+
+<h2 id="key-operations">Key operations</h2>
+
+<p><code class="language-plaintext highlighter-rouge">generate_keypair()</code> produces a 32-byte public key and a 64-byte guarded signing key, and <code class="language-plaintext highlighter-rouge">generate_keypair(seed)</code> derives both from a confidential 32-byte <code class="language-plaintext highlighter-rouge">seed_tag</code> key.
+Both operations have <code class="language-plaintext highlighter-rouge">generate_keypair_into</code> forms that accept caller-owned public and signing-key storage, including a stack <code class="language-plaintext highlighter-rouge">key_buffer_storage&lt;signing_key_tag&gt;</code>.
+<code class="language-plaintext highlighter-rouge">public_key_from_secret_key</code> extracts the encoded public key, while <code class="language-plaintext highlighter-rouge">seed_from_secret_key</code> and <code class="language-plaintext highlighter-rouge">seed_from_secret_key_into</code> extract the confidential seed.
+Treat the extracted seed as a signing secret because it can recreate the signing key.</p>
+
+<h2 id="one-shot-messages">One-shot messages</h2>
+
+<p><code class="language-plaintext highlighter-rouge">sign</code> and <code class="language-plaintext highlighter-rouge">sign_into</code> produce a signed message consisting of a 64-byte Ed25519 signature followed by the message bytes.
+<code class="language-plaintext highlighter-rouge">open</code> verifies that format and returns the message in guarded storage, and <code class="language-plaintext highlighter-rouge">open_into</code> writes the verified message to a disjoint destination.
+Signed messages expose their entire contents to anyone who receives them.</p>
+
+<p><code class="language-plaintext highlighter-rouge">sign_detached</code> returns a fixed-size <code class="language-plaintext highlighter-rouge">signature</code> with no heap allocation.
+<code class="language-plaintext highlighter-rouge">verify_detached</code> checks that signature against the separately supplied message.
+Check the wire length before importing a detached signature into its writable byte span.
+Invalid signed messages and failed verification report <code class="language-plaintext highlighter-rouge">errc::crypto_failed</code>.</p>
+
+<h2 id="multipart-messages">Multipart messages</h2>
+
+<p><code class="language-plaintext highlighter-rouge">start_prehash()</code> creates an Ed25519ph operation with guarded state.
+Call <code class="language-plaintext highlighter-rouge">update</code> for each chunk, then <code class="language-plaintext highlighter-rouge">finish_sign</code> with the signing key or <code class="language-plaintext highlighter-rouge">finish_verify</code> with the public key and a <code class="language-plaintext highlighter-rouge">prehash_signature</code>.
+Both final operations wipe the state, including on a verification failure.
+A one-shot Ed25519 signature and an Ed25519ph signature use distinct types and different verification operations.</p>
+
+<p>Pass <code class="language-plaintext highlighter-rouge">state_storage{state.get()}</code> for an <code class="language-plaintext highlighter-rouge">inplace_state</code>, or lend a <code class="language-plaintext highlighter-rouge">state_type</code> from custom storage.
+The borrowed object must outlive the operation and any state handle that holds it.
+The operation is move-only and wipes active state on destruction.
+Use <code class="language-plaintext highlighter-rouge">std::move(operation).close_for_reuse()</code> before or after finalization to obtain wiped storage for a new operation without reallocating state.</p>
+
+<p><a href="https://doc.libsodium.org/public-key_cryptography/public-key_signatures">libsodium public-key signature documentation</a></p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/docs/design/sign.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

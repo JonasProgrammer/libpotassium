@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>libpotassium | WIP. Opinoinated libsodium wrapper in C++.</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","name":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <p><img src="docs/img/libpotassium-banana-flame.svg" width="64" height="64" style="float:left; max-height: max(2em, 64px); margin-right: 1em; max-width: 64px;" alt="libpotassium Banana Flame" /></p>
+
+<h1 id="libpotassium">libpotassium</h1>
+
+<p>libpotassium is an opinionated C++ wrapper for <a href="https://libsodium.org">libsodium</a>.</p>
+
+<h2 id="mapping-libsodium-apis">Mapping libsodium APIs</h2>
+
+<p>For a supported libsodium family named <code class="language-plaintext highlighter-rouge">crypto_x_*</code>, import <code class="language-plaintext highlighter-rouge">potassium.x</code> and use the <code class="language-plaintext highlighter-rouge">potassium::x</code> namespace.
+For example, <code class="language-plaintext highlighter-rouge">crypto_box_*</code> and <code class="language-plaintext highlighter-rouge">crypto_secretbox_*</code> map to <code class="language-plaintext highlighter-rouge">potassium.box</code> and <code class="language-plaintext highlighter-rouge">potassium.secretbox</code>, respectively.
+Import <code class="language-plaintext highlighter-rouge">potassium</code> for the complete public API.
+See the <a href="/libpotassium/COMPARISON.html">libsodium coverage comparison</a> for support by operation, gaps, and deliberate API differences.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Libsodium family</th>
+      <th>libpotassium mapping</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_hash_*</code> and <code class="language-plaintext highlighter-rouge">crypto_generichash_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.hash</code> provides SHA digests and both unkeyed and keyed BLAKE2b under <code class="language-plaintext highlighter-rouge">potassium::hash</code>.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_auth_*</code></td>
+      <td>Use <code class="language-plaintext highlighter-rouge">potassium::auth</code> for HMAC tags, one-shot authentication, and verification, and <code class="language-plaintext highlighter-rouge">potassium::hash::keyed_hasher&lt;A&gt;</code> for streaming.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_aead_chacha20poly1305_*</code> and <code class="language-plaintext highlighter-rouge">crypto_aead_xchacha20poly1305_ietf_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.aead</code> provides combined and detached ChaCha authenticated encryption with associated data.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crypto_secretstream_xchacha20poly1305_*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.secretstream</code> provides guarded sender and receiver states for ordered authenticated records.</td>
+    </tr>
+    <tr>
+      <td>Symmetric key generators such as <code class="language-plaintext highlighter-rouge">crypto_auth_keygen</code></td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.core</code> generates typed keys through <code class="language-plaintext highlighter-rouge">potassium::secret_key&lt;KeyTag&gt;</code>, <code class="language-plaintext highlighter-rouge">potassium::key_buffer_storage&lt;KeyTag&gt;</code>, and <code class="language-plaintext highlighter-rouge">potassium::make_secret_key&lt;KeyTag&gt;()</code>.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sodium_init</code>, secure-memory utilities, and random byte generation</td>
+      <td><code class="language-plaintext highlighter-rouge">potassium.core</code> exposes shared facilities such as <code class="language-plaintext highlighter-rouge">potassium::init</code>, <code class="language-plaintext highlighter-rouge">potassium::wipe</code>, and <code class="language-plaintext highlighter-rouge">potassium::random_fill</code> directly in <code class="language-plaintext highlighter-rouge">potassium</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Streaming HMAC moved to <code class="language-plaintext highlighter-rouge">potassium.hash</code> because it shares storage, finalization, and reset operations with keyed BLAKE2b.
+For compatibility with libsodium’s <code class="language-plaintext highlighter-rouge">crypto_hash()</code>, select <code class="language-plaintext highlighter-rouge">potassium::hash::sha512</code> explicitly.
+<code class="language-plaintext highlighter-rouge">potassium::hash::default_algorithm</code> selects 32-byte BLAKE2b.</p>
+
+<h2 id="build-and-test">Build and test</h2>
+
+<p>Use CMake 4.5 or newer, Ninja 1.11 or newer, development files for libsodium 1.0.22 or newer, and a C++26 toolchain whose <code class="language-plaintext highlighter-rouge">std</code> module exports <code class="language-plaintext highlighter-rouge">std::indirect</code> and whose compiler supports deleted functions with reasons.
+The test suite requires Catch2 v3, which is available in the full Nix development shell.
+To configure without the test suite, pass <code class="language-plaintext highlighter-rouge">-DBUILD_TESTING=OFF</code>.
+See <a href="/libpotassium/HACKING.html">HACKING.md</a> for the pinned Nix development shell, toolchain details, and CLion setup.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake <span class="nt">--preset</span> debug
+cmake <span class="nt">--build</span> <span class="nt">--preset</span> debug
+ctest <span class="nt">--preset</span> debug
+</code></pre></div></div>
+
+<p>Run the example directly with <code class="language-plaintext highlighter-rouge">./build/debug/libpotassium_example</code>.
+Use <code class="language-plaintext highlighter-rouge">release</code> in the same commands for an optimized build in <code class="language-plaintext highlighter-rouge">build/release</code>.</p>
+
+<h2 id="api-documentation">API documentation</h2>
+
+<p>With Doxygen installed, enable and build the HTML documentation with the following commands.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake <span class="nt">--preset</span> docs
+cmake <span class="nt">--build</span> <span class="nt">--preset</span> docs
+</code></pre></div></div>
+
+<p>Open <code class="language-plaintext highlighter-rouge">build/docs/docs/html/index.html</code> to browse the documentation.
+The documentation option defaults to <code class="language-plaintext highlighter-rouge">OFF</code>.
+If enabled while Doxygen is missing, CMake warns and skips the documentation target.</p>
+
+<h2 id="contributing">Contributing</h2>
+
+<p>Follow the project rules in <a href="/libpotassium/AGENTS.html">AGENTS.md</a>.
+Enable soft wrapping in your editor so Markdown remains easy to read while keeping one sentence per line for focused diffs.</p>
+
+<h2 id="ai-usage">AI usage</h2>
+
+<p>AI tools are used in developing libpotassium.
+A human reviews and improves AI-assisted code, and pull requests containing AI-assisted code are accepted only after that manual review and improvement.
+Each AI-assisted commit must attribute the assistance with a Git trailer in the following format.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Assisted-By: Agent (Provider; underlying model)
+</code></pre></div></div>
+
+<h2 id="license">License</h2>
+
+<p>libpotassium is licensed under the <a href="/libpotassium/LICENSE">Boost Software License 1.0</a>.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/README.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

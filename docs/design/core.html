@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>libpotassium | WIP. Opinoinated libsodium wrapper in C++.</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/docs/design/core.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/docs/design/core.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/core.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
+<!-- SPDX-License-Identifier: BSL-1.0 -->
+
+<h1 id="core-types-and-authenticated-encryption-contracts">Core types and authenticated-encryption contracts</h1>
+
+<p><code class="language-plaintext highlighter-rouge">potassium.core</code> defines the types used by <a href="/libpotassium/docs/design/secretbox.html">SecretBox</a>, <a href="/libpotassium/docs/design/aead.html">AEAD</a> and <a href="/libpotassium/docs/design/pk-authenticated.html">public-key authenticated encryption</a>.
+Each construction supplies its own algorithm tags, trait specializations and operations.</p>
+
+<h2 id="key-nonce-and-mac-types">Key, nonce and MAC types</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Material</th>
+      <th>Owner</th>
+      <th>Read-only view</th>
+      <th>Extent in bytes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Confidential key</td>
+      <td><code class="language-plaintext highlighter-rouge">secret_key&lt;KeyTag&gt;</code> or caller-selected storage</td>
+      <td><code class="language-plaintext highlighter-rouge">key_ref&lt;KeyTag&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">key_traits&lt;KeyTag&gt;::size</code></td>
+    </tr>
+    <tr>
+      <td>Public key</td>
+      <td><code class="language-plaintext highlighter-rouge">public_key&lt;A&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">public_key_ref&lt;A&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">algorithm_traits&lt;A&gt;::public_key_size</code></td>
+    </tr>
+    <tr>
+      <td>Nonce</td>
+      <td><code class="language-plaintext highlighter-rouge">nonce_buffer&lt;A&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">nonce_ref&lt;A&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">algorithm_traits&lt;A&gt;::nonce_size</code></td>
+    </tr>
+    <tr>
+      <td>Detached MAC</td>
+      <td><code class="language-plaintext highlighter-rouge">mac_buffer&lt;A&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">mac_buffer&lt;A&gt; const&amp;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">algorithm_traits&lt;A&gt;::mac_size</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A confidential key tag identifies its cryptographic purpose and needs only a <code class="language-plaintext highlighter-rouge">key_traits</code> specialization.
+An algorithm tag identifies a construction, and its <code class="language-plaintext highlighter-rouge">algorithm_traits</code> specialization supplies the dimensions and message limit applicable to that construction.
+Distinct key purposes and algorithms remain distinct types even when their byte lengths match.</p>
+
+<p>Each key and nonce view takes an explicit <code class="language-plaintext highlighter-rouge">std::span&lt;const std::byte, N&gt;</code> and borrows the underlying bytes.
+A matching owner converts implicitly to its view on lvalues only.
+Both mutable and const rvalues must reject borrowing, including through named view accessors.
+The caller keeps the backing storage alive for every use of the view and controls the protection and wiping of externally owned secrets.</p>
+
+<p>Public keys and nonces are ordinary copyable, movable values with fixed-size inline byte storage.
+A public key carries the full algorithm identity, so reusing the same encoding across protocols requires explicit adaptation.
+Constructing a public-key view establishes its extent and declared type only.
+Peer identity and acceptance of the encoded key are separate questions.
+A detached MAC is a copyable, algorithm-typed value in ordinary memory.
+Check the received MAC length against its extent and copy its bytes into <code class="language-plaintext highlighter-rouge">mac_buffer&lt;A&gt;::storage</code> or the writable, fixed-extent span returned by <code class="language-plaintext highlighter-rouge">bytes()</code>.</p>
+
+<h2 id="confidential-storage">Confidential storage</h2>
+
+<p>Operations borrow confidential keys independently of the storage policy.
+The default heap owner stores a key-sized byte array in <code class="language-plaintext highlighter-rouge">std::indirect</code> using the guarded allocator.
+Moving the owner transfers the allocation without copying key bytes.
+Move assignment wipes and releases the destination’s previous allocation.
+Borrowing requires a live allocation, so a moved-from owner must receive a new allocation before it can be borrowed from.
+A stack-local <code class="language-plaintext highlighter-rouge">key_buffer_storage&lt;KeyTag&gt;</code> owns a fixed-size buffer, disallows copying and moving, and wipes its contents on destruction.
+Generate or derive keys directly in their final writable storage and make any duplication explicit.
+Default construction of either confidential owner requires a default-constructible <code class="language-plaintext highlighter-rouge">key_traits&lt;KeyTag&gt;::generator</code> satisfying <code class="language-plaintext highlighter-rouge">KeyGenerator&lt;G, KeyTag&gt;</code>.
+Size-only key traits support explicit generator, <code class="language-plaintext highlighter-rouge">zero</code>, and <code class="language-plaintext highlighter-rouge">for_overwrite</code> construction.</p>
+
+<p>Guarded allocation attempts page locking on a best-effort basis.
+Stack storage does not acquire a lock automatically because disjoint objects may occupy the same page.
+Callers requiring strict locking can guard a contiguous aggregate with <code class="language-plaintext highlighter-rouge">mlock_guard</code> when they control all affected pages.</p>
+
+<p>Decrypted plaintext uses a move-only <code class="language-plaintext highlighter-rouge">secure_buffer</code> backed by guarded allocation.
+Destruction, shrinking and reallocation must wipe secret bytes before their storage becomes unused or is released.</p>
+
+<h2 id="message-and-operation-conventions">Message and operation conventions</h2>
+
+<p>Inputs use <code class="language-plaintext highlighter-rouge">std::span&lt;const std::byte&gt;</code> and caller-owned destinations use <code class="language-plaintext highlighter-rouge">std::span&lt;std::byte&gt;</code>.
+For SecretBox and public-key Box, combined ciphertext is exactly <code class="language-plaintext highlighter-rouge">MAC || encrypted plaintext</code>, with length equal to the plaintext length plus <code class="language-plaintext highlighter-rouge">mac_size</code>.
+For AEAD, combined ciphertext is <code class="language-plaintext highlighter-rouge">encrypted plaintext || MAC</code>, with the same length formula.
+Applications transport the nonce separately and define framing, versioning, replay detection and ordering.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Operation after the key arguments</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal(plaintext)</code></td>
+      <td>A construction-specific aggregate with <code class="language-plaintext highlighter-rouge">std::vector&lt;std::byte&gt; ciphertext</code> followed by <code class="language-plaintext highlighter-rouge">nonce_buffer&lt;A&gt; nonce</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal(plaintext, nonce)</code></td>
+      <td>Ciphertext vector</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">open(ciphertext, nonce)</code> or <code class="language-plaintext highlighter-rouge">open(sealed_result)</code></td>
+      <td>Authenticated plaintext in a <code class="language-plaintext highlighter-rouge">secure_buffer</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal_into(plaintext, out)</code></td>
+      <td>Generated nonce</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal_into(plaintext, out, nonce)</code></td>
+      <td>Writes combined ciphertext</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">open_into(ciphertext, out, nonce)</code></td>
+      <td>Writes authenticated plaintext</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Detached operations return or accept the MAC separately.
+Their ciphertext is exactly as long as the plaintext, including zero bytes for an empty message.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Operation after the key arguments</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal_detached(plaintext, nonce)</code></td>
+      <td><code class="language-plaintext highlighter-rouge">detached_ciphertext&lt;A&gt;</code> with ciphertext and MAC</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal_detached(plaintext)</code></td>
+      <td><code class="language-plaintext highlighter-rouge">detached_seal_result&lt;A&gt;</code> with ciphertext, MAC and nonce</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal_detached_into(plaintext, out, nonce)</code></td>
+      <td>Writes ciphertext and returns the MAC</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seal_detached_into(plaintext, out)</code></td>
+      <td>Writes ciphertext and returns <code class="language-plaintext highlighter-rouge">detached_mac_nonce&lt;A&gt;</code> with MAC and nonce</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">open_detached(ciphertext, mac, nonce)</code></td>
+      <td>Authenticated plaintext in a <code class="language-plaintext highlighter-rouge">secure_buffer</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">open_detached_into(ciphertext, mac, out, nonce)</code></td>
+      <td>Writes authenticated plaintext</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For constructions supporting randomly generated nonces, sealing without an explicit nonce uses the secure RNG, also available through <code class="language-plaintext highlighter-rouge">generate_nonce&lt;A&gt;()</code>.
+Algorithm traits may disable that capability with <code class="language-plaintext highlighter-rouge">static constexpr bool random_nonce_enabled = false</code>.
+To import a nonce, explicitly construct its owner from a fixed-extent byte span.
+An explicit nonce must be unique for each encryption under the same key across participants, processes and restarts.</p>
+
+<p>Encryption requires plaintext length at most <code class="language-plaintext highlighter-rouge">algorithm_traits&lt;A&gt;::messagebytes_max</code>.
+For the allocation-free message operations, output must be disjoint from every input and sized exactly for the result.
+Combined opening rejects ciphertext shorter than <code class="language-plaintext highlighter-rouge">mac_size</code> before subtracting the overhead to determine the output size.
+Failed authentication must never expose unauthenticated plaintext.</p>
+
+<h2 id="failures-and-implementation-boundaries">Failures and implementation boundaries</h2>
+
+<p>The default overloads throw <code class="language-plaintext highlighter-rouge">crypto_error</code> for cryptographic failure and <code class="language-plaintext highlighter-rouge">std::bad_alloc</code> for allocation failure.
+A final <code class="language-plaintext highlighter-rouge">std::nothrow_t</code> selects a nonthrowing overload returning <code class="language-plaintext highlighter-rouge">std::expected&lt;T, errc&gt;</code>, including <code class="language-plaintext highlighter-rouge">T = void</code>.
+Malformed ciphertext and backend rejection map to <code class="language-plaintext highlighter-rouge">errc::crypto_failed</code> without guessing whether the key, nonce or message was wrong.
+Allocation failures in ordinary and guarded storage map to <code class="language-plaintext highlighter-rouge">errc::allocation_failed</code>.</p>
+
+<p>Core owns the shared RNG, wiping, guarded memory, byte-pointer adapters and error translation.
+The design keeps libsodium headers, dispatch and backend assertions in private implementation units, with exported interfaces limited to declarations, layouts, constants and short template definitions.
+Concrete typed key parameters allow an owner to convert to a view during overload resolution.
+The AEAD templates select their algorithm by borrowing a view through a concrete typed overload.</p>
+
+<p>Shared contract tests cover explicit raw-span construction, lvalue-only borrowing, tag isolation, owner copy and move semantics, and wiping.
+Each construction exercises both nonce modes, exact output sizes, empty and binary messages, authentication failures and short ciphertext in both error interfaces, including allocation failure where injection is practical.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/docs/design/core.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

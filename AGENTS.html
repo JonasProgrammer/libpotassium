@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Project instructions | libpotassium</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Project instructions" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/AGENTS.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/AGENTS.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Project instructions" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"Project instructions","url":"https://jonasprogrammer.github.io/libpotassium/AGENTS.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <h1 id="project-instructions">Project instructions</h1>
+
+<ul>
+  <li>Read <code class="language-plaintext highlighter-rouge">AGENTS-local.md</code> if present for additional local development instructions.</li>
+  <li>Format C++ code with clang-format using the repository’s <code class="language-plaintext highlighter-rouge">.clang-format</code>.</li>
+  <li>Build in C++26 mode and use C++23 as the source baseline.</li>
+  <li>Use a module-first approach and put public C++ APIs in named modules.</li>
+  <li>Forward-declare identity tags, including algorithm and key-purpose tags, as incomplete structs (for example, <code class="language-plaintext highlighter-rouge">struct sha256;</code>) and leave them undefined throughout the project.</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">import std;</code> for the C++ standard library.</li>
+  <li>Use a C++26 feature only when it is explicitly enabled in this file.</li>
+  <li>Do not use any feature explicitly forbidden in this file.</li>
+  <li>Never add ephemeral information, temporary notes, or planning material to committed documentation.</li>
+  <li>Use ASCII characters only in Markdown, source code, and other project files unless instructed otherwise.</li>
+  <li>In <code class="language-plaintext highlighter-rouge">COMPARISON.md</code>, emoji may accompany text labels to indicate wrapping status.</li>
+  <li>Write Markdown with one sentence per line to keep diffs focused.</li>
+  <li>Follow the <a href="/libpotassium/#ai-usage">AI usage and attribution policy</a>.</li>
+</ul>
+
+<h2 id="confidential-state-storage">Confidential state storage</h2>
+
+<ul>
+  <li>Provide a dedicated storage type and allow callers to supply custom, preallocated state, including in-place storage.</li>
+  <li>Allow state allocations to be reused for a new operation without allocating again.</li>
+  <li>Wipe confidential state immediately when the operation closes, even when retaining its storage for reuse.</li>
+</ul>
+
+<h2 id="error-handling">Error handling</h2>
+
+<ul>
+  <li>For fallible cryptographic operations, provide a throwing overload and a <code class="language-plaintext highlighter-rouge">noexcept</code> overload with a final <code class="language-plaintext highlighter-rouge">std::nothrow_t</code> parameter that returns <code class="language-plaintext highlighter-rouge">std::expected&lt;T, errc&gt;</code>.</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">std::expected&lt;void, errc&gt;</code> when success has no value.</li>
+  <li>Implement the operation in the nonthrowing overload and have the throwing overload delegate with <code class="language-plaintext highlighter-rouge">std::nothrow</code> and translate errors through <code class="language-plaintext highlighter-rouge">throw_error</code>.</li>
+  <li>Return <code class="language-plaintext highlighter-rouge">std::unexpected(errc::crypto_failed)</code> for cryptographic failures and <code class="language-plaintext highlighter-rouge">std::unexpected(errc::allocation_failed)</code> for allocation failures, catching only the exception types that the operation can translate to those errors.</li>
+  <li>Use a function try-block when exception handling applies to the entire function body.</li>
+  <li>Use a local try-block when the handler should cover only a specific operation.</li>
+</ul>
+
+<h2 id="in-code-documentation">In-code documentation</h2>
+
+<ul>
+  <li>Use Doxygen for in-code documentation.</li>
+  <li>Both <code class="language-plaintext highlighter-rouge">///</code> and <code class="language-plaintext highlighter-rouge">/** ... */</code> comment forms are allowed.</li>
+  <li>Prefix Doxygen commands with <code class="language-plaintext highlighter-rouge">@</code>, as in <code class="language-plaintext highlighter-rouge">@pre</code> and <code class="language-plaintext highlighter-rouge">@ref</code>.</li>
+  <li>Keep documentation terse and useful.</li>
+  <li>Document preconditions with <code class="language-plaintext highlighter-rouge">@pre</code> instead of using exceptions.</li>
+  <li>The global precondition that <code class="language-plaintext highlighter-rouge">init</code> must have been called does not need to be repeated for every function.</li>
+</ul>
+
+<h2 id="source-file-notices">Source file notices</h2>
+
+<p>Start each project source file, including examples, build scripts, and source templates, with the following notices in the file’s comment syntax.
+Place the notices immediately after the shebang in executable scripts.
+Use the year the file was first published for new files and preserve existing copyright notices.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// SPDX-FileCopyrightText: 2026 libpotassium team</span>
+<span class="c1">// SPDX-License-Identifier: BSL-1.0</span>
+</code></pre></div></div>
+
+<h2 id="commit-messages">Commit messages</h2>
+
+<p>Follow <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits 1.0.0</a>.
+Use <code class="language-plaintext highlighter-rouge">&lt;type&gt;[optional scope]: &lt;description&gt;</code> for the subject.
+Use <code class="language-plaintext highlighter-rouge">feat</code> for new features, <code class="language-plaintext highlighter-rouge">fix</code> for bug fixes, and a suitable type such as <code class="language-plaintext highlighter-rouge">build</code>, <code class="language-plaintext highlighter-rouge">docs</code>, or <code class="language-plaintext highlighter-rouge">test</code> for other changes.
+Indicate breaking changes with <code class="language-plaintext highlighter-rouge">!</code> before the subject’s colon or a <code class="language-plaintext highlighter-rouge">BREAKING CHANGE:</code> footer.
+Include an <code class="language-plaintext highlighter-rouge">Assisted-By</code> trailer for AI-assisted commits as specified in the README.</p>
+
+<h2 id="c26-features">C++26 features</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">std::indirect</code> is enabled for general use.</li>
+  <li>Deleted-function reasons are enabled.</li>
+</ul>
+
+<h2 id="forbidden-features">Forbidden features</h2>
+
+<p>None are currently listed.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/AGENTS.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

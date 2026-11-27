@@ -1,0 +1,76 @@
+{
+  "$comment": [
+    "SPDX-FileCopyrightText: 2026 libpotassium team",
+    "SPDX-License-Identifier: BSL-1.0"
+  ],
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 5,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "inherits": "ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LIBPOTASSIUM_HASH_ASSERTS": true
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "inherits": "ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "docs",
+      "displayName": "Doxygen documentation",
+      "inherits": "debug",
+      "cacheVariables": {
+        "LIBPOTASSIUM_BUILD_DOCS": true
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "docs",
+      "configurePreset": "docs",
+      "targets": ["libpotassium_docs"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

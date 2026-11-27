@@ -1,0 +1,8 @@
+var searchData=
+[
+  ['secretbox_5fdefault_0',['secretbox_default',['../namespacepotassium_1_1secretbox.html#a52822a640d9c3d5ca5170d85372a7ee6',1,'potassium::secretbox']]],
+  ['size_5ftype_1',['size_type',['../structpotassium_1_1raw__allocator.html#ab543006d7eef45432a7509e30167f014',1,'potassium::raw_allocator']]],
+  ['span_5ftype_2',['span_type',['../classpotassium_1_1key__ref.html#a4e7ea22281b4e73cee33fac7cfd82a18',1,'potassium::key_ref::span_type'],['../classpotassium_1_1nonce__ref.html#a7ca98ae408c1d520fb7132c6701c2981',1,'potassium::nonce_ref::span_type'],['../classpotassium_1_1public__key__ref.html#af50706f276eb796766cdd3caab42b018',1,'potassium::public_key_ref::span_type'],['../classpotassium_1_1key__out.html#aee98da34492d3a51fb211185d2359566',1,'potassium::key_out::span_type']]],
+  ['state_5ftype_3',['state_type',['../structpotassium_1_1auth_1_1auth__traits.html#ab7e1589bb08086b2e7b682bf43b00926',1,'potassium::auth::auth_traits::state_type'],['../structpotassium_1_1hash_1_1detail_1_1traits.html#a068c009c4b92d9420174811c9f6dcb66',1,'potassium::hash::detail::traits::state_type'],['../structpotassium_1_1hash_1_1keyed__hash__traits_3_01A_01_4.html#a3055805c0b8daf340821eb793256b542',1,'potassium::hash::keyed_hash_traits&lt; A &gt;::state_type'],['../structpotassium_1_1hash_1_1keyed__hash__traits_3_01blake2b_3_01N_01_4_01_4.html#a4096e3b7d832feb77f9adbae0332c243',1,'potassium::hash::keyed_hash_traits&lt; blake2b&lt; N &gt; &gt;::state_type'],['../namespacepotassium_1_1secretstream.html#a6fe07ed0719a670831c0e8a163c54400',1,'potassium::secretstream::state_type']]],
+  ['stream_5fkey_5fref_4',['stream_key_ref',['../namespacepotassium_1_1secretstream.html#a8d7861828985d6cb1341ca7e0e672941',1,'potassium::secretstream']]]
+];

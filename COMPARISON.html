@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>libpotassium | WIP. Opinoinated libsodium wrapper in C++.</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/COMPARISON.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/COMPARISON.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/COMPARISON.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
+<!-- SPDX-License-Identifier: BSL-1.0 -->
+
+<h1 id="libpotassium-coverage-of-libsodium">libpotassium coverage of libsodium</h1>
+
+<p>This comparison follows the <a href="https://libsodium.gitbook.io/doc">libsodium manual</a> and its <a href="https://github.com/jedisct1/libsodium-doc/blob/master/SUMMARY.md">table of contents</a>.
+Coverage describes operations available through the <a href="/libpotassium/src/libpotassium.cpp">public potassium module</a> as of 2026-11-26.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Coverage</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>✅ Supported</td>
+      <td>Callers can perform the listed operation.</td>
+    </tr>
+    <tr>
+      <td>🟡 Partial</td>
+      <td>The wrapper exposes a subset of the operation or its options.</td>
+    </tr>
+    <tr>
+      <td>❌ Unwrapped</td>
+      <td>No public wrapper exists.</td>
+    </tr>
+    <tr>
+      <td>🚫 Omitted by design</td>
+      <td>The wrapper deliberately excludes this interface.</td>
+    </tr>
+    <tr>
+      <td>📖 Guidance</td>
+      <td>The upstream topic describes application responsibilities.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="introduction-installation-and-usage">Introduction, installation and usage</h2>
+
+<p>The introduction, installation, quickstart and FAQ, projects, commercial support and language bindings are informational chapters.
+For the C++ build requirements and module imports, see the <a href="/libpotassium/">project README</a>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream topic</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Usage and initialization</td>
+      <td>✅ Supported</td>
+      <td>Call <code class="language-plaintext highlighter-rouge">potassium::init()</code> or check the Boolean result of <code class="language-plaintext highlighter-rouge">init(std::nothrow)</code>.</td>
+    </tr>
+    <tr>
+      <td>Version information</td>
+      <td>🟡 Partial</td>
+      <td><code class="language-plaintext highlighter-rouge">sodium_version_string</code> identifies the build-time headers, alongside the wrapper’s own version strings.</td>
+    </tr>
+    <tr>
+      <td>Runtime configuration</td>
+      <td>❌ Unwrapped</td>
+      <td>No public misuse-handler registration or CPU feature queries.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="helpers-padding-secure-memory-and-generating-random-data">Helpers, padding, secure memory and generating random data</h2>
+
+<p>The <a href="/libpotassium/docs/design/core.html">core design</a> describes ownership and wiping, and the <a href="/libpotassium/docs/design/hash.html">hash design</a> specifies constant-time comparison for typed results.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream topic</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Constant-time comparison</td>
+      <td>🟡 Partial</td>
+      <td>Digests and tags of matching type provide constant-time equality, with no general byte-span comparison API.</td>
+    </tr>
+    <tr>
+      <td>Other helpers</td>
+      <td>❌ Unwrapped</td>
+      <td>Hex and Base64 codecs, little-endian comparison, increment, addition, subtraction, zero testing and stack clearing.</td>
+    </tr>
+    <tr>
+      <td>Padding</td>
+      <td>❌ Unwrapped</td>
+      <td>No general-purpose block padding or unpadding (<code class="language-plaintext highlighter-rouge">sodium_pad</code>, <code class="language-plaintext highlighter-rouge">sodium_unpad</code>).</td>
+    </tr>
+    <tr>
+      <td>Memory wiping and locking</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">wipe</code> erases a byte span and <code class="language-plaintext highlighter-rouge">mlock_guard</code> locks caller-owned storage and wipes it on release.</td>
+    </tr>
+    <tr>
+      <td>Guarded heap</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">raw_allocator</code>, <code class="language-plaintext highlighter-rouge">allocator&lt;T&gt;</code> and the PMR <code class="language-plaintext highlighter-rouge">memory_resource</code> expose guarded allocation, also used by confidential owners.</td>
+    </tr>
+    <tr>
+      <td>Page protection changes</td>
+      <td>❌ Unwrapped</td>
+      <td>No public transitions to read-only, read/write or inaccessible pages.</td>
+    </tr>
+    <tr>
+      <td>Random data</td>
+      <td>🟡 Partial</td>
+      <td><code class="language-plaintext highlighter-rouge">random_fill</code> fills a span, and typed key and nonce generation also draw secure bytes.</td>
+    </tr>
+    <tr>
+      <td>Other RNG operations</td>
+      <td>❌ Unwrapped</td>
+      <td>Random integers, bounded uniform sampling, deterministic buffers and generator lifecycle controls.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="secret-key-cryptography">Secret-key cryptography</h2>
+
+<p>See the <a href="/libpotassium/docs/design/secretbox.html">SecretBox design</a>, <a href="/libpotassium/docs/design/aead.html">AEAD design</a>, <a href="/libpotassium/docs/design/secretstream.html">secretstream design</a> and <a href="/libpotassium/docs/design/hash.html#hmac-authentication">authentication design</a> for the supported interfaces and wire formats.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream topic</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Authenticated encryption, combined mode</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">secretbox::seal</code> and <code class="language-plaintext highlighter-rouge">open</code> use XSalsa20-Poly1305 by default and also support XChaCha20-Poly1305.</td>
+    </tr>
+    <tr>
+      <td>Detached SecretBox</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">secretbox::seal_detached</code>, <code class="language-plaintext highlighter-rouge">open_detached</code> and their caller-buffer forms support both SecretBox algorithms with separate typed MACs.</td>
+    </tr>
+    <tr>
+      <td>Original NaCl SecretBox</td>
+      <td>🚫 Omitted by design</td>
+      <td>The easy interface accepts ordinary plaintext and produces a MAC followed by encrypted bytes, eliminating the legacy caller-supplied zero prefixes.</td>
+    </tr>
+    <tr>
+      <td>Encrypted streams and file encryption</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">secretstream::start_push</code> and <code class="language-plaintext highlighter-rouge">start_pull</code> manage guarded state, authenticated record tags, finalization and rekeying.</td>
+    </tr>
+    <tr>
+      <td>Encrypting related messages</td>
+      <td>📖 Guidance</td>
+      <td>Applications frame ordered secretstream records, or manage ordering, replay and nonces when using independent boxes.</td>
+    </tr>
+    <tr>
+      <td>Authentication</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">auth::authenticate</code>, <code class="language-plaintext highlighter-rouge">authenticate_into</code> and <code class="language-plaintext highlighter-rouge">verify</code> cover <code class="language-plaintext highlighter-rouge">crypto_auth</code>, including its default truncated HMAC-SHA-512 tag.</td>
+    </tr>
+    <tr>
+      <td>AEAD, ChaCha family</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">aead</code> wraps the original and IETF ChaCha20-Poly1305 variants and defaults to IETF XChaCha20-Poly1305, each in combined and detached mode with associated data.</td>
+    </tr>
+    <tr>
+      <td>AEAD, AEGIS and AES</td>
+      <td>❌ Unwrapped</td>
+      <td>AEGIS-256, AEGIS-128L and AES256-GCM, including AES precomputation.</td>
+    </tr>
+    <tr>
+      <td>IP address encryption</td>
+      <td>❌ Unwrapped</td>
+      <td>No address-encryption or decryption API.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="public-key-cryptography">Public-key cryptography</h2>
+
+<p>The <a href="/libpotassium/docs/design/pk-authenticated.html">public-key authenticated encryption design</a> specifies key roles and precomputation.
+Both box modules follow the <a href="/libpotassium/docs/design/core.html#message-and-operation-conventions">core message contract</a>, so callers can supply a nonce or receive a generated nonce alongside the ciphertext.
+The allocating open operations return guarded plaintext, and the caller-buffer operations require disjoint input and output.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream topic</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Authenticated encryption</td>
+      <td>✅ Supported</td>
+      <td><code class="language-plaintext highlighter-rouge">box::seal</code> and <code class="language-plaintext highlighter-rouge">open</code> support Curve25519 with XSalsa20-Poly1305 or XChaCha20-Poly1305, directly or with a key from <code class="language-plaintext highlighter-rouge">box::precompute</code>.</td>
+    </tr>
+    <tr>
+      <td>Key pairs</td>
+      <td>🟡 Partial</td>
+      <td>Random key-pair generation is exposed, including generation into caller storage, while deterministic generation from a seed is unwrapped.</td>
+    </tr>
+    <tr>
+      <td>Detached Box</td>
+      <td>❌ Unwrapped</td>
+      <td>Only the combined MAC and ciphertext format is exposed.</td>
+    </tr>
+    <tr>
+      <td>Original NaCl Box</td>
+      <td>🚫 Omitted by design</td>
+      <td>Direct and precomputed operations use the easy format, eliminating the zero-padding contract of the legacy Box calls.</td>
+    </tr>
+    <tr>
+      <td>Signatures</td>
+      <td>❌ Unwrapped</td>
+      <td>No Ed25519 key pairs, signed messages, detached signatures or multipart Ed25519ph.</td>
+    </tr>
+    <tr>
+      <td>Sealed boxes</td>
+      <td>❌ Unwrapped</td>
+      <td>Upstream <code class="language-plaintext highlighter-rouge">crypto_box_seal</code> uses an anonymous sender, while <code class="language-plaintext highlighter-rouge">box::seal</code> requires a sender private key or a precomputed shared key.</td>
+    </tr>
+    <tr>
+      <td>Key encapsulation</td>
+      <td>❌ Unwrapped</td>
+      <td>No X-Wing key generation, encapsulation or decapsulation.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="hashing">Hashing</h2>
+
+<p>The <a href="/libpotassium/docs/design/hash.html">hash design</a> describes one-shot calls, streaming state, digest sizes and typed keys.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream topic</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Generic hashing</td>
+      <td>✅ Supported</td>
+      <td>Keyed and unkeyed BLAKE2b support one-shot and multipart input with 16 to 64 output bytes (default 32).</td>
+    </tr>
+    <tr>
+      <td>BLAKE2b parameters</td>
+      <td>🟡 Partial</td>
+      <td>Digest and key lengths are type parameters, with no salt or personalization interface.</td>
+    </tr>
+    <tr>
+      <td>Short-input hashing</td>
+      <td>❌ Unwrapped</td>
+      <td>No SipHash interface.</td>
+    </tr>
+    <tr>
+      <td>Extendable output functions</td>
+      <td>❌ Unwrapped</td>
+      <td>No SHAKE or TurboSHAKE, including incremental output.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>HMAC and keyed BLAKE2b deliberately share the keyed streaming interface <code class="language-plaintext highlighter-rouge">hash::keyed_hasher&lt;A&gt;</code>.
+The algorithm tag selects the construction and types the resulting authentication tag.
+For one-shot calls, keyed BLAKE2b uses <code class="language-plaintext highlighter-rouge">hash::hash</code> and HMAC uses <code class="language-plaintext highlighter-rouge">auth::authenticate</code>, with <code class="language-plaintext highlighter-rouge">auth::verify</code> for constant-time wire-tag verification.
+HMAC one-shot keys are 32 bytes, while a stream accepts an explicit key span of any length.
+See <a href="/libpotassium/docs/design/hash.html#hmac-authentication">HMAC authentication</a>.</p>
+
+<h2 id="password-hashing-key-derivation-and-key-exchange">Password hashing, key derivation and key exchange</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream chapter</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Password hashing</td>
+      <td>❌ Unwrapped</td>
+      <td>No Argon2 password-based key derivation, encoded password hashes, verification or rehash checks.</td>
+    </tr>
+    <tr>
+      <td>Key derivation</td>
+      <td>❌ Unwrapped</td>
+      <td>No <code class="language-plaintext highlighter-rouge">crypto_kdf</code> context and subkey-ID API.</td>
+    </tr>
+    <tr>
+      <td>HKDF</td>
+      <td>❌ Unwrapped</td>
+      <td>No extract or expand API.</td>
+    </tr>
+    <tr>
+      <td>Key exchange</td>
+      <td>❌ Unwrapped</td>
+      <td>No <code class="language-plaintext highlighter-rouge">crypto_kx</code> client/server directional session keys.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="advanced">Advanced</h2>
+
+<p>The <a href="/libpotassium/docs/design/hash.html#choosing-the-construction">hash design</a> lists the supported SHA and HMAC tags, output lengths and state types.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Upstream topic</th>
+      <th>Coverage</th>
+      <th>C++ interface or gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SHA-2</td>
+      <td>✅ Supported</td>
+      <td>SHA-256 and SHA-512, one-shot and streaming.</td>
+    </tr>
+    <tr>
+      <td>SHA-3</td>
+      <td>✅ Supported</td>
+      <td>SHA3-256 and SHA3-512, one-shot and streaming.</td>
+    </tr>
+    <tr>
+      <td>ML-KEM768</td>
+      <td>❌ Unwrapped</td>
+      <td>No standalone post-quantum KEM.</td>
+    </tr>
+    <tr>
+      <td>HMAC-SHA-2</td>
+      <td>✅ Supported</td>
+      <td>HMAC-SHA-256, HMAC-SHA-512 and HMAC-SHA-512 truncated to 256 bits, one-shot and streaming.</td>
+    </tr>
+    <tr>
+      <td>Scrypt</td>
+      <td>❌ Unwrapped</td>
+      <td>No high-level password interface or low-level scrypt derivation.</td>
+    </tr>
+    <tr>
+      <td>Point/scalar multiplication</td>
+      <td>❌ Unwrapped</td>
+      <td>Box uses Curve25519 internally, with no standalone X25519 scalar multiplication API.</td>
+    </tr>
+    <tr>
+      <td>One-time authentication</td>
+      <td>❌ Unwrapped</td>
+      <td>No standalone Poly1305 computation or verification.</td>
+    </tr>
+    <tr>
+      <td>Stream ciphers</td>
+      <td>❌ Unwrapped</td>
+      <td>No raw keystream or XOR operations for ChaCha20, XChaCha20, Salsa20 or XSalsa20.</td>
+    </tr>
+    <tr>
+      <td>Ed25519 to Curve25519</td>
+      <td>❌ Unwrapped</td>
+      <td>No public or secret key conversion.</td>
+    </tr>
+    <tr>
+      <td>Finite field arithmetic and Ristretto</td>
+      <td>❌ Unwrapped</td>
+      <td>No public Ed25519 or Ristretto255 point and scalar operations.</td>
+    </tr>
+    <tr>
+      <td>Keccak-f[1600]</td>
+      <td>❌ Unwrapped</td>
+      <td>No public permutation or low-level state operations.</td>
+    </tr>
+    <tr>
+      <td>Custom RNG</td>
+      <td>❌ Unwrapped</td>
+      <td>No registration of a process-wide randombytes implementation.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="internals-and-roadmap">Internals and roadmap</h2>
+
+<p>These upstream chapters describe implementation choices and future work.
+The tables record the current public interface and make no commitment about future wrappers.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/COMPARISON.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

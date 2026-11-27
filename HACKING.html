@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Hacking on libpotassium | libpotassium</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Hacking on libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/HACKING.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/HACKING.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Hacking on libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"Hacking on libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/HACKING.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <h1 id="hacking-on-libpotassium">Hacking on libpotassium</h1>
+
+<p>Read <a href="/libpotassium/AGENTS.html">AGENTS.md</a> for the project rules and <a href="/libpotassium/#build-and-test">README.md</a> for build and test commands.</p>
+
+<h2 id="toolchain">Toolchain</h2>
+
+<p>CMake 4.5 makes <code class="language-plaintext highlighter-rouge">import std;</code> available to scanned C++ targets without the earlier experimental opt-in.
+This project enables scanning with <code class="language-plaintext highlighter-rouge">CMAKE_CXX_SCAN_FOR_MODULES</code> and declares its public module interface with a <code class="language-plaintext highlighter-rouge">CXX_MODULES</code> file set.
+Use a Ninja generator and a toolchain that ships usable standard-library module sources and metadata.
+See the <a href="https://cmake.org/cmake/help/v4.5/release/4.5.html#languages">CMake 4.5 release notes</a> and <a href="https://cmake.org/cmake/help/v4.5/manual/cmake-cxxmodules.7.html#import-std-support">CMake modules manual</a>.</p>
+
+<h2 id="nix-development-shell">Nix development shell</h2>
+
+<p>The repository flake provides GCC 16 with libstdc++, CMake 4.5, Ninja, and libsodium for x86_64 Linux.
+The flake takes CMake from the pinned nixpkgs staging input.
+The full shell also provides Catch2 v3 for the test suite and Doxygen for the documentation.
+Use the checked-in <code class="language-plaintext highlighter-rouge">flake.lock</code> to reproduce the development environment.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nix <span class="nt">--extra-experimental-features</span> <span class="s1">'nix-command flakes'</span> develop .#full
+</code></pre></div></div>
+
+<p>In a Git checkout, Nix only sees tracked files when it evaluates the Git-backed flake.
+Track new flake inputs before trying to evaluate them through the Git-backed flake.</p>
+
+<h3 id="example-local-instructions">Example local instructions</h3>
+
+<p>Create an <code class="language-plaintext highlighter-rouge">AGENTS-local.md</code> in the repository root if your local workflow needs additional instructions.
+For example:</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gh"># Local development instructions</span>
+<span class="p">
+-</span> Use the repository flake for configuration, builds, and tests.
+<span class="p">-</span> Start an interactive shell with <span class="sb">`nix --extra-experimental-features 'nix-command flakes' develop .`</span>.
+<span class="p">-</span> For individual commands, use <span class="sb">`nix --extra-experimental-features 'nix-command flakes' develop . --command &lt;command&gt; &lt;args&gt;`</span>.
+</code></pre></div></div>
+
+<h2 id="clion">CLion</h2>
+
+<ol>
+  <li>Launch CLion normally and open the repository as a CMake project.</li>
+  <li>Under <strong>Settings &gt; Build, Execution, Deployment &gt; Toolchains</strong>, select a local <strong>System</strong> toolchain.</li>
+  <li>Choose <strong>Add environment &gt; From file</strong> and select the repository’s <code class="language-plaintext highlighter-rouge">clion-env.sh</code>.</li>
+  <li>Make sure CLion sources the file with Bash.
+On Linux CLion uses the shell named by <code class="language-plaintext highlighter-rouge">$SHELL</code>, and its fallback shell setting applies only when <code class="language-plaintext highlighter-rouge">$SHELL</code> is unset.</li>
+  <li>From the Nix development shell, use the commands below to find the tool paths.
+Set CLion’s C and C++ compilers to the Nix wrappers and select the Nix CMake and Ninja executables.</li>
+  <li>Under <strong>Settings &gt; Build, Execution, Deployment &gt; CMake</strong>, select that toolchain for the active profile and set the generator to <strong>Ninja</strong>.</li>
+</ol>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">printf</span> <span class="s1">'%s\n'</span> <span class="s2">"</span><span class="nv">$CC</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$CXX</span><span class="s2">"</span>
+<span class="nb">command</span> <span class="nt">-v</span> cmake
+<span class="nb">command</span> <span class="nt">-v</span> ninja
+</code></pre></div></div>
+
+<p>The script uses <code class="language-plaintext highlighter-rouge">nix print-dev-env</code> to load the flake environment into CLion’s toolchain.
+After updating <code class="language-plaintext highlighter-rouge">flake.lock</code>, refresh any stored Nix tool paths and reset the CMake cache if CLion still uses the old environment.
+See <a href="https://www.jetbrains.com/help/clion/how-to-create-toolchain-in-clion.html#toolchain-environment">CLion toolchain setup</a>.</p>
+
+<h3 id="example-presets-for-a-custom-clion-toolchain">Example presets for a custom CLion toolchain</h3>
+
+<p>The <a href="/libpotassium/CMakeUserPresets.example.json">CMakeUserPresets.example.json</a> example extends the shared <code class="language-plaintext highlighter-rouge">debug</code>, <code class="language-plaintext highlighter-rouge">release</code>, and <code class="language-plaintext highlighter-rouge">docs</code> presets with profiles that select a CLion toolchain named <code class="language-plaintext highlighter-rouge">libpotassium</code>.
+Name the toolchain you configured above <code class="language-plaintext highlighter-rouge">libpotassium</code>, or change each <code class="language-plaintext highlighter-rouge">toolchain</code> value in your local copy to match your toolchain’s name in CLion.
+The toolchain must make Doxygen available to build the <code class="language-plaintext highlighter-rouge">clion-docs</code> preset.</p>
+
+<p>If you do not have a <code class="language-plaintext highlighter-rouge">CMakeUserPresets.json</code> in the project root, copy the example to that filename.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cp </span>CMakeUserPresets.example.json CMakeUserPresets.json
+</code></pre></div></div>
+
+<p>If you already have a <code class="language-plaintext highlighter-rouge">CMakeUserPresets.json</code>, merge the example’s configure and build presets into it and use schema version 10.
+Git ignores <code class="language-plaintext highlighter-rouge">CMakeUserPresets.json</code> so you can keep your toolchain settings local.
+Reload the CMake project in CLion and enable the desired <code class="language-plaintext highlighter-rouge">clion-*</code> profile under <strong>Settings &gt; Build, Execution, Deployment &gt; CMake</strong>.
+See <a href="https://www.jetbrains.com/help/clion/cmake-presets.html">CLion’s CMake presets documentation</a>.</p>
+
+<h2 id="updating-the-development-shell">Updating the development shell</h2>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nix <span class="nt">--extra-experimental-features</span> <span class="s1">'nix-command flakes'</span> flake update nixpkgs nixpkgs-staging
+</code></pre></div></div>
+
+<p>Verify that configuration, build, and CTest pass in the updated shell, then commit <code class="language-plaintext highlighter-rouge">flake.lock</code>.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/HACKING.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

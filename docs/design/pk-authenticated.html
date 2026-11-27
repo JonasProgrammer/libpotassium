@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>libpotassium | WIP. Opinoinated libsodium wrapper in C++.</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/docs/design/pk-authenticated.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/docs/design/pk-authenticated.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/pk-authenticated.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
+<!-- SPDX-License-Identifier: BSL-1.0 -->
+
+<h1 id="public-key-authenticated-encryption">Public-key authenticated encryption</h1>
+
+<p>The proposed <code class="language-plaintext highlighter-rouge">potassium.box</code> module provides sender-authenticated encryption between a local key holder and a peer.
+Both direct and precomputed operations follow the <a href="/libpotassium/docs/design/core.html">core key, nonce, buffer and error contracts</a>.</p>
+
+<p>Import <code class="language-plaintext highlighter-rouge">potassium.box</code> to access the construction, its core key types, and <code class="language-plaintext highlighter-rouge">potassium::init()</code>.</p>
+
+<h2 id="algorithms-and-key-pairs">Algorithms and key pairs</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tag in <code class="language-plaintext highlighter-rouge">potassium::box</code></th>
+      <th>libsodium function prefix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">curve25519xsalsa20poly1305</code> (<code class="language-plaintext highlighter-rouge">box_default</code>)</td>
+      <td><code class="language-plaintext highlighter-rouge">crypto_box_</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">curve25519xchacha20poly1305</code></td>
+      <td><code class="language-plaintext highlighter-rouge">crypto_box_curve25519xchacha20poly1305_</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For both algorithms, <code class="language-plaintext highlighter-rouge">public_key_size</code>, <code class="language-plaintext highlighter-rouge">secret_key_size</code>, <code class="language-plaintext highlighter-rouge">precomputed_key_size</code> and <code class="language-plaintext highlighter-rouge">seed_size</code> are 32 bytes, <code class="language-plaintext highlighter-rouge">nonce_size</code> is 24 bytes and <code class="language-plaintext highlighter-rouge">mac_size</code> is 16 bytes.
+Each specialization publishes the backend’s platform-specific <code class="language-plaintext highlighter-rouge">messagebytes_max</code>.
+Backend assertions verify these dimensions and the default <code class="language-plaintext highlighter-rouge">crypto_box_PRIMITIVE</code> value of <code class="language-plaintext highlighter-rouge">"curve25519xsalsa20poly1305"</code>.
+The XChaCha variant requires its named backend symbols.</p>
+
+<p>For algorithm <code class="language-plaintext highlighter-rouge">A</code>, both <code class="language-plaintext highlighter-rouge">keypair&lt;A&gt;{}</code> and <code class="language-plaintext highlighter-rouge">generate_keypair&lt;A&gt;()</code> produce a matching public key and guarded private key in a move-only owner.
+Default construction selects <code class="language-plaintext highlighter-rouge">key_traits&lt;keypair&lt;A&gt;&gt;::generator</code>.
+A custom generator passed to the explicit constructor receives the public owner by mutable reference and the private destination as a fixed-extent writable byte span.
+The constructor forwards the generator in its original value category and calls it once.
+The generator must populate both halves with a matching pair on success and may throw on failure.
+Use <code class="language-plaintext highlighter-rouge">keypair&lt;A&gt;{potassium::for_overwrite}</code> when importing or deriving both halves, or <code class="language-plaintext highlighter-rouge">keypair&lt;A&gt;{potassium::zero}</code> for explicitly all-zero storage.
+The existing <code class="language-plaintext highlighter-rouge">generate_keypair&lt;A&gt;(std::nothrow)</code> factory reports allocation and backend failures through its result.
+Pass a mutable private-key owner directly to <code class="language-plaintext highlighter-rouge">generate_keypair_into</code> and a precomputed-key owner to <code class="language-plaintext highlighter-rouge">precompute_into</code>.
+Key generation writes directly into the final destinations, including caller-owned storage in the corresponding generation-into operation.
+Deterministic key generation is a possible extension and would treat its seed as confidential.</p>
+
+<h2 id="direct-and-precomputed-operations">Direct and precomputed operations</h2>
+
+<p>The first argument is the local private key and the second is the peer public key.
+Their roles reverse when the recipient opens the message.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">auto</span> <span class="n">sealed</span> <span class="o">=</span> <span class="n">box</span><span class="o">::</span><span class="n">seal</span><span class="p">(</span><span class="n">alice</span><span class="p">.</span><span class="n">secret_key</span><span class="p">,</span> <span class="n">bob</span><span class="p">.</span><span class="n">public_key</span><span class="p">,</span> <span class="n">plaintext</span><span class="p">);</span>
+<span class="k">auto</span> <span class="n">opened</span> <span class="o">=</span> <span class="n">box</span><span class="o">::</span><span class="n">open</span><span class="p">(</span><span class="n">bob</span><span class="p">.</span><span class="n">secret_key</span><span class="p">,</span> <span class="n">alice</span><span class="p">.</span><span class="n">public_key</span><span class="p">,</span> <span class="n">sealed</span><span class="p">.</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">sealed</span><span class="p">.</span><span class="n">nonce</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Direct operations use the backend’s <code class="language-plaintext highlighter-rouge">easy</code> and <code class="language-plaintext highlighter-rouge">open_easy</code> functions.
+The name <code class="language-plaintext highlighter-rouge">box::seal</code> denotes sender-authenticated encryption here, whereas libsodium reserves <code class="language-plaintext highlighter-rouge">crypto_box_seal</code> for anonymous sealed boxes.</p>
+
+<p>For repeated messages, <code class="language-plaintext highlighter-rouge">box::precompute(local.secret_key, peer.public_key)</code> uses <code class="language-plaintext highlighter-rouge">beforenm</code> to derive a confidential owner tagged with <code class="language-plaintext highlighter-rouge">precomputed_key_tag&lt;A&gt;</code>.
+Precomputed key owners require derivation or explicit initialization.
+The shared-key overloads take this one key in place of the direct key arguments and call <code class="language-plaintext highlighter-rouge">easy_afternm</code> or <code class="language-plaintext highlighter-rouge">open_easy_afternm</code>.
+Private, precomputed and SecretBox keys cannot implicitly convert between roles.
+With matching keys, plaintext and nonce, direct and precomputed encryption produce identical ciphertext.
+Interoperability tests exercise both directions between these modes and with libsodium for both algorithms.
+Rejection of an externally supplied peer key, including a small-order input rejected during precomputation, is a recoverable <code class="language-plaintext highlighter-rouge">crypto_failed</code>.</p>
+
+<h2 id="protocol-responsibilities">Protocol responsibilities</h2>
+
+<p>The application independently establishes whose public key it uses.
+Either participant can produce a valid ciphertext, so successful authentication supplies no third-party proof of authorship.
+Static key pairs provide no forward secrecy after private-key compromise.</p>
+
+<p>The same pair derives the same shared key in both directions.
+Independent counters starting at zero would therefore reuse a nonce on the first exchange.
+Use the random-nonce overload or coordinate explicit nonces across both directions, for example by assigning disjoint counter ranges.</p>
+
+<p><a href="https://libsodium.gitbook.io/doc/public-key_cryptography/authenticated_encryption">libsodium authenticated public-key encryption documentation</a></p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/docs/design/pk-authenticated.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

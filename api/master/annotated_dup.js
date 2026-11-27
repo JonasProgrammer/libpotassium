@@ -1,0 +1,107 @@
+var annotated_dup =
+[
+    [ "potassium", "namespacepotassium.html", [
+      [ "aead", "namespacepotassium_1_1aead.html", [
+        [ "seal_result", "structpotassium_1_1aead_1_1seal__result.html", "structpotassium_1_1aead_1_1seal__result" ]
+      ] ],
+      [ "auth", "namespacepotassium_1_1auth.html", [
+        [ "auth_traits", "structpotassium_1_1auth_1_1auth__traits.html", "structpotassium_1_1auth_1_1auth__traits" ],
+        [ "hmac_key_tag", "structpotassium_1_1auth_1_1hmac__key__tag.html", null ]
+      ] ],
+      [ "box", "namespacepotassium_1_1box.html", [
+        [ "private_key_tag", "structpotassium_1_1box_1_1private__key__tag.html", null ],
+        [ "precomputed_key_tag", "structpotassium_1_1box_1_1precomputed__key__tag.html", null ],
+        [ "seal_result", "structpotassium_1_1box_1_1seal__result.html", "structpotassium_1_1box_1_1seal__result" ],
+        [ "keypair", "structpotassium_1_1box_1_1keypair.html", "structpotassium_1_1box_1_1keypair" ]
+      ] ],
+      [ "hash", "namespacepotassium_1_1hash.html", [
+        [ "detail", null, [
+          [ "traits", "structpotassium_1_1hash_1_1detail_1_1traits.html", "structpotassium_1_1hash_1_1detail_1_1traits" ],
+          [ "hash_output", "structpotassium_1_1hash_1_1detail_1_1hash__output.html", "structpotassium_1_1hash_1_1detail_1_1hash__output" ],
+          [ "stream_state", "classpotassium_1_1hash_1_1detail_1_1stream__state.html", "classpotassium_1_1hash_1_1detail_1_1stream__state" ]
+        ] ],
+        [ "blake2b", "structpotassium_1_1hash_1_1blake2b.html", null ],
+        [ "blake2b_key_tag", "structpotassium_1_1hash_1_1blake2b__key__tag.html", null ],
+        [ "inplace_hash_state", "classpotassium_1_1hash_1_1inplace__hash__state.html", "classpotassium_1_1hash_1_1inplace__hash__state" ],
+        [ "guarded_hash_state", "classpotassium_1_1hash_1_1guarded__hash__state.html", "classpotassium_1_1hash_1_1guarded__hash__state" ],
+        [ "hash_traits", "structpotassium_1_1hash_1_1hash__traits.html", null ],
+        [ "keyed_hash_traits", "structpotassium_1_1hash_1_1keyed__hash__traits.html", null ],
+        [ "hash_traits&lt; blake2b&lt; N &gt; &gt;", "structpotassium_1_1hash_1_1hash__traits_3_01blake2b_3_01N_01_4_01_4.html", null ],
+        [ "keyed_hash_traits&lt; A &gt;", "structpotassium_1_1hash_1_1keyed__hash__traits_3_01A_01_4.html", "structpotassium_1_1hash_1_1keyed__hash__traits_3_01A_01_4" ],
+        [ "keyed_hash_traits&lt; blake2b&lt; N &gt; &gt;", "structpotassium_1_1hash_1_1keyed__hash__traits_3_01blake2b_3_01N_01_4_01_4.html", "structpotassium_1_1hash_1_1keyed__hash__traits_3_01blake2b_3_01N_01_4_01_4" ],
+        [ "hash_traits&lt; sha256 &gt;", "structpotassium_1_1hash_1_1hash__traits_3_01sha256_01_4.html", null ],
+        [ "hash_traits&lt; sha512 &gt;", "structpotassium_1_1hash_1_1hash__traits_3_01sha512_01_4.html", null ],
+        [ "hash_traits&lt; sha3_256 &gt;", "structpotassium_1_1hash_1_1hash__traits_3_01sha3__256_01_4.html", null ],
+        [ "hash_traits&lt; sha3_512 &gt;", "structpotassium_1_1hash_1_1hash__traits_3_01sha3__512_01_4.html", null ],
+        [ "hasher", "classpotassium_1_1hash_1_1hasher.html", "classpotassium_1_1hash_1_1hasher" ],
+        [ "keyed_hasher", "classpotassium_1_1hash_1_1keyed__hasher.html", "classpotassium_1_1hash_1_1keyed__hasher" ]
+      ] ],
+      [ "secretbox", "namespacepotassium_1_1secretbox.html", [
+        [ "seal_result", "structpotassium_1_1secretbox_1_1seal__result.html", "structpotassium_1_1secretbox_1_1seal__result" ]
+      ] ],
+      [ "secretstream", "namespacepotassium_1_1secretstream.html", [
+        [ "inplace_state", "classpotassium_1_1secretstream_1_1inplace__state.html", "classpotassium_1_1secretstream_1_1inplace__state" ],
+        [ "state_storage", "classpotassium_1_1secretstream_1_1state__storage.html", "classpotassium_1_1secretstream_1_1state__storage" ],
+        [ "stream_header", "structpotassium_1_1secretstream_1_1stream__header.html", "structpotassium_1_1secretstream_1_1stream__header" ],
+        [ "pull_result", "structpotassium_1_1secretstream_1_1pull__result.html", "structpotassium_1_1secretstream_1_1pull__result" ],
+        [ "sender", "classpotassium_1_1secretstream_1_1sender.html", "classpotassium_1_1secretstream_1_1sender" ],
+        [ "receiver", "classpotassium_1_1secretstream_1_1receiver.html", "classpotassium_1_1secretstream_1_1receiver" ]
+      ] ],
+      [ "algorithm_traits", "structpotassium_1_1algorithm__traits.html", null ],
+      [ "algorithm_traits&lt; aead::chacha20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1chacha20poly1305_01_4.html", null ],
+      [ "algorithm_traits&lt; aead::chacha20poly1305_ietf &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1chacha20poly1305__ietf_01_4.html", null ],
+      [ "algorithm_traits&lt; aead::xchacha20poly1305_ietf &gt;", "structpotassium_1_1algorithm__traits_3_01aead_1_1xchacha20poly1305__ietf_01_4.html", null ],
+      [ "algorithm_traits&lt; box::curve25519xchacha20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01box_1_1curve25519xchacha20poly1305_01_4.html", null ],
+      [ "algorithm_traits&lt; box::curve25519xsalsa20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01box_1_1curve25519xsalsa20poly1305_01_4.html", null ],
+      [ "algorithm_traits&lt; secretbox::xchacha20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01secretbox_1_1xchacha20poly1305_01_4.html", null ],
+      [ "algorithm_traits&lt; secretbox::xsalsa20poly1305 &gt;", "structpotassium_1_1algorithm__traits_3_01secretbox_1_1xsalsa20poly1305_01_4.html", null ],
+      [ "allocator", "structpotassium_1_1allocator.html", "structpotassium_1_1allocator" ],
+      [ "crypto_error", "classpotassium_1_1crypto__error.html", "classpotassium_1_1crypto__error" ],
+      [ "detached_ciphertext", "structpotassium_1_1detached__ciphertext.html", "structpotassium_1_1detached__ciphertext" ],
+      [ "detached_mac_nonce", "structpotassium_1_1detached__mac__nonce.html", "structpotassium_1_1detached__mac__nonce" ],
+      [ "detached_seal_result", "structpotassium_1_1detached__seal__result.html", "structpotassium_1_1detached__seal__result" ],
+      [ "for_overwrite_t", "structpotassium_1_1for__overwrite__t.html", "structpotassium_1_1for__overwrite__t" ],
+      [ "key_buffer_storage", "classpotassium_1_1key__buffer__storage.html", "classpotassium_1_1key__buffer__storage" ],
+      [ "key_out", "classpotassium_1_1key__out.html", "classpotassium_1_1key__out" ],
+      [ "key_ref", "classpotassium_1_1key__ref.html", "classpotassium_1_1key__ref" ],
+      [ "key_traits", "structpotassium_1_1key__traits.html", null ],
+      [ "key_traits&lt; aead::chacha20poly1305 &gt;", "structpotassium_1_1key__traits_3_01aead_1_1chacha20poly1305_01_4.html", null ],
+      [ "key_traits&lt; aead::chacha20poly1305_ietf &gt;", "structpotassium_1_1key__traits_3_01aead_1_1chacha20poly1305__ietf_01_4.html", null ],
+      [ "key_traits&lt; aead::xchacha20poly1305_ietf &gt;", "structpotassium_1_1key__traits_3_01aead_1_1xchacha20poly1305__ietf_01_4.html", null ],
+      [ "key_traits&lt; auth::hmac_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01auth_1_1hmac__key__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01auth_1_1hmac__key__tag_3_01A_01_4_01_4" ],
+      [ "key_traits&lt; box::keypair&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1keypair_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1keypair_3_01A_01_4_01_4" ],
+      [ "key_traits&lt; box::precomputed_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1precomputed__key__tag_3_01A_01_4_01_4.html", null ],
+      [ "key_traits&lt; box::private_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4" ],
+      [ "key_traits&lt; hash::blake2b_key_tag&lt; K &gt; &gt;", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4.html", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4" ],
+      [ "key_traits&lt; secretbox::xchacha20poly1305 &gt;", "structpotassium_1_1key__traits_3_01secretbox_1_1xchacha20poly1305_01_4.html", "structpotassium_1_1key__traits_3_01secretbox_1_1xchacha20poly1305_01_4" ],
+      [ "key_traits&lt; secretbox::xsalsa20poly1305 &gt;", "structpotassium_1_1key__traits_3_01secretbox_1_1xsalsa20poly1305_01_4.html", "structpotassium_1_1key__traits_3_01secretbox_1_1xsalsa20poly1305_01_4" ],
+      [ "key_traits&lt; secretstream::key_tag &gt;", "structpotassium_1_1key__traits_3_01secretstream_1_1key__tag_01_4.html", "structpotassium_1_1key__traits_3_01secretstream_1_1key__tag_01_4" ],
+      [ "mac_buffer", "structpotassium_1_1mac__buffer.html", "structpotassium_1_1mac__buffer" ],
+      [ "memory_resource", "classpotassium_1_1memory__resource.html", null ],
+      [ "mlock_guard", "classpotassium_1_1mlock__guard.html", "classpotassium_1_1mlock__guard" ],
+      [ "nonce_buffer", "classpotassium_1_1nonce__buffer.html", "classpotassium_1_1nonce__buffer" ],
+      [ "nonce_ref", "classpotassium_1_1nonce__ref.html", "classpotassium_1_1nonce__ref" ],
+      [ "public_key", "classpotassium_1_1public__key.html", "classpotassium_1_1public__key" ],
+      [ "public_key_ref", "classpotassium_1_1public__key__ref.html", "classpotassium_1_1public__key__ref" ],
+      [ "random_key_generator", "structpotassium_1_1random__key__generator.html", "structpotassium_1_1random__key__generator" ],
+      [ "raw_allocator", "structpotassium_1_1raw__allocator.html", "structpotassium_1_1raw__allocator" ],
+      [ "secret_key", "classpotassium_1_1secret__key.html", "classpotassium_1_1secret__key" ],
+      [ "secure_buffer", "classpotassium_1_1secure__buffer.html", "classpotassium_1_1secure__buffer" ],
+      [ "zero_t", "structpotassium_1_1zero__t.html", "structpotassium_1_1zero__t" ]
+    ] ],
+    [ "chacha20poly1305", "structpotassium_1_1aead_1_1chacha20poly1305.html", null ],
+    [ "chacha20poly1305_ietf", "structpotassium_1_1aead_1_1chacha20poly1305__ietf.html", null ],
+    [ "curve25519xchacha20poly1305", "structpotassium_1_1box_1_1curve25519xchacha20poly1305.html", null ],
+    [ "curve25519xsalsa20poly1305", "structpotassium_1_1box_1_1curve25519xsalsa20poly1305.html", null ],
+    [ "hmac_sha256", "structpotassium_1_1auth_1_1hmac__sha256.html", null ],
+    [ "hmac_sha512", "structpotassium_1_1auth_1_1hmac__sha512.html", null ],
+    [ "hmac_sha512256", "structpotassium_1_1auth_1_1hmac__sha512256.html", null ],
+    [ "key_tag", "structpotassium_1_1secretstream_1_1key__tag.html", null ],
+    [ "sha256", "structpotassium_1_1hash_1_1sha256.html", null ],
+    [ "sha3_256", "structpotassium_1_1hash_1_1sha3__256.html", null ],
+    [ "sha3_512", "structpotassium_1_1hash_1_1sha3__512.html", null ],
+    [ "sha512", "structpotassium_1_1hash_1_1sha512.html", null ],
+    [ "xchacha20poly1305", "structpotassium_1_1secretbox_1_1xchacha20poly1305.html", null ],
+    [ "xchacha20poly1305_ietf", "structpotassium_1_1aead_1_1xchacha20poly1305__ietf.html", null ],
+    [ "xsalsa20poly1305", "structpotassium_1_1secretbox_1_1xsalsa20poly1305.html", null ]
+];

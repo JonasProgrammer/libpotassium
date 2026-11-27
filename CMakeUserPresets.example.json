@@ -1,0 +1,56 @@
+{
+  "$comment": [
+    "SPDX-FileCopyrightText: 2026 libpotassium team",
+    "SPDX-License-Identifier: BSL-1.0"
+  ],
+  "version": 10,
+  "configurePresets": [
+    {
+      "name": "clion-debug",
+      "displayName": "CLion Debug",
+      "inherits": "debug",
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "libpotassium"
+        }
+      }
+    },
+    {
+      "name": "clion-release",
+      "displayName": "CLion Release",
+      "inherits": "release",
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "libpotassium"
+        }
+      }
+    },
+    {
+      "name": "clion-docs",
+      "displayName": "CLion Doxygen documentation",
+      "inherits": "docs",
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "libpotassium"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "clion-debug",
+      "inherits": "debug",
+      "configurePreset": "clion-debug"
+    },
+    {
+      "name": "clion-release",
+      "inherits": "release",
+      "configurePreset": "clion-release"
+    },
+    {
+      "name": "clion-docs",
+      "inherits": "docs",
+      "configurePreset": "clion-docs"
+    }
+  ]
+}

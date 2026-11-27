@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>libpotassium | WIP. Opinoinated libsodium wrapper in C++.</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="libpotassium" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<meta property="og:description" content="WIP. Opinoinated libsodium wrapper in C++." />
+<link rel="canonical" href="https://jonasprogrammer.github.io/libpotassium/docs/design/hash.html" />
+<meta property="og:url" content="https://jonasprogrammer.github.io/libpotassium/docs/design/hash.html" />
+<meta property="og:site_name" content="libpotassium" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="libpotassium" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/docs/design/hash.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6b92151b9b581ee71c5eaba91d46eb396e360122">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/libpotassium/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://jonasprogrammer.github.io/libpotassium/">libpotassium</a></h1>
+      
+
+      <!-- SPDX-FileCopyrightText: 2026 libpotassium team -->
+<!-- SPDX-License-Identifier: BSL-1.0 -->
+
+<h1 id="hashing-with-potassiumhash">Hashing with potassium.hash</h1>
+
+<p>Import <code class="language-plaintext highlighter-rouge">potassium.hash</code> for hashing, initialization, and the core key owners, or <code class="language-plaintext highlighter-rouge">potassium</code> for the complete API.
+Import <code class="language-plaintext highlighter-rouge">potassium.auth</code> for HMAC one-shot authentication and verification.
+Call <code class="language-plaintext highlighter-rouge">potassium::init()</code> once before using these interfaces.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">import</span> <span class="n">potassium</span><span class="p">.</span><span class="n">hash</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="n">h</span> <span class="o">=</span> <span class="n">potassium</span><span class="o">::</span><span class="n">hash</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">example</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">byte</span> <span class="k">const</span><span class="o">&gt;</span> <span class="n">message</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">auto</span> <span class="n">checksum</span> <span class="o">=</span> <span class="n">h</span><span class="o">::</span><span class="n">hash</span><span class="o">&lt;</span><span class="n">h</span><span class="o">::</span><span class="n">sha256</span><span class="o">&gt;</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+
+    <span class="n">potassium</span><span class="o">::</span><span class="n">secret_key</span><span class="o">&lt;</span><span class="n">h</span><span class="o">::</span><span class="n">blake2b_key_tag</span><span class="o">&lt;&gt;&gt;</span> <span class="n">key</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">h</span><span class="o">::</span><span class="n">hash</span><span class="o">&lt;</span><span class="n">h</span><span class="o">::</span><span class="n">default_algorithm</span><span class="o">&gt;</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+
+    <span class="n">h</span><span class="o">::</span><span class="n">hasher</span><span class="o">&lt;</span><span class="n">h</span><span class="o">::</span><span class="n">sha256</span><span class="o">&gt;</span> <span class="n">stream</span><span class="p">;</span>
+    <span class="n">stream</span><span class="p">.</span><span class="n">update</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">same_checksum</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">stream</span><span class="p">).</span><span class="n">finalize</span><span class="p">();</span>
+
+    <span class="n">h</span><span class="o">::</span><span class="n">keyed_hasher</span><span class="o">&lt;</span><span class="n">h</span><span class="o">::</span><span class="n">default_algorithm</span><span class="o">&gt;</span> <span class="n">keyed</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+    <span class="n">keyed</span><span class="p">.</span><span class="n">update</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="p">[</span><span class="n">same_tag</span><span class="p">,</span> <span class="n">reuse</span><span class="p">]</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">keyed</span><span class="p">).</span><span class="n">finalize_for_reuse</span><span class="p">();</span>
+    <span class="n">keyed</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">reuse</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="choosing-the-construction">Choosing the construction</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Algorithm tag</th>
+      <th>Digest bytes</th>
+      <th>Key bytes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">blake2b&lt;N&gt;</code></td>
+      <td>16 through 64, default 32</td>
+      <td>Unkeyed or 16 through 64, default 32</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sha256</code>, <code class="language-plaintext highlighter-rouge">sha3_256</code></td>
+      <td>32</td>
+      <td>Unkeyed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sha512</code>, <code class="language-plaintext highlighter-rouge">sha3_512</code></td>
+      <td>64</td>
+      <td>Unkeyed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">auth::hmac_sha256</code>, <code class="language-plaintext highlighter-rouge">auth::hmac_sha512256</code></td>
+      <td>32</td>
+      <td>32 one-shot, any explicit length for streams</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">auth::hmac_sha512</code></td>
+      <td>64</td>
+      <td>32 one-shot, any explicit length for streams</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The stable <code class="language-plaintext highlighter-rouge">default_algorithm</code> alias selects <code class="language-plaintext highlighter-rouge">blake2b&lt;32&gt;</code>.
+BLAKE2b incorporates the output length during initialization, so truncating a 64-byte digest produces a different construction from requesting 32 bytes.
+The type <code class="language-plaintext highlighter-rouge">digest_buffer&lt;A&gt;</code> records that choice and distinguishes algorithms with equal output lengths.
+Digests, including keyed authentication tags, are copyable values in ordinary memory.
+Compare two digests of the same type with <code class="language-plaintext highlighter-rouge">==</code> or <code class="language-plaintext highlighter-rouge">!=</code>, which use libsodium’s constant-time comparison.
+Use the fixed-extent span from <code class="language-plaintext highlighter-rouge">digest.bytes()</code> while the digest lives, or copy received bytes into its fixed-size <code class="language-plaintext highlighter-rouge">storage</code> array.</p>
+
+<p><code class="language-plaintext highlighter-rouge">SimpleDigest&lt;A&gt;</code> selects algorithms supporting unkeyed streams and <code class="language-plaintext highlighter-rouge">KeyedDigest&lt;A&gt;</code> selects algorithms supporting keyed streams.
+BLAKE2b satisfies both concepts, SHA satisfies the first, and HMAC satisfies the second.
+<code class="language-plaintext highlighter-rouge">hash_algorithm</code> and <code class="language-plaintext highlighter-rouge">keyed_hash_algorithm</code> are compatibility spellings for these concepts.
+For initialized streams, <code class="language-plaintext highlighter-rouge">Hasher&lt;S&gt;</code> covers update and both consuming finalizers.
+<code class="language-plaintext highlighter-rouge">SimpleHasher&lt;S&gt;</code> and <code class="language-plaintext highlighter-rouge">KeyedHasher&lt;S&gt;</code> add the corresponding construction and reset operations.
+Streams expose <code class="language-plaintext highlighter-rouge">result_type</code> and <code class="language-plaintext highlighter-rouge">token_type</code>, and keyed streams also expose their default <code class="language-plaintext highlighter-rouge">key_type</code> view.</p>
+
+<p>The BLAKE2b key length is an independent initialization parameter, so a single <code class="language-plaintext highlighter-rouge">blake2b_key_tag&lt;K&gt;</code> applies across digest lengths.
+The purpose tag prevents accidental substitution of a SecretBox key or Box private key of the same size.
+A <code class="language-plaintext highlighter-rouge">secret_key</code> or <code class="language-plaintext highlighter-rouge">key_buffer_storage</code> generates the key directly in its final storage.
+Pass a live lvalue owner, or explicitly construct a matching <code class="language-plaintext highlighter-rouge">potassium::key_ref</code> from a fixed-extent span and keep the referenced bytes alive through the call.</p>
+
+<p>Choose SHA-2 or SHA-3 when a format or protocol specifies it.
+An unkeyed digest alone cannot authenticate the sender.
+In particular, prefixing a message with a secret before SHA-256 or SHA-512 permits length-extension attacks.
+Use a dedicated password-hashing construction for passwords because all five hash families are designed to run quickly.</p>
+
+<h2 id="one-shot-and-streaming-state">One-shot and streaming state</h2>
+
+<p><code class="language-plaintext highlighter-rouge">hash&lt;A&gt;(message)</code> and unkeyed stream finalization return <code class="language-plaintext highlighter-rouge">digest_buffer&lt;A&gt;</code>.
+Keyed calls and keyed stream finalization return <code class="language-plaintext highlighter-rouge">tag_buffer&lt;A&gt;</code>, a distinct fixed-size value with the same byte access and constant-time equality.
+Use <code class="language-plaintext highlighter-rouge">hash_into&lt;A&gt;(message, output)</code> or <code class="language-plaintext highlighter-rouge">hash_into&lt;A&gt;(key, message, output)</code> with writable storage of exactly <code class="language-plaintext highlighter-rouge">hash_traits&lt;A&gt;::digest_size</code> bytes.
+These calls go directly to the matching libsodium one-shot function, avoiding stream construction and guarded allocation.
+The module pins BLAKE2b to the explicit <code class="language-plaintext highlighter-rouge">crypto_generichash_blake2b</code> family and requires libsodium 1.0.22 or newer for SHA-3.</p>
+
+<p>An unkeyed <code class="language-plaintext highlighter-rouge">hasher&lt;A&gt;</code> stores the actual aligned libsodium state in place, avoiding a heap allocation.
+It erases the state because even unkeyed hashes may buffer fragments of the input.
+A <code class="language-plaintext highlighter-rouge">keyed_hasher&lt;A&gt;</code> requires a key at construction and defaults to the guarded allocator because the derived state can authenticate further input.
+Its move-only storage wraps <code class="language-plaintext highlighter-rouge">std::indirect&lt;State, potassium::allocator&lt;State&gt;&gt;</code>, so the allocator manages the state allocation and moves transfer ownership without copying state bytes.
+Guarded allocation attempts page locking and wipes memory on release.
+Initialization consumes the key bytes synchronously, so the caller can release the key afterward.
+Separate types give each mode its own storage default and make a missing key a compile-time error.</p>
+
+<p>The optional second template argument controls ownership and protection independently of the algorithm.
+For example, choose <code class="language-plaintext highlighter-rouge">hasher&lt;A, guarded_hash_state&lt;typename hash_traits&lt;A&gt;::state_type&gt;&gt;</code> to protect an unkeyed computation.
+A custom policy owns a fully constructed, correctly aligned state, exposes it by mutable lvalue reference through a nonthrowing <code class="language-plaintext highlighter-rouge">get()</code>, and securely erases released storage.
+It must prohibit copying and transfer ownership without duplicating state bytes if it supports moving.
+Successful construction provides storage ready for hash initialization.
+The nonthrowing observer <code class="language-plaintext highlighter-rouge">has_value() const</code> reports whether <code class="language-plaintext highlighter-rouge">get()</code> can access the state for wiping.
+Each policy defines a move-only <code class="language-plaintext highlighter-rouge">transfer_token</code> with nonthrowing move construction and destruction.
+After the stream wipes the state, <code class="language-plaintext highlighter-rouge">make_token()</code> issues a token, and <code class="language-plaintext highlighter-rouge">assign_token(transfer_token&amp;&amp;)</code> consumes one to provide usable storage in any destination state.
+Both operations must be allocation-free and nonthrowing.
+When using a nonthrowing factory, a custom policy must report construction failure through <code class="language-plaintext highlighter-rouge">std::bad_alloc</code>.
+Traits describe sizes and storage defaults, while compile-time selection calls typed backend functions implemented outside the module interface.
+This preserves the actual state layout and keeps the libsodium calls out of the consumer’s BMI without runtime dispatch.</p>
+
+<h2 id="finalization-reuse-and-errors">Finalization, reuse and errors</h2>
+
+<p><code class="language-plaintext highlighter-rouge">update(chunk)</code> consumes the bytes during the call and accepts empty chunks.
+On a named stream, use <code class="language-plaintext highlighter-rouge">std::move(stream).finalize()</code> to finish the active computation and immediately wipe its state.
+Only mutable rvalues can finalize, including temporaries and streams whose in-place storage prohibits move construction.
+The C++26 deleted lvalue overloads explain how to express consumption, and the deleted const overloads explain the mutability requirement.
+With GCC 16.2, the diagnostic for an imported module shows the reason in the declaration excerpt and omits it from the primary error line.
+Disabling source excerpts on that compiler hides the reason.
+The cast alone transfers no ownership, and compilers need not warn about later uses of the named object.</p>
+
+<p>Use <code class="language-plaintext highlighter-rouge">reset()</code> or <code class="language-plaintext highlighter-rouge">reset(key)</code> on an active stream to wipe any pending input and start again.
+Both <code class="language-plaintext highlighter-rouge">finalize()</code> and <code class="language-plaintext highlighter-rouge">finalize_for_reuse()</code> consume the stream.
+Choose <code class="language-plaintext highlighter-rouge">finalize_for_reuse()</code> to receive a pair containing the digest or tag and a move-only token for the wiped storage.
+A guarded token owns the allocation until the caller transfers it or destroys the token.
+An in-place token is empty and can outlive the source.</p>
+
+<p>Pass an unconsumed token once to <code class="language-plaintext highlighter-rouge">reset(std::move(token))</code> or <code class="language-plaintext highlighter-rouge">reset(key, std::move(token))</code> to start a fresh computation without allocating.
+The destination may be active, finalized, or moved from, and must accept the token’s storage type.
+The keyed overload initializes the computation with the supplied key.
+Moving a guarded stream transfers its current computation and allocation to the destination.
+Updating, finalizing, and plain reset all require an active stream.
+The Debug preset enables assertions for this precondition.</p>
+
+<p>Guarded construction can throw <code class="language-plaintext highlighter-rouge">std::bad_alloc</code>.
+Use <code class="language-plaintext highlighter-rouge">make_keyed_hasher&lt;A&gt;(key, std::nothrow)</code> or <code class="language-plaintext highlighter-rouge">make_hasher&lt;A, Storage&gt;(std::nothrow)</code> to receive <code class="language-plaintext highlighter-rouge">std::expected</code> with <code class="language-plaintext highlighter-rouge">potassium::errc::allocation_failed</code> on allocation failure.
+One-shot hashing, updating, resetting and finalizing valid inputs have no recoverable backend error.</p>
+
+<h2 id="hmac-authentication">HMAC authentication</h2>
+
+<p><code class="language-plaintext highlighter-rouge">auth::default_algorithm</code> selects HMAC-SHA-512 truncated to 32 bytes, matching libsodium’s <code class="language-plaintext highlighter-rouge">crypto_auth</code>.
+<code class="language-plaintext highlighter-rouge">auth::authenticate</code> and <code class="language-plaintext highlighter-rouge">authenticate_into</code> compute tags without allocation and are <code class="language-plaintext highlighter-rouge">noexcept</code>.
+<code class="language-plaintext highlighter-rouge">auth::verify</code> verifies a wire tag in constant time and reports a mismatch through <code class="language-plaintext highlighter-rouge">crypto_error</code> or the <code class="language-plaintext highlighter-rouge">std::nothrow</code> overload.
+Use same-algorithm tag equality for constant-time comparison of a streamed result.
+An HMAC stream accepts a matching typed key or an explicit span of key bytes, including an empty span.
+Construction and each reset require a key argument.
+Guarded HMAC state holds the inner and outer keyed hash contexts and follows the keyed BLAKE2b wiping and reuse rules.
+Plain finalization wipes the state immediately and retains its storage until replacement or destruction.
+HMAC computation uses the nonthrowing hash interface for update and both finalizers.
+The <code class="language-plaintext highlighter-rouge">std::nothrow</code> overload of <code class="language-plaintext highlighter-rouge">hash::keyed_hasher&lt;A&gt;::create</code> reports allocation failure and supports immobile in-place storage.</p>
+
+<p>This example authenticates multiple messages using one guarded allocation.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">import</span> <span class="n">potassium</span><span class="p">.</span><span class="n">auth</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">authenticate_messages</span><span class="p">(</span><span class="n">potassium</span><span class="o">::</span><span class="n">key_ref</span><span class="o">&lt;</span><span class="n">potassium</span><span class="o">::</span><span class="n">auth</span><span class="o">::</span><span class="n">hmac_key_tag</span><span class="o">&lt;&gt;&gt;</span> <span class="n">key</span><span class="p">,</span>
+                           <span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">byte</span> <span class="k">const</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&gt;</span> <span class="n">messages</span><span class="p">,</span>
+                           <span class="k">auto</span> <span class="n">consume_tag</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">potassium</span><span class="o">::</span><span class="n">hash</span><span class="o">::</span><span class="n">keyed_hasher</span><span class="o">&lt;</span><span class="n">potassium</span><span class="o">::</span><span class="n">auth</span><span class="o">::</span><span class="n">default_algorithm</span><span class="o">&gt;</span> <span class="n">stream</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">message</span> <span class="o">:</span> <span class="n">messages</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">stream</span><span class="p">.</span><span class="n">update</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+        <span class="k">auto</span> <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="n">token</span><span class="p">]</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">stream</span><span class="p">).</span><span class="n">finalize_for_reuse</span><span class="p">();</span>
+        <span class="n">consume_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">);</span>
+        <span class="n">stream</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">token</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>For a stream with zero heap allocations, select <code class="language-plaintext highlighter-rouge">hash::inplace_hash_state&lt;typename hash::keyed_hash_traits&lt;A&gt;::state_type&gt;</code> as the second template argument.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/JonasProgrammer/libpotassium/edit/gh-pages/docs/design/hash.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>

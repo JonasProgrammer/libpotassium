@@ -1,0 +1,57 @@
+// SPDX-FileCopyrightText: 2026 libpotassium team
+// SPDX-License-Identifier: BSL-1.0
+
+module;
+#include <sodium.h>
+
+#define LIBPOTASSIUM_VERSION "0.1.0"
+
+export module potassium:base;
+
+import std;
+
+namespace
+{
+
+template <std::string_view const&... Strings>
+consteval auto concat_buffers()
+{
+    constexpr auto size = (std::string_view{Strings}.size() + ... + 1uz);
+
+    std::array<char, size> buffer{};
+    auto out = buffer.begin();
+    ((out = std::ranges::copy(std::string_view{Strings}, out).out), ...);
+    *out++ = '\0';
+    return buffer;
+}
+
+template <std::size_t N>
+consteval std::string_view from_buffer(std::array<char, N> const& buffer)
+{
+    return {buffer.data(), buffer.size() - 1};
+}
+
+}  // namespace
+
+using namespace std::string_view_literals;
+
+/// Parent namespace for all libpotassium's contents.
+namespace potassium
+{
+
+/// The libpotassium version.
+export constexpr auto potassium_version_string = "@PROJECT_VERSION@"sv;
+
+/// Version of the libsodium headers used to build libpotassium.
+export constexpr auto sodium_version_string = SODIUM_VERSION_STRING ""sv;
+
+/// @cond INTERNAL
+constexpr auto sep = "-"sv;
+
+constexpr auto version_string_buffer = concat_buffers<potassium_version_string, sep, sodium_version_string>();
+/// @endcond
+
+/// The libpotassium version followed by the libsodium version, separated by a hyphen.
+export constexpr auto version_string = from_buffer(version_string_buffer);
+
+}  // namespace potassium

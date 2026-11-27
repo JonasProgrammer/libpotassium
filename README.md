@@ -41,8 +41,26 @@ cmake --build --preset debug
 ctest --preset debug
 ```
 
-Run the example directly with `./build/debug/libpotassium_example`.
 Use `release` in the same commands for an optimized build in `build/release`.
+
+## Examples
+
+Each example builds as `potassium_example_<topic>` and runs as part of CTest when tests are enabled.
+For example, run `./build/debug/potassium_example_init` after building.
+The caller-owned variants show how to avoid dynamic allocation for keys, cryptographic state, and outputs where the API supports it.
+
+| Topic | Usage variants |
+| --- | --- |
+| [Init](examples/init.cpp) | Library initialization and version information |
+| [Core](examples/core.cpp) | Nonthrowing initialization, guarded and inline keys, random bytes, wiping, guarded allocators and PMR, and locking caller memory |
+| [AEAD](examples/aead.cpp) | Combined and detached ciphertext, associated data, generated and explicit nonces, caller buffers, and reusable AES256-GCM precomputation |
+| [Auth](examples/auth.cpp) | One-shot HMAC tags, verification, authentication failure, and inline streaming HMAC |
+| [Box](examples/box.cpp) | Random and seeded key pairs, direct and precomputed encryption, anonymous sealed boxes, and caller-owned keys and outputs |
+| [Hash](examples/hash.cpp) | One-shot and incremental digests, keyed BLAKE2b, active reset with key replacement, and state reuse after finalization |
+| [KEM](examples/kem.cpp) | X-Wing encapsulation and decapsulation with guarded results or reusable caller buffers |
+| [SecretBox](examples/secretbox.cpp) | Combined and detached ciphertext, generated and explicit nonces, caller buffers, and authentication failure |
+| [Secretstream](examples/secretstream.cpp) | Record streams, rekeying, final record verification, and reuse of guarded state, caller-owned state, and record buffers |
+| [Sign](examples/sign.cpp) | Signed messages, detached signatures, key extraction, and Ed25519ph with reusable guarded or inline state |
 
 ## API documentation
 

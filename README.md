@@ -28,6 +28,18 @@ Streaming HMAC moved to `potassium.hash` because it shares storage, finalization
 For compatibility with libsodium's `crypto_hash()`, select `potassium::hash::sha512` explicitly.
 `potassium::hash::default_algorithm` selects 32-byte BLAKE2b.
 
+## Contrib
+
+Import `potassium.contrib` for constructions that extend the libsodium API.
+`potassium::contrib::scram_sha256` implements SCRAM-SHA-256 credential derivation and mutual authentication.
+At enrollment, generate a fresh random salt and store it and the iteration count alongside the verifier's 32-byte `StoredKey` and 32-byte `ServerKey`, in that order.
+On the client, derived credentials can be cached for the same password, salt, and iteration count and must be protected like the password. [RFC 7677](https://www.rfc-editor.org/rfc/rfc7677.html)
+
+Pass UTF-8 passwords as `std::string`, `std::u8string`, or the corresponding views, already processed with SASLprep or unchanged by it.
+The protocol layer prepares identities, handles SASL framing and Base64, validates nonces, channel binding, and decoded proof and signature lengths, and applies iteration-count policy before deriving credentials.
+Pass the exact `client-first-message-bare`, `server-first-message`, and `client-final-message-without-proof` wire fragments to `auth_message`.
+The server returns its signature only after verifying the client proof, and the client verifies that signature before accepting the exchange. [RFC 5802](https://www.rfc-editor.org/rfc/rfc5802.html)
+
 ## Build and test
 
 Use CMake 4.5 or newer, Ninja 1.11 or newer, development files for libsodium 1.0.22 or newer, and a C++26 toolchain whose `std` module exports `std::indirect` and whose compiler supports deleted functions with reasons.
@@ -58,6 +70,7 @@ The caller-owned variants show how to avoid dynamic allocation for keys, cryptog
 | [Box](examples/box.cpp) | Random and seeded key pairs, direct and precomputed encryption, anonymous sealed boxes, and caller-owned keys and outputs |
 | [Hash](examples/hash.cpp) | One-shot and incremental digests, keyed BLAKE2b, active reset with key replacement, and state reuse after finalization |
 | [KEM](examples/kem.cpp) | X-Wing encapsulation and decapsulation with guarded results or reusable caller buffers |
+| [SCRAM-SHA-256](examples/scram_sha256.cpp) | Server verifier enrollment, reusable client credentials, and mutual authentication |
 | [SecretBox](examples/secretbox.cpp) | Combined and detached ciphertext, generated and explicit nonces, caller buffers, and authentication failure |
 | [Secretstream](examples/secretstream.cpp) | Record streams, rekeying, final record verification, and reuse of guarded state, caller-owned state, and record buffers |
 | [Sign](examples/sign.cpp) | Signed messages, detached signatures, key extraction, and Ed25519ph with reusable guarded or inline state |

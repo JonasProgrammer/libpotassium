@@ -31,14 +31,31 @@ For compatibility with libsodium's `crypto_hash()`, select `potassium::hash::sha
 ## Contrib
 
 Import `potassium.contrib` for constructions that extend the libsodium API.
-`potassium::contrib::scram_sha256` implements SCRAM-SHA-256 credential derivation and mutual authentication.
+`potassium::contrib::scram_sha256` implements credential derivation and mutual authentication for SCRAM-SHA-256 and SCRAM-SHA-256-PLUS.
 At enrollment, generate a fresh random salt and store it and the iteration count alongside the verifier's 32-byte `StoredKey` and 32-byte `ServerKey`, in that order.
 On the client, derived credentials can be cached for the same password, salt, and iteration count and must be protected like the password. [RFC 7677](https://www.rfc-editor.org/rfc/rfc7677.html)
 
 Pass UTF-8 passwords as `std::string`, `std::u8string`, or the corresponding views, already processed with SASLprep or unchanged by it.
-The protocol layer prepares identities, handles SASL framing and Base64, validates nonces, channel binding, and decoded proof and signature lengths, and applies iteration-count policy before deriving credentials.
-Pass the exact `client-first-message-bare`, `server-first-message`, and `client-final-message-without-proof` wire fragments to `auth_message`.
-The server returns its signature only after verifying the client proof, and the client verifies that signature before accepting the exchange. [RFC 5802](https://www.rfc-editor.org/rfc/rfc5802.html)
+Use `client_exchange` and `server_exchange` to generate nonces and construct and validate the four SCRAM wire messages.
+The application prepares the client username, selects a server verifier for the username returned by `receive_client_first`, and transports the messages within its SASL protocol.
+The returned username is an unauthenticated lookup key until `server_exchange::finish` succeeds.
+The client authenticates the server only after `client_exchange::finish` succeeds.
+The client accepts iteration counts from 4096 to 1,000,000 by default, with configurable bounds.
+Both exchanges close on success or failure, and `reset()` allows their storage to be reused.
+
+The exchange API uses the authentication identity as the authorization identity.
+For mechanism negotiation, pass the peer's advertised mechanisms and local `channel_binding` to `client_exchange::start` with `client_negotiation`.
+The client selects PLUS when the advertisement includes it and the transport supplies binding data.
+Pass the selected mechanism to the SASL transport and provide the selected and advertised mechanisms and local binding to `server_exchange::receive_client_first` with `server_negotiation`.
+The client sends GS2 `y` when it can bind but the advertisement offers only the plain mechanism, and a binding-capable server rejects that flag as a possible downgrade.
+Set `require_channel_binding` to require PLUS on the client, and advertise only PLUS to require it on the server. [RFC 5802](https://www.rfc-editor.org/rfc/rfc5802.html)
+
+Each peer supplies a channel-binding type and raw binary data obtained independently from the secure channel for the exchange.
+SCRAM-SHA-256-PLUS authenticates the Base64 encoding of the GS2 header followed by those bytes in the `c=` attribute.
+For TLS 1.3, use the `tls-exporter` type and obtain 32 bytes from the TLS exporter using the `EXPORTER-Channel-Binding` label and an empty context. [RFC 9266](https://www.rfc-editor.org/rfc/rfc9266.html)
+
+For an existing protocol implementation, the standalone primitives accept the exact `client-first-message-bare`, `server-first-message`, and `client-final-message-without-proof` wire fragments through `auth_message`.
+The caller of those primitives handles GS2 framing, Base64, nonce and channel binding checks, and iteration-count policy.
 
 ## Build and test
 
@@ -70,7 +87,8 @@ The caller-owned variants show how to avoid dynamic allocation for keys, cryptog
 | [Box](examples/box.cpp) | Random and seeded key pairs, direct and precomputed encryption, anonymous sealed boxes, and caller-owned keys and outputs |
 | [Hash](examples/hash.cpp) | One-shot and incremental digests, keyed BLAKE2b, active reset with key replacement, and state reuse after finalization |
 | [KEM](examples/kem.cpp) | X-Wing encapsulation and decapsulation with guarded results or reusable caller buffers |
-| [SCRAM-SHA-256](examples/scram_sha256.cpp) | Server verifier enrollment, reusable client credentials, and mutual authentication |
+| [SCRAM-SHA-256](examples/scram_sha256.cpp) | Server verifier enrollment and mutual authentication |
+| [SCRAM-SHA-256-PLUS](examples/scram_sha256_plus.cpp) | Mechanism selection and mutual authentication with channel binding |
 | [SecretBox](examples/secretbox.cpp) | Combined and detached ciphertext, generated and explicit nonces, caller buffers, and authentication failure |
 | [Secretstream](examples/secretstream.cpp) | Record streams, rekeying, final record verification, and reuse of guarded state, caller-owned state, and record buffers |
 | [Sign](examples/sign.cpp) | Signed messages, detached signatures, key extraction, and Ed25519ph with reusable guarded or inline state |

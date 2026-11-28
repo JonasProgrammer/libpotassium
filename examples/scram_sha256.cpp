@@ -10,35 +10,21 @@ int main()
 {
     potassium::init();
 
-    // RFC 7677 sample salt and transcript. Use a fresh random salt for each enrollment.
-    constexpr std::array salt{std::byte{0x5b},
-                              std::byte{0x6d},
-                              std::byte{0x99},
-                              std::byte{0x68},
-                              std::byte{0x9d},
-                              std::byte{0x12},
-                              std::byte{0x35},
-                              std::byte{0x8e},
-                              std::byte{0xec},
-                              std::byte{0xa0},
-                              std::byte{0x4b},
-                              std::byte{0x14},
-                              std::byte{0x12},
-                              std::byte{0x36},
-                              std::byte{0xfa},
-                              std::byte{0x81}};
-    constexpr std::uint32_t iterations = 4096;
-
     // Store the verifier with the salt and iteration count at enrollment.
+    std::array<std::byte, 16> salt;
+    potassium::random_fill(salt);
+    constexpr auto iterations = scram::recommended_min_iterations;
     auto verifier = scram::make_server_verifier("pencil", salt, iterations);
-    // The client can cache credentials as long as the salt and iteration count still match.
-    auto credentials = scram::derive_client_credentials(u8"pencil", salt, iterations);
 
-    scram::auth_message transcript{
-            "n=user,r=rOprNGfwEbeRWgbNEkqO", "r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096", "c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0"};
+    scram::client_exchange client;
+    scram::server_exchange server;
+    auto client_first = client.start("user");
+    auto username = server.receive_client_first(client_first);
+    if (username != "user") return 1;
 
-    auto proof = scram::make_client_proof(credentials, transcript);
-    auto signature = scram::authenticate_client(verifier, transcript, proof.bytes());
-    scram::authenticate_server(credentials, transcript, signature.bytes());
+    auto server_first = server.challenge(verifier, salt, iterations);
+    auto client_final = client.respond(server_first, u8"pencil");
+    auto server_final = server.finish(client_final);
+    client.finish(server_final);
     std::println("SCRAM-SHA-256 authenticated the client and server");
 }

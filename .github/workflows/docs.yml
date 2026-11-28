@@ -8,11 +8,6 @@ on:
       - 'release/**'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 concurrency:
   group: documentation-publish
   cancel-in-progress: false
@@ -20,12 +15,12 @@ concurrency:
 
 jobs:
   docs:
+    name: Build documentation
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v7
@@ -65,23 +60,6 @@ jobs:
           ref: gh-pages
           path: _published
 
-      # Migrate previously published documentation to api/.
-      - name: Migrate legacy documentation
-        run: |
-          mkdir -p _published/api
-
-          for branch in master release; do
-            if [ -d "_published/docs/$branch" ]; then
-              mkdir -p "_published/api/$branch"
-
-              rsync -a --ignore-existing \
-                "_published/docs/$branch/" \
-                "_published/api/$branch/"
-
-              rm -rf "_published/docs/$branch"
-            fi
-          done
-
       # Replace the main website, preserving all API versions.
       - name: Synchronize master site
         if: github.ref == 'refs/heads/master'
@@ -106,12 +84,10 @@ jobs:
           rsync -a --delete \
             "$source/" "$destination/"
 
-      # Persist the complete website.
+      # Persist the complete website for subsequent builds.
       - name: Commit published site
         working-directory: _published
         run: |
-          touch .nojekyll
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -122,13 +98,26 @@ jobs:
             git push origin gh-pages
           fi
 
-      # Deploy the complete website through GitHub Pages.
+      # Upload the complete website for deployment.
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: _published
 
+  deploy:
+    name: Deploy documentation
+    needs: docs
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

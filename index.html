@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebSite","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","name":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=b6f88a80ef8e22551f616ef62ea86376522030cb">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=84362ffa37277491621fa3c7c8f06e6e8c7d63dd">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -112,14 +112,31 @@ For compatibility with libsodium’s <code class="language-plaintext highlighter
 <h2 id="contrib">Contrib</h2>
 
 <p>Import <code class="language-plaintext highlighter-rouge">potassium.contrib</code> for constructions that extend the libsodium API.
-<code class="language-plaintext highlighter-rouge">potassium::contrib::scram_sha256</code> implements SCRAM-SHA-256 credential derivation and mutual authentication.
+<code class="language-plaintext highlighter-rouge">potassium::contrib::scram_sha256</code> implements credential derivation and mutual authentication for SCRAM-SHA-256 and SCRAM-SHA-256-PLUS.
 At enrollment, generate a fresh random salt and store it and the iteration count alongside the verifier’s 32-byte <code class="language-plaintext highlighter-rouge">StoredKey</code> and 32-byte <code class="language-plaintext highlighter-rouge">ServerKey</code>, in that order.
 On the client, derived credentials can be cached for the same password, salt, and iteration count and must be protected like the password. <a href="https://www.rfc-editor.org/rfc/rfc7677.html">RFC 7677</a></p>
 
 <p>Pass UTF-8 passwords as <code class="language-plaintext highlighter-rouge">std::string</code>, <code class="language-plaintext highlighter-rouge">std::u8string</code>, or the corresponding views, already processed with SASLprep or unchanged by it.
-The protocol layer prepares identities, handles SASL framing and Base64, validates nonces, channel binding, and decoded proof and signature lengths, and applies iteration-count policy before deriving credentials.
-Pass the exact <code class="language-plaintext highlighter-rouge">client-first-message-bare</code>, <code class="language-plaintext highlighter-rouge">server-first-message</code>, and <code class="language-plaintext highlighter-rouge">client-final-message-without-proof</code> wire fragments to <code class="language-plaintext highlighter-rouge">auth_message</code>.
-The server returns its signature only after verifying the client proof, and the client verifies that signature before accepting the exchange. <a href="https://www.rfc-editor.org/rfc/rfc5802.html">RFC 5802</a></p>
+Use <code class="language-plaintext highlighter-rouge">client_exchange</code> and <code class="language-plaintext highlighter-rouge">server_exchange</code> to generate nonces and construct and validate the four SCRAM wire messages.
+The application prepares the client username, selects a server verifier for the username returned by <code class="language-plaintext highlighter-rouge">receive_client_first</code>, and transports the messages within its SASL protocol.
+The returned username is an unauthenticated lookup key until <code class="language-plaintext highlighter-rouge">server_exchange::finish</code> succeeds.
+The client authenticates the server only after <code class="language-plaintext highlighter-rouge">client_exchange::finish</code> succeeds.
+The client accepts iteration counts from 4096 to 1,000,000 by default, with configurable bounds.
+Both exchanges close on success or failure, and <code class="language-plaintext highlighter-rouge">reset()</code> allows their storage to be reused.</p>
+
+<p>The exchange API uses the authentication identity as the authorization identity.
+For mechanism negotiation, pass the peer’s advertised mechanisms and local <code class="language-plaintext highlighter-rouge">channel_binding</code> to <code class="language-plaintext highlighter-rouge">client_exchange::start</code> with <code class="language-plaintext highlighter-rouge">client_negotiation</code>.
+The client selects PLUS when the advertisement includes it and the transport supplies binding data.
+Pass the selected mechanism to the SASL transport and provide the selected and advertised mechanisms and local binding to <code class="language-plaintext highlighter-rouge">server_exchange::receive_client_first</code> with <code class="language-plaintext highlighter-rouge">server_negotiation</code>.
+The client sends GS2 <code class="language-plaintext highlighter-rouge">y</code> when it can bind but the advertisement offers only the plain mechanism, and a binding-capable server rejects that flag as a possible downgrade.
+Set <code class="language-plaintext highlighter-rouge">require_channel_binding</code> to require PLUS on the client, and advertise only PLUS to require it on the server. <a href="https://www.rfc-editor.org/rfc/rfc5802.html">RFC 5802</a></p>
+
+<p>Each peer supplies a channel-binding type and raw binary data obtained independently from the secure channel for the exchange.
+SCRAM-SHA-256-PLUS authenticates the Base64 encoding of the GS2 header followed by those bytes in the <code class="language-plaintext highlighter-rouge">c=</code> attribute.
+For TLS 1.3, use the <code class="language-plaintext highlighter-rouge">tls-exporter</code> type and obtain 32 bytes from the TLS exporter using the <code class="language-plaintext highlighter-rouge">EXPORTER-Channel-Binding</code> label and an empty context. <a href="https://www.rfc-editor.org/rfc/rfc9266.html">RFC 9266</a></p>
+
+<p>For an existing protocol implementation, the standalone primitives accept the exact <code class="language-plaintext highlighter-rouge">client-first-message-bare</code>, <code class="language-plaintext highlighter-rouge">server-first-message</code>, and <code class="language-plaintext highlighter-rouge">client-final-message-without-proof</code> wire fragments through <code class="language-plaintext highlighter-rouge">auth_message</code>.
+The caller of those primitives handles GS2 framing, Base64, nonce and channel binding checks, and iteration-count policy.</p>
 
 <h2 id="build-and-test">Build and test</h2>
 
@@ -179,7 +196,11 @@ The caller-owned variants show how to avoid dynamic allocation for keys, cryptog
     </tr>
     <tr>
       <td><a href="/libpotassium/examples/scram_sha256.cpp">SCRAM-SHA-256</a></td>
-      <td>Server verifier enrollment, reusable client credentials, and mutual authentication</td>
+      <td>Server verifier enrollment and mutual authentication</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/scram_sha256_plus.cpp">SCRAM-SHA-256-PLUS</a></td>
+      <td>Mechanism selection and mutual authentication with channel binding</td>
     </tr>
     <tr>
       <td><a href="/libpotassium/examples/secretbox.cpp">SecretBox</a></td>

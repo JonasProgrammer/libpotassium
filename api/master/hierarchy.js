@@ -33,6 +33,7 @@ var hierarchy =
     [ "potassium::auth::auth_traits&lt; A &gt;", "structpotassium_1_1auth_1_1auth__traits.html", null ],
     [ "potassium::hash::blake2b&lt; N &gt;", "structpotassium_1_1hash_1_1blake2b.html", null ],
     [ "potassium::hash::blake2b_key_tag&lt; K &gt;", "structpotassium_1_1hash_1_1blake2b__key__tag.html", null ],
+    [ "potassium::contrib::scram_sha256::cached_client_credentials", "structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials.html", null ],
     [ "chacha20poly1305", "structpotassium_1_1aead_1_1chacha20poly1305.html", null ],
     [ "chacha20poly1305_ietf", "structpotassium_1_1aead_1_1chacha20poly1305__ietf.html", null ],
     [ "aead::detail::chacha_traits", null, [
@@ -40,7 +41,11 @@ var hierarchy =
       [ "potassium::algorithm_traits< aead::chacha20poly1305_ietf >", "structpotassium_1_1algorithm__traits_3_01aead_1_1chacha20poly1305__ietf_01_4.html", null ],
       [ "potassium::algorithm_traits< aead::xchacha20poly1305_ietf >", "structpotassium_1_1algorithm__traits_3_01aead_1_1xchacha20poly1305__ietf_01_4.html", null ]
     ] ],
+    [ "potassium::contrib::scram_sha256::channel_binding", "structpotassium_1_1contrib_1_1scram__sha256_1_1channel__binding.html", null ],
     [ "potassium::kem::ciphertext_buffer", "structpotassium_1_1kem_1_1ciphertext__buffer.html", null ],
+    [ "potassium::contrib::scram_sha256::client_exchange", "classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange.html", null ],
+    [ "potassium::contrib::scram_sha256::client_first_message", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message.html", null ],
+    [ "potassium::contrib::scram_sha256::client_negotiation", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation.html", null ],
     [ "potassium::contrib::scram_sha256::client_proof", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof.html", null ],
     [ "curve25519xchacha20poly1305", "structpotassium_1_1box_1_1curve25519xchacha20poly1305.html", null ],
     [ "curve25519xsalsa20poly1305", "structpotassium_1_1box_1_1curve25519xsalsa20poly1305.html", null ],
@@ -60,6 +65,7 @@ var hierarchy =
     [ "potassium::hash::inplace_hash_state&lt; State &gt;", "classpotassium_1_1hash_1_1inplace__hash__state.html", null ],
     [ "potassium::secretstream::inplace_state", "classpotassium_1_1secretstream_1_1inplace__state.html", null ],
     [ "potassium::sign::inplace_state", "classpotassium_1_1sign_1_1inplace__state.html", null ],
+    [ "potassium::contrib::scram_sha256::iteration_policy", "structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy.html", null ],
     [ "potassium::key_buffer_storage&lt; KeyTag &gt;", "classpotassium_1_1key__buffer__storage.html", null ],
     [ "potassium::key_out&lt; KeyTag &gt;", "classpotassium_1_1key__out.html", null ],
     [ "potassium::key_ref&lt; KeyTag &gt;", "classpotassium_1_1key__ref.html", null ],
@@ -71,6 +77,7 @@ var hierarchy =
     [ "potassium::key_traits&lt; box::private_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4.html", null ],
     [ "potassium::key_traits&lt; box::seed_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4.html", null ],
     [ "potassium::key_traits&lt; contrib::scram_sha256::client_credentials_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1client__credentials__tag_01_4.html", null ],
+    [ "potassium::key_traits&lt; contrib::scram_sha256::expected_server_signature_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1expected__server__signature__tag_01_4.html", null ],
     [ "potassium::key_traits&lt; contrib::scram_sha256::server_verifier_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1server__verifier__tag_01_4.html", null ],
     [ "potassium::key_traits&lt; hash::blake2b_key_tag&lt; K &gt; &gt;", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4.html", null ],
     [ "potassium::key_traits&lt; kem::decapsulation_key_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1decapsulation__key__tag_01_4.html", null ],
@@ -88,6 +95,7 @@ var hierarchy =
     [ "potassium::kem::keypair", "structpotassium_1_1kem_1_1keypair.html", null ],
     [ "potassium::sign::keypair", "structpotassium_1_1sign_1_1keypair.html", null ],
     [ "potassium::mac_buffer&lt; A &gt;", "structpotassium_1_1mac__buffer.html", null ],
+    [ "potassium::contrib::scram_sha256::mechanism_offer", "structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer.html", null ],
     [ "std::pmr::memory_resource", null, [
       [ "potassium::memory_resource", "classpotassium_1_1memory__resource.html", null ]
     ] ],
@@ -115,6 +123,8 @@ var hierarchy =
     [ "potassium::secure_buffer", "classpotassium_1_1secure__buffer.html", null ],
     [ "potassium::box::seed_tag&lt; A &gt;", "structpotassium_1_1box_1_1seed__tag.html", null ],
     [ "potassium::secretstream::sender", "classpotassium_1_1secretstream_1_1sender.html", null ],
+    [ "potassium::contrib::scram_sha256::server_exchange", "classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange.html", null ],
+    [ "potassium::contrib::scram_sha256::server_negotiation", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation.html", null ],
     [ "potassium::contrib::scram_sha256::server_signature", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html", null ],
     [ "sha256", "structpotassium_1_1hash_1_1sha256.html", null ],
     [ "sha3_256", "structpotassium_1_1hash_1_1sha3__256.html", null ],

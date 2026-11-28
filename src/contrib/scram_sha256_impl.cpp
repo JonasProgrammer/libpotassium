@@ -77,6 +77,11 @@ using confidential_tag = wiped_hash_output<auth::tag_buffer<auth::hmac_sha256>>;
 
 namespace detail
 {
+void server_signature_into(client_credentials_ref credentials, auth_message transcript, key_destination out) noexcept
+{
+    authenticate_transcript(credentials.bytes().last<key_size>(), transcript, out);
+}
+
 std::expected<void, errc> derive_client_credentials_into(std::span<std::byte const> password, std::span<std::byte const> salt, std::uint32_t iterations, client_credentials_out out) noexcept
 {
     if (iterations == 0) return std::unexpected(errc::crypto_failed);
@@ -192,7 +197,7 @@ std::expected<void, errc> authenticate_server(client_credentials_ref credentials
 {
     confidential_tag expected;
     auth::tag_buffer<auth::hmac_sha256> received;
-    authenticate_transcript(credentials.bytes().last<key_size>(), transcript, expected.storage);
+    detail::server_signature_into(credentials, transcript, expected.storage);
     std::ranges::copy(signature, received.storage.begin());
     if (expected != received) return std::unexpected(errc::crypto_failed);
     return {};

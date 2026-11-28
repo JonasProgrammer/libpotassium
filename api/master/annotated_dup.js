@@ -22,7 +22,16 @@ var annotated_dup =
         [ "scram_sha256", "namespacepotassium_1_1contrib_1_1scram__sha256.html", [
           [ "auth_message", "classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message" ],
           [ "client_proof", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof" ],
-          [ "server_signature", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature" ]
+          [ "server_signature", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature" ],
+          [ "iteration_policy", "structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy" ],
+          [ "cached_client_credentials", "structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials" ],
+          [ "mechanism_offer", "structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer" ],
+          [ "channel_binding", "structpotassium_1_1contrib_1_1scram__sha256_1_1channel__binding.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1channel__binding" ],
+          [ "client_negotiation", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation" ],
+          [ "server_negotiation", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation" ],
+          [ "client_first_message", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message" ],
+          [ "client_exchange", "classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange" ],
+          [ "server_exchange", "classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange" ]
         ] ]
       ] ],
       [ "hash", "namespacepotassium_1_1hash.html", [
@@ -106,6 +115,7 @@ var annotated_dup =
       [ "key_traits&lt; box::private_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4" ],
       [ "key_traits&lt; box::seed_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4" ],
       [ "key_traits&lt; contrib::scram_sha256::client_credentials_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1client__credentials__tag_01_4.html", null ],
+      [ "key_traits&lt; contrib::scram_sha256::expected_server_signature_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1expected__server__signature__tag_01_4.html", null ],
       [ "key_traits&lt; contrib::scram_sha256::server_verifier_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1server__verifier__tag_01_4.html", null ],
       [ "key_traits&lt; hash::blake2b_key_tag&lt; K &gt; &gt;", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4.html", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4" ],
       [ "key_traits&lt; kem::decapsulation_key_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1decapsulation__key__tag_01_4.html", null ],

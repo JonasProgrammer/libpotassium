@@ -133,6 +133,21 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Client proof to encode as the client-final message's p attribute.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof.html#details">More...</a><br /></td></tr>
 <tr class="memitem:server_5Fsignature" id="r_server_5Fsignature"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html">server_signature</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Server signature to encode as the server-final message's v attribute.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html#details">More...</a><br /></td></tr>
+<tr class="memitem:iteration_5Fpolicy" id="r_iteration_5Fpolicy"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy.html">iteration_policy</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inclusive bounds applied by a client before password derivation.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy.html#details">More...</a><br /></td></tr>
+<tr class="memitem:cached_5Fclient_5Fcredentials" id="r_cached_5Fclient_5Fcredentials"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials.html">cached_client_credentials</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cached keys and the challenge parameters for which they were derived.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials.html#details">More...</a><br /></td></tr>
+<tr class="memitem:mechanism_5Foffer" id="r_mechanism_5Foffer"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer.html">mechanism_offer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">SCRAM mechanisms advertised by the server for this connection.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer.html#details">More...</a><br /></td></tr>
+<tr class="memitem:channel_5Fbinding" id="r_channel_5Fbinding"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1channel__binding.html">channel_binding</a></td></tr>
+<tr class="memitem:client_5Fnegotiation" id="r_client_5Fnegotiation"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation.html">client_negotiation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mechanism negotiation and channel binding for one client exchange.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:server_5Fnegotiation" id="r_server_5Fnegotiation"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation.html">server_negotiation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mechanism negotiation and channel binding for one server exchange.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:client_5Ffirst_5Fmessage" id="r_client_5Ffirst_5Fmessage"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message.html">client_first_message</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The client's initial wire message and the SASL mechanism it selected.  <a href="structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message.html#details">More...</a><br /></td></tr>
+<tr class="memitem:client_5Fexchange" id="r_client_5Fexchange"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange.html">client_exchange</a></td></tr>
+<tr class="memitem:server_5Fexchange" id="r_server_5Fexchange"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange.html">server_exchange</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -160,6 +175,19 @@ using&#160;</td><td class="memItemRight"><b>server_verifier_ref</b> = <a class="
 <tr class="memitem:a3ceb25ff787abd2c7df67e30b500371d" id="r_a3ceb25ff787abd2c7df67e30b500371d"><td class="memItemLeft"><a id="a3ceb25ff787abd2c7df67e30b500371d" name="a3ceb25ff787abd2c7df67e30b500371d"></a>
 using&#160;</td><td class="memItemRight"><b>server_verifier_out</b> = <a class="el" href="classpotassium_1_1key__out.html">key_out</a>&lt;server_verifier_tag&gt;</td></tr>
 <tr class="memdesc:a3ceb25ff787abd2c7df67e30b500371d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writable destination for a server verifier. <br /></td></tr>
+<tr class="memitem:a69edeeb633e326616d9da669ef73921d" id="r_a69edeeb633e326616d9da669ef73921d"><td class="memItemLeft"><a id="a69edeeb633e326616d9da669ef73921d" name="a69edeeb633e326616d9da669ef73921d"></a>
+using&#160;</td><td class="memItemRight"><b>client_exchange_storage</b> = <a class="el" href="classpotassium_1_1key__buffer__storage.html">key_buffer_storage</a>&lt;expected_server_signature_tag&gt;</td></tr>
+<tr class="memdesc:a69edeeb633e326616d9da669ef73921d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inline, reusable storage for the client's expected server signature. <br /></td></tr>
+<tr class="memitem:a31e2dfcbd41a9e6509cd89978e848f13" id="r_a31e2dfcbd41a9e6509cd89978e848f13"><td class="memItemLeft"><a id="a31e2dfcbd41a9e6509cd89978e848f13" name="a31e2dfcbd41a9e6509cd89978e848f13"></a>
+using&#160;</td><td class="memItemRight"><b>client_exchange_out</b> = <a class="el" href="classpotassium_1_1key__out.html">key_out</a>&lt;expected_server_signature_tag&gt;</td></tr>
+<tr class="memdesc:a31e2dfcbd41a9e6509cd89978e848f13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writable view of caller-owned storage for the client's expected server signature. <br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a570f74680eb40095fcf8076cd72fc9be" id="r_a570f74680eb40095fcf8076cd72fc9be"><td class="memItemLeft">enum class &#160;</td><td class="memItemRight"><a class="el" href="#a570f74680eb40095fcf8076cd72fc9be">mechanism</a> { <a class="el" href="#a570f74680eb40095fcf8076cd72fc9bead8d8a6d2e9e1fb99302b479a8fe540d4">sha256</a>
+, <a class="el" href="#a570f74680eb40095fcf8076cd72fc9bea827144e1f2b600cec84269e9c4a74afd">sha256_plus</a>
+ }</td></tr>
+<tr class="memdesc:a570f74680eb40095fcf8076cd72fc9be"><td class="mdescLeft">&#160;</td><td class="mdescRight">SASL mechanism selected for one SCRAM exchange.  <a href="#a570f74680eb40095fcf8076cd72fc9be">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -191,6 +219,9 @@ std::expected&lt; <a class="el" href="#a20a2e58b6da7d557e4ec60fd1d078078">server
 <tr class="memitem:a1b633eb6e6905d089d38f8f414d64e0f" id="r_a1b633eb6e6905d089d38f8f414d64e0f"><td class="memItemLeft"><a class="el" href="structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html">server_signature</a>&#160;</td><td class="memItemRight"><a class="el" href="#a1b633eb6e6905d089d38f8f414d64e0f">authenticate_client</a> (<a class="el" href="#a2585d2de21dc94a17af6c35bec84a68e">server_verifier_ref</a> verifier, <a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html">auth_message</a> transcript, std::span&lt; std::byte const, <a class="el" href="#a8fe88b45a0245373fcd183b2093abcbf">key_size</a> &gt; proof)</td></tr>
 <tr class="memitem:a87530a3fec89d91ff475eb0f04d720a1" id="r_a87530a3fec89d91ff475eb0f04d720a1"><td class="memItemLeft">std::expected&lt; void, <a class="el" href="namespacepotassium.html#a66ae76a466284a0c8cb92accee64d069">errc</a> &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a87530a3fec89d91ff475eb0f04d720a1">authenticate_server</a> (<a class="el" href="#ac8687887ed11f0edfc6b3cb2900771c2">client_credentials_ref</a> credentials, <a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html">auth_message</a> transcript, std::span&lt; std::byte const, <a class="el" href="#a8fe88b45a0245373fcd183b2093abcbf">key_size</a> &gt; signature, std::nothrow_t) noexcept</td></tr>
 <tr class="memitem:a875d50a3799f383483fe7aad8a534240" id="r_a875d50a3799f383483fe7aad8a534240"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a875d50a3799f383483fe7aad8a534240">authenticate_server</a> (<a class="el" href="#ac8687887ed11f0edfc6b3cb2900771c2">client_credentials_ref</a> credentials, <a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html">auth_message</a> transcript, std::span&lt; std::byte const, <a class="el" href="#a8fe88b45a0245373fcd183b2093abcbf">key_size</a> &gt; signature)</td></tr>
+<tr class="memitem:a054baf5e9f889068bb8924a17f9ed83b" id="r_a054baf5e9f889068bb8924a17f9ed83b"><td class="memItemLeft"><a id="a054baf5e9f889068bb8924a17f9ed83b" name="a054baf5e9f889068bb8924a17f9ed83b"></a>
+constexpr std::string_view&#160;</td><td class="memItemRight"><b>mechanism_name</b> (<a class="el" href="#a570f74680eb40095fcf8076cd72fc9be">mechanism</a> selected) noexcept</td></tr>
+<tr class="memdesc:a054baf5e9f889068bb8924a17f9ed83b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the name used by the SASL transport for the selected mechanism. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-var-members" class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -200,11 +231,51 @@ constexpr std::size_t&#160;</td><td class="memItemRight"><b>key_size</b> = 32</t
 <tr class="memitem:af3906430dfa96bd0baf24c205b250a07" id="r_af3906430dfa96bd0baf24c205b250a07"><td class="memItemLeft"><a id="af3906430dfa96bd0baf24c205b250a07" name="af3906430dfa96bd0baf24c205b250a07"></a>
 constexpr std::uint32_t&#160;</td><td class="memItemRight"><b>recommended_min_iterations</b> = 4096</td></tr>
 <tr class="memdesc:af3906430dfa96bd0baf24c205b250a07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum enrollment iteration count recommended by RFC 7677. <br /></td></tr>
+<tr class="memitem:a5056e0e74aabbe7252b4f6276cbe0c25" id="r_a5056e0e74aabbe7252b4f6276cbe0c25"><td class="memItemLeft"><a id="a5056e0e74aabbe7252b4f6276cbe0c25" name="a5056e0e74aabbe7252b4f6276cbe0c25"></a>
+constexpr std::size_t&#160;</td><td class="memItemRight"><b>max_message_size</b> = 4096</td></tr>
+<tr class="memdesc:a5056e0e74aabbe7252b4f6276cbe0c25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum size in bytes of one wire message accepted or produced by the exchange API. <br /></td></tr>
+<tr class="memitem:ac4caf560cf9c99225b4ccfac2afc2565" id="r_ac4caf560cf9c99225b4ccfac2afc2565"><td class="memItemLeft"><a id="ac4caf560cf9c99225b4ccfac2afc2565" name="ac4caf560cf9c99225b4ccfac2afc2565"></a>
+constexpr std::size_t&#160;</td><td class="memItemRight"><b>max_salt_size</b> = 1024</td></tr>
+<tr class="memdesc:ac4caf560cf9c99225b4ccfac2afc2565"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum decoded salt length accepted by the exchange API. <br /></td></tr>
+<tr class="memitem:a16688ba92ef4de58909a5354d4ad4f3d" id="r_a16688ba92ef4de58909a5354d4ad4f3d"><td class="memItemLeft"><a id="a16688ba92ef4de58909a5354d4ad4f3d" name="a16688ba92ef4de58909a5354d4ad4f3d"></a>
+constexpr std::size_t&#160;</td><td class="memItemRight"><b>max_channel_binding_size</b> = 1024</td></tr>
+<tr class="memdesc:a16688ba92ef4de58909a5354d4ad4f3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum decoded size of the GS2 header and channel-binding bytes together. <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>SCRAM-SHA-256 cryptographic operations as specified by RFC 5802 and RFC 7677. </p>
-<p>The caller handles SASL framing, exchange state, nonce and channel binding validation, Base64, and the policy for accepting a server's salt and iteration count. </p>
-</div><a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<p>Use <a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange.html">client_exchange</a> and <a class="el" href="classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange.html">server_exchange</a> for SASL messages and nonce validation, or the standalone operations when a protocol layer already performs those tasks. </p>
+</div><a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
+<a id="a570f74680eb40095fcf8076cd72fc9be" name="a570f74680eb40095fcf8076cd72fc9be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a570f74680eb40095fcf8076cd72fc9be">&#9670;&#160;</a></span>mechanism</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="#a570f74680eb40095fcf8076cd72fc9be">potassium::contrib::scram_sha256::mechanism</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel strong">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>SASL mechanism selected for one SCRAM exchange. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a570f74680eb40095fcf8076cd72fc9bead8d8a6d2e9e1fb99302b479a8fe540d4" name="a570f74680eb40095fcf8076cd72fc9bead8d8a6d2e9e1fb99302b479a8fe540d4"></a>sha256&#160;</td><td class="fielddoc"><p>SCRAM-SHA-256. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a570f74680eb40095fcf8076cd72fc9bea827144e1f2b600cec84269e9c4a74afd" name="a570f74680eb40095fcf8076cd72fc9bea827144e1f2b600cec84269e9c4a74afd"></a>sha256_plus&#160;</td><td class="fielddoc"><p>SCRAM-SHA-256-PLUS with channel binding. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
 <a id="a1b633eb6e6905d089d38f8f414d64e0f" name="a1b633eb6e6905d089d38f8f414d64e0f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1b633eb6e6905d089d38f8f414d64e0f">&#9670;&#160;</a></span>authenticate_client() <span class="overload">[1/2]</span></h2>
 
@@ -347,7 +418,7 @@ constexpr std::uint32_t&#160;</td><td class="memItemRight"><b>recommended_min_it
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -515,7 +586,7 @@ template&lt;detail::text Password&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -747,7 +818,7 @@ template&lt;detail::text Password&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel export">export</span><span class="mlabel noexcept">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

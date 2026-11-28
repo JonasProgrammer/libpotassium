@@ -2,9 +2,23 @@ var module__potassium_8contrib =
 [
     [ "key_traits&lt; contrib::scram_sha256::client_credentials_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1client__credentials__tag_01_4.html", null ],
     [ "key_traits&lt; contrib::scram_sha256::server_verifier_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1server__verifier__tag_01_4.html", null ],
+    [ "key_traits&lt; contrib::scram_sha256::expected_server_signature_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1expected__server__signature__tag_01_4.html", null ],
     [ "auth_message", "classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message" ],
     [ "client_proof", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof" ],
     [ "server_signature", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature" ],
+    [ "iteration_policy", "structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1iteration__policy" ],
+    [ "cached_client_credentials", "structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials" ],
+    [ "mechanism_offer", "structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1mechanism__offer" ],
+    [ "channel_binding", "structpotassium_1_1contrib_1_1scram__sha256_1_1channel__binding.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1channel__binding" ],
+    [ "client_negotiation", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__negotiation" ],
+    [ "server_negotiation", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__negotiation" ],
+    [ "client_first_message", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__first__message" ],
+    [ "client_exchange", "classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1client__exchange" ],
+    [ "server_exchange", "classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1server__exchange" ],
+    [ "potassium::contrib::scram_sha256::mechanism", "module__potassium_8contrib.html#a570f74680eb40095fcf8076cd72fc9be", [
+      [ "potassium::contrib::scram_sha256::mechanism::sha256", "module__potassium_8contrib.html#a570f74680eb40095fcf8076cd72fc9bead8d8a6d2e9e1fb99302b479a8fe540d4", null ],
+      [ "potassium::contrib::scram_sha256::mechanism::sha256_plus", "module__potassium_8contrib.html#a570f74680eb40095fcf8076cd72fc9bea827144e1f2b600cec84269e9c4a74afd", null ]
+    ] ],
     [ "potassium::contrib::scram_sha256::client_credentials", "module__potassium_8contrib.html#aa8d70aff8d34588e9940a67be4c85535", null ],
     [ "potassium::contrib::scram_sha256::client_credentials_storage", "module__potassium_8contrib.html#ab9b5eae02a4f3b420884139d4dd3e8f5", null ],
     [ "potassium::contrib::scram_sha256::client_credentials_ref", "module__potassium_8contrib.html#ac8687887ed11f0edfc6b3cb2900771c2", null ],
@@ -13,6 +27,8 @@ var module__potassium_8contrib =
     [ "potassium::contrib::scram_sha256::server_verifier_storage", "module__potassium_8contrib.html#a98de7641e6c49c783d5916ba93869985", null ],
     [ "potassium::contrib::scram_sha256::server_verifier_ref", "module__potassium_8contrib.html#a2585d2de21dc94a17af6c35bec84a68e", null ],
     [ "potassium::contrib::scram_sha256::server_verifier_out", "module__potassium_8contrib.html#a3ceb25ff787abd2c7df67e30b500371d", null ],
+    [ "potassium::contrib::scram_sha256::client_exchange_storage", "module__potassium_8contrib.html#a69edeeb633e326616d9da669ef73921d", null ],
+    [ "potassium::contrib::scram_sha256::client_exchange_out", "module__potassium_8contrib.html#a31e2dfcbd41a9e6509cd89978e848f13", null ],
     [ "potassium::contrib::scram_sha256::derive_client_credentials_into", "module__potassium_8contrib.html#a304e92d456d594f55abd6ec114e73ae5", null ],
     [ "potassium::contrib::scram_sha256::derive_client_credentials_into", "module__potassium_8contrib.html#aab79af1cb717d3b5a95a62c31323afe5", null ],
     [ "potassium::contrib::scram_sha256::derive_client_credentials", "module__potassium_8contrib.html#aba350440b4dd943ad7bf397c598240c8", null ],
@@ -29,6 +45,10 @@ var module__potassium_8contrib =
     [ "potassium::contrib::scram_sha256::authenticate_client", "module__potassium_8contrib.html#a1b633eb6e6905d089d38f8f414d64e0f", null ],
     [ "potassium::contrib::scram_sha256::authenticate_server", "module__potassium_8contrib.html#a87530a3fec89d91ff475eb0f04d720a1", null ],
     [ "potassium::contrib::scram_sha256::authenticate_server", "module__potassium_8contrib.html#a875d50a3799f383483fe7aad8a534240", null ],
+    [ "potassium::contrib::scram_sha256::mechanism_name", "module__potassium_8contrib.html#a054baf5e9f889068bb8924a17f9ed83b", null ],
     [ "potassium::contrib::scram_sha256::key_size", "module__potassium_8contrib.html#a8fe88b45a0245373fcd183b2093abcbf", null ],
-    [ "potassium::contrib::scram_sha256::recommended_min_iterations", "module__potassium_8contrib.html#af3906430dfa96bd0baf24c205b250a07", null ]
+    [ "potassium::contrib::scram_sha256::recommended_min_iterations", "module__potassium_8contrib.html#af3906430dfa96bd0baf24c205b250a07", null ],
+    [ "potassium::contrib::scram_sha256::max_message_size", "module__potassium_8contrib.html#a5056e0e74aabbe7252b4f6276cbe0c25", null ],
+    [ "potassium::contrib::scram_sha256::max_salt_size", "module__potassium_8contrib.html#ac4caf560cf9c99225b4ccfac2afc2565", null ],
+    [ "potassium::contrib::scram_sha256::max_channel_binding_size", "module__potassium_8contrib.html#a16688ba92ef4de58909a5354d4ad4f3d", null ]
 ];

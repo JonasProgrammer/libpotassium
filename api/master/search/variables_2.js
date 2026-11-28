@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['for_5foverwrite_0',['for_overwrite',['../namespacepotassium.html#a4d455310561137d10ca7c8fc64d486d5',1,'potassium']]]
+  ['ciphertext_0',['ciphertext',['../structpotassium_1_1aead_1_1seal__result.html#afdb84d5147ebe1935fba8b6bf48fedc7',1,'potassium::aead::seal_result::ciphertext'],['../structpotassium_1_1box_1_1seal__result.html#a53176c2c219b622a54598900cfec0b9a',1,'potassium::box::seal_result::ciphertext'],['../structpotassium_1_1detached__ciphertext.html#a4e314048c6fd3a4363c80483f3f8de44',1,'potassium::detached_ciphertext::ciphertext'],['../structpotassium_1_1detached__seal__result.html#a8d7c5e477da31dc979ecb820be233b3c',1,'potassium::detached_seal_result::ciphertext'],['../structpotassium_1_1kem_1_1encapsulation.html#a472568445883181d074896cd97ea0af4',1,'potassium::kem::encapsulation::ciphertext'],['../structpotassium_1_1secretbox_1_1seal__result.html#ab3fa3fd86102a251f57619fe8e0cadf6',1,'potassium::secretbox::seal_result::ciphertext']]],
+  ['ciphertext_5fsize_1',['ciphertext_size',['../structpotassium_1_1algorithm__traits_3_01kem_1_1xwing_01_4.html#a06e868dc6d2848ee68f020c2035f4384',1,'potassium::algorithm_traits&lt; kem::xwing &gt;']]],
+  ['credentials_2',['credentials',['../structpotassium_1_1contrib_1_1scram__sha256_1_1cached__client__credentials.html#ae41619f6651b3abce035c380203c8fe7',1,'potassium::contrib::scram_sha256::cached_client_credentials']]]
 ];

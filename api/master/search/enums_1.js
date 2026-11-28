@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['record_5ftag_0',['record_tag',['../namespacepotassium_1_1secretstream.html#a08ae4c0da1bccf0dda80b0c4fafe4554',1,'potassium::secretstream']]]
+  ['mechanism_0',['mechanism',['../namespacepotassium_1_1contrib_1_1scram__sha256.html#a570f74680eb40095fcf8076cd72fc9be',1,'potassium::contrib::scram_sha256']]]
 ];

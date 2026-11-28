@@ -45,6 +45,7 @@ target_sources(potassium PUBLIC
         src/aead/aead_impl.cpp
         src/auth/auth_impl.cpp
         src/box/box_impl.cpp
+        src/contrib/scram_sha256_exchange.cpp
         src/contrib/scram_sha256_impl.cpp
         src/core/crypto_impl.cpp
         src/core/memory_impl.cpp
@@ -65,7 +66,7 @@ if (LIBPOTASSIUM_BUILD_DOCS)
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/DoxygenSetup.cmake")
 endif ()
 
-set(LIBPOTASSIUM_EXAMPLE_TOPICS init core aead auth box hash kem scram_sha256 secretbox secretstream sign)
+set(LIBPOTASSIUM_EXAMPLE_TOPICS init core aead auth box hash kem scram_sha256 scram_sha256_plus secretbox secretstream sign)
 foreach (topic IN LISTS LIBPOTASSIUM_EXAMPLE_TOPICS)
     add_executable(potassium_example_${topic} examples/${topic}.cpp)
     target_link_libraries(potassium_example_${topic} PRIVATE potassium)

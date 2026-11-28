@@ -18,6 +18,13 @@ var annotated_dup =
         [ "seal_result", "structpotassium_1_1box_1_1seal__result.html", "structpotassium_1_1box_1_1seal__result" ],
         [ "keypair", "structpotassium_1_1box_1_1keypair.html", "structpotassium_1_1box_1_1keypair" ]
       ] ],
+      [ "contrib", null, [
+        [ "scram_sha256", "namespacepotassium_1_1contrib_1_1scram__sha256.html", [
+          [ "auth_message", "classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html", "classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message" ],
+          [ "client_proof", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1client__proof" ],
+          [ "server_signature", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature.html", "structpotassium_1_1contrib_1_1scram__sha256_1_1server__signature" ]
+        ] ]
+      ] ],
       [ "hash", "namespacepotassium_1_1hash.html", [
         [ "detail", null, [
           [ "traits", "structpotassium_1_1hash_1_1detail_1_1traits.html", "structpotassium_1_1hash_1_1detail_1_1traits" ],
@@ -98,6 +105,8 @@ var annotated_dup =
       [ "key_traits&lt; box::precomputed_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1precomputed__key__tag_3_01A_01_4_01_4.html", null ],
       [ "key_traits&lt; box::private_key_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1private__key__tag_3_01A_01_4_01_4" ],
       [ "key_traits&lt; box::seed_tag&lt; A &gt; &gt;", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4.html", "structpotassium_1_1key__traits_3_01box_1_1seed__tag_3_01A_01_4_01_4" ],
+      [ "key_traits&lt; contrib::scram_sha256::client_credentials_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1client__credentials__tag_01_4.html", null ],
+      [ "key_traits&lt; contrib::scram_sha256::server_verifier_tag &gt;", "structpotassium_1_1key__traits_3_01contrib_1_1scram__sha256_1_1server__verifier__tag_01_4.html", null ],
       [ "key_traits&lt; hash::blake2b_key_tag&lt; K &gt; &gt;", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4.html", "structpotassium_1_1key__traits_3_01hash_1_1blake2b__key__tag_3_01K_01_4_01_4" ],
       [ "key_traits&lt; kem::decapsulation_key_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1decapsulation__key__tag_01_4.html", null ],
       [ "key_traits&lt; kem::seed_tag &gt;", "structpotassium_1_1key__traits_3_01kem_1_1seed__tag_01_4.html", "structpotassium_1_1key__traits_3_01kem_1_1seed__tag_01_4" ],

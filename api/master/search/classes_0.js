@@ -21,5 +21,6 @@ var searchData=
   ['algorithm_5ftraits_3c_20sign_3a_3aed25519_20_3e_18',['algorithm_traits&lt; sign::ed25519 &gt;',['../structpotassium_1_1algorithm__traits_3_01sign_1_1ed25519_01_4.html',1,'potassium']]],
   ['algorithm_5ftraits_3c_20sign_3a_3aed25519ph_20_3e_19',['algorithm_traits&lt; sign::ed25519ph &gt;',['../structpotassium_1_1algorithm__traits_3_01sign_1_1ed25519ph_01_4.html',1,'potassium']]],
   ['allocator_20',['allocator',['../structpotassium_1_1allocator.html',1,'potassium']]],
-  ['auth_5ftraits_21',['auth_traits',['../structpotassium_1_1auth_1_1auth__traits.html',1,'potassium::auth']]]
+  ['auth_5fmessage_21',['auth_message',['../classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html',1,'potassium::contrib::scram_sha256']]],
+  ['auth_5ftraits_22',['auth_traits',['../structpotassium_1_1auth_1_1auth__traits.html',1,'potassium::auth']]]
 ];

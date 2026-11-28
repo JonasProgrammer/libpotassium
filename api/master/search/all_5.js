@@ -7,5 +7,6 @@ var searchData=
   ['finish_5fverify_4',['finish_verify',['../classpotassium_1_1sign_1_1prehash.html#a61ab8cbb1de5fc9211b28585281a8a22',1,'potassium::sign::prehash::finish_verify(verification_key_ref key, prehash_signature const &amp;sig, std::nothrow_t) noexcept'],['../classpotassium_1_1sign_1_1prehash.html#a1322cc2aef9e85df481247a71990cd11',1,'potassium::sign::prehash::finish_verify(verification_key_ref key, prehash_signature const &amp;sig)']]],
   ['finished_5',['finished',['../classpotassium_1_1secretstream_1_1receiver.html#af5f92cd52a8c6778f0fa6f466148e1ee',1,'potassium::secretstream::receiver']]],
   ['for_5foverwrite_6',['for_overwrite',['../namespacepotassium.html#a4d455310561137d10ca7c8fc64d486d5',1,'potassium']]],
-  ['for_5foverwrite_5ft_7',['for_overwrite_t',['../structpotassium_1_1for__overwrite__t.html',1,'potassium::for_overwrite_t'],['../structpotassium_1_1for__overwrite__t.html#addd3e95e985b944604e788d75d205371',1,'potassium::for_overwrite_t::for_overwrite_t()']]]
+  ['for_5foverwrite_5ft_7',['for_overwrite_t',['../structpotassium_1_1for__overwrite__t.html',1,'potassium::for_overwrite_t'],['../structpotassium_1_1for__overwrite__t.html#addd3e95e985b944604e788d75d205371',1,'potassium::for_overwrite_t::for_overwrite_t()']]],
+  ['fragments_8',['fragments',['../classpotassium_1_1contrib_1_1scram__sha256_1_1auth__message.html#a5114531071a6a3fcd2769c02b7025e00',1,'potassium::contrib::scram_sha256::auth_message']]]
 ];

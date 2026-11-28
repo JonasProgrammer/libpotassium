@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['decapsulation_5fkey_5fref_0',['decapsulation_key_ref',['../namespacepotassium_1_1kem.html#a8c5fda794c3ba73fde027784ff4fdd2d',1,'potassium::kem']]],
-  ['default_5falgorithm_1',['default_algorithm',['../namespacepotassium_1_1aead.html#a454cfbd683015cc728d93b1c2e480c0b',1,'potassium::aead::default_algorithm'],['../namespacepotassium_1_1auth.html#abfabd85b27b99916f427ebbc01fdd4da',1,'potassium::auth::default_algorithm'],['../namespacepotassium_1_1hash.html#aad5607249dc72aa04ee57ef5d54641cd',1,'potassium::hash::default_algorithm']]],
-  ['default_5fstorage_2',['default_storage',['../structpotassium_1_1hash_1_1detail_1_1traits.html#a71a37a325168d8ab9ac0e78a8e3ea6d0',1,'potassium::hash::detail::traits::default_storage'],['../structpotassium_1_1hash_1_1keyed__hash__traits_3_01A_01_4.html#a4cb24094a9d869c448715c49f9af685a',1,'potassium::hash::keyed_hash_traits&lt; A &gt;::default_storage'],['../structpotassium_1_1hash_1_1keyed__hash__traits_3_01blake2b_3_01N_01_4_01_4.html#a7071eb1e9ac17fb87231c0761851a449',1,'potassium::hash::keyed_hash_traits&lt; blake2b&lt; N &gt; &gt;::default_storage']]],
-  ['digest_5fbuffer_3',['digest_buffer',['../namespacepotassium_1_1hash.html#a262b994ea1ed69d8ae5899d32f17aceb',1,'potassium::hash']]]
+  ['client_5fcredentials_0',['client_credentials',['../namespacepotassium_1_1contrib_1_1scram__sha256.html#aa8d70aff8d34588e9940a67be4c85535',1,'potassium::contrib::scram_sha256']]],
+  ['client_5fcredentials_5fout_1',['client_credentials_out',['../namespacepotassium_1_1contrib_1_1scram__sha256.html#afcd47d5ec913b51f08c67214f01e502b',1,'potassium::contrib::scram_sha256']]],
+  ['client_5fcredentials_5fref_2',['client_credentials_ref',['../namespacepotassium_1_1contrib_1_1scram__sha256.html#ac8687887ed11f0edfc6b3cb2900771c2',1,'potassium::contrib::scram_sha256']]],
+  ['client_5fcredentials_5fstorage_3',['client_credentials_storage',['../namespacepotassium_1_1contrib_1_1scram__sha256.html#ab9b5eae02a4f3b420884139d4dd3e8f5',1,'potassium::contrib::scram_sha256']]]
 ];

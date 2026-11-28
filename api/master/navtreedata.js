@@ -54,7 +54,7 @@ var NAVTREE =
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
-        [ "Functions", "functions_func.html", null ],
+        [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
         [ "Typedefs", "functions_type.html", null ],
         [ "Related Symbols", "functions_rela.html", null ]
@@ -66,12 +66,13 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"classpotassium_1_1memory__resource.html",
-"classpotassium_1_1secretstream_1_1state__storage.html#a4e3e46bc1441274ae68fead010ac01cc",
-"module__potassium_8secretstream.html#a08ae4c0da1bccf0dda80b0c4fafe4554a401e4828efba74490d6887c8a2ac2b43",
-"namespacepotassium_1_1box.html#a884da2a733e1c121cb9fdca834333e21",
-"structpotassium_1_1algorithm__traits_3_01aead_1_1aegis128l_01_4.html",
-"structpotassium_1_1kem_1_1keypair.html#a4fe49d4113e2d33337938f8b02a1bf5b"
+"classpotassium_1_1key__ref.html#ab65a89ccae97c0a1fa5a0d5a6d5b32e9",
+"classpotassium_1_1secretstream_1_1sender.html#ab7e1be2c03af8e3d298e375d1199fd8b",
+"module__potassium_8contrib.html#ac8687887ed11f0edfc6b3cb2900771c2",
+"namespacepotassium_1_1box.html#a187bd4d99184e94cf071aeb85e9b323c",
+"namespacepotassium_1_1secretbox.html#afba8e30a36fe4c0e53aa10a0bd4d54ef",
+"structpotassium_1_1detached__seal__result.html#aa757d3848ed4abdab1b56283991c1121",
+"structpotassium_1_1raw__allocator.html#ab543006d7eef45432a7509e30167f014"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

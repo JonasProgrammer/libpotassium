@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebSite","description":"WIP. Opinoinated libsodium wrapper in C++.","headline":"libpotassium","name":"libpotassium","url":"https://jonasprogrammer.github.io/libpotassium/"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=6fbafb4fbcb014b6a625123eb3203f4964cebf3f">
+    <link rel="stylesheet" href="/libpotassium/assets/css/style.css?v=b6f88a80ef8e22551f616ef62ea86376522030cb">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup Google Analytics -->
@@ -109,6 +109,18 @@ See the <a href="/libpotassium/COMPARISON.html">libsodium coverage comparison</a
 For compatibility with libsodium’s <code class="language-plaintext highlighter-rouge">crypto_hash()</code>, select <code class="language-plaintext highlighter-rouge">potassium::hash::sha512</code> explicitly.
 <code class="language-plaintext highlighter-rouge">potassium::hash::default_algorithm</code> selects 32-byte BLAKE2b.</p>
 
+<h2 id="contrib">Contrib</h2>
+
+<p>Import <code class="language-plaintext highlighter-rouge">potassium.contrib</code> for constructions that extend the libsodium API.
+<code class="language-plaintext highlighter-rouge">potassium::contrib::scram_sha256</code> implements SCRAM-SHA-256 credential derivation and mutual authentication.
+At enrollment, generate a fresh random salt and store it and the iteration count alongside the verifier’s 32-byte <code class="language-plaintext highlighter-rouge">StoredKey</code> and 32-byte <code class="language-plaintext highlighter-rouge">ServerKey</code>, in that order.
+On the client, derived credentials can be cached for the same password, salt, and iteration count and must be protected like the password. <a href="https://www.rfc-editor.org/rfc/rfc7677.html">RFC 7677</a></p>
+
+<p>Pass UTF-8 passwords as <code class="language-plaintext highlighter-rouge">std::string</code>, <code class="language-plaintext highlighter-rouge">std::u8string</code>, or the corresponding views, already processed with SASLprep or unchanged by it.
+The protocol layer prepares identities, handles SASL framing and Base64, validates nonces, channel binding, and decoded proof and signature lengths, and applies iteration-count policy before deriving credentials.
+Pass the exact <code class="language-plaintext highlighter-rouge">client-first-message-bare</code>, <code class="language-plaintext highlighter-rouge">server-first-message</code>, and <code class="language-plaintext highlighter-rouge">client-final-message-without-proof</code> wire fragments to <code class="language-plaintext highlighter-rouge">auth_message</code>.
+The server returns its signature only after verifying the client proof, and the client verifies that signature before accepting the exchange. <a href="https://www.rfc-editor.org/rfc/rfc5802.html">RFC 5802</a></p>
+
 <h2 id="build-and-test">Build and test</h2>
 
 <p>Use CMake 4.5 or newer, Ninja 1.11 or newer, development files for libsodium 1.0.22 or newer, and a C++26 toolchain whose <code class="language-plaintext highlighter-rouge">std</code> module exports <code class="language-plaintext highlighter-rouge">std::indirect</code> and whose compiler supports deleted functions with reasons.
@@ -164,6 +176,10 @@ The caller-owned variants show how to avoid dynamic allocation for keys, cryptog
     <tr>
       <td><a href="/libpotassium/examples/kem.cpp">KEM</a></td>
       <td>X-Wing encapsulation and decapsulation with guarded results or reusable caller buffers</td>
+    </tr>
+    <tr>
+      <td><a href="/libpotassium/examples/scram_sha256.cpp">SCRAM-SHA-256</a></td>
+      <td>Server verifier enrollment, reusable client credentials, and mutual authentication</td>
     </tr>
     <tr>
       <td><a href="/libpotassium/examples/secretbox.cpp">SecretBox</a></td>

@@ -24,6 +24,7 @@ add_executable(potassium_tests
         kem.cpp
         key_traits.cpp
         memory.cpp
+        scram_sha256.cpp
         secretbox.cpp
         secretstream.cpp
         sign.cpp

@@ -4,10 +4,11 @@ var searchData=
   ['potassium_2eaead_1',['potassium.aead',['../module__potassium_8aead.html',1,'']]],
   ['potassium_2eauth_2',['potassium.auth',['../module__potassium_8auth.html',1,'']]],
   ['potassium_2ebox_3',['potassium.box',['../module__potassium_8box.html',1,'']]],
-  ['potassium_2ecore_4',['potassium.core',['../module__potassium_8core.html',1,'']]],
-  ['potassium_2ehash_5',['potassium.hash',['../module__potassium_8hash.html',1,'']]],
-  ['potassium_2ekem_6',['potassium.kem',['../module__potassium_8kem.html',1,'']]],
-  ['potassium_2esecretbox_7',['potassium.secretbox',['../module__potassium_8secretbox.html',1,'']]],
-  ['potassium_2esecretstream_8',['potassium.secretstream',['../module__potassium_8secretstream.html',1,'']]],
-  ['potassium_2esign_9',['potassium.sign',['../module__potassium_8sign.html',1,'']]]
+  ['potassium_2econtrib_4',['potassium.contrib',['../module__potassium_8contrib.html',1,'']]],
+  ['potassium_2ecore_5',['potassium.core',['../module__potassium_8core.html',1,'']]],
+  ['potassium_2ehash_6',['potassium.hash',['../module__potassium_8hash.html',1,'']]],
+  ['potassium_2ekem_7',['potassium.kem',['../module__potassium_8kem.html',1,'']]],
+  ['potassium_2esecretbox_8',['potassium.secretbox',['../module__potassium_8secretbox.html',1,'']]],
+  ['potassium_2esecretstream_9',['potassium.secretstream',['../module__potassium_8secretstream.html',1,'']]],
+  ['potassium_2esign_10',['potassium.sign',['../module__potassium_8sign.html',1,'']]]
 ];
